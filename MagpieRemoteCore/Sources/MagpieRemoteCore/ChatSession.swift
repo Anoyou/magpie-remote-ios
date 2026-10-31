@@ -28,7 +28,7 @@ public struct ChatAnswerer: Codable, Hashable, Sendable {
 
     /// 给用户看的一行，例如 `anthropic/claude-sonnet-4-6`。
     public var displayText: String? {
-        switch (provider?.nilIfEmpty, model?.nilIfEmpty) {
+        switch (provider?.chatNonEmpty, model?.chatNonEmpty) {
         case let (_, model?) where model.contains("/"): model
         case let (provider?, model?): "\(provider)/\(model)"
         case let (nil, model?): model
@@ -156,5 +156,5 @@ public struct ChatSession: Codable, Hashable, Identifiable, Sendable {
 }
 
 fileprivate extension String {
-    var nilIfEmpty: String? { isEmpty ? nil : self }
+    var chatNonEmpty: String? { isEmpty ? nil : self }
 }
