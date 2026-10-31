@@ -1,0 +1,1170 @@
+{
+ "magpieCommit": "80af3b86",
+ "doc": "spec/web-api.md",
+ "auth": {
+  "query": "k",
+  "cookie": "magpie_web_<listenPort>",
+  "cookieAnchors": [
+   {
+    "file": "internal/gui/web.go",
+    "contains": [
+     "q.Has(\"k\")",
+     "webGuard(\"magpie_web_\"+port",
+     "SameSite: http.SameSiteLaxMode",
+     "webSignInPath = \"/_magpie/sign-in\"",
+     "http.StatusSeeOther"
+    ]
+   },
+   {
+    "file": "internal/gui/api.go",
+    "contains": [
+     "func fail(rw http.ResponseWriter, err error)",
+     "out := map[string]string{\"error\": err.Error()}",
+     "Version string `json:\"version\"`",
+     "return noFramedAPI(held(mux))"
+    ]
+   }
+  ],
+  "defaultWebAddr": {
+   "file": "internal/cli/web_cli.go",
+   "contains": [
+    "const webAddr = \"127.0.0.1:3430\""
+   ]
+  },
+  "defaultGatewayAddr": {
+   "file": "internal/gateway/gateway.go",
+   "contains": [
+    "const DefaultAddr = \"127.0.0.1:3425\""
+   ]
+  }
+ },
+ "routes": [
+  {
+   "method": "GET",
+   "path": "/api/settings",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"GET /api/settings\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "version",
+     "gateway",
+     "lan?",
+     "port?",
+     "lanURLs?",
+     "lanPublic?",
+     "publicURL?",
+     "onNetwork?",
+     "addrEnv?",
+     "allowIPs?",
+     "lanKeyId?",
+     "disabledModels?",
+     "web?",
+     "gatewayOn?",
+     "dir"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/api.go",
+     "tags": [
+      "version",
+      "dir",
+      "gateway",
+      "lanURLs",
+      "lanPublic",
+      "publicURL",
+      "onNetwork",
+      "addrEnv",
+      "web",
+      "gatewayOn"
+     ]
+    },
+    {
+     "file": "internal/settings/settings.go",
+     "tags": [
+      "lan",
+      "port",
+      "allowIPs",
+      "lanKeyId",
+      "disabledModels",
+      "corsOrigins"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/update",
+   "source": "internal/gui/update.go",
+   "anchor": "mux.HandleFunc(\"GET /api/update\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "state",
+     "current",
+     "latest?",
+     "notes?",
+     "url?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/update.go",
+     "tags": [
+      "state",
+      "current",
+      "latest",
+      "notes",
+      "url"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/state",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"GET /api/state\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "agents[].id",
+     "agents[].name",
+     "agents[].icon",
+     "agents[].path",
+     "agents[].fields[].key",
+     "agents[].fields[].label",
+     "agents[].fields[].value",
+     "agents[].fields[].options[].value",
+     "agents[].fields[].options[].label?",
+     "agents[].fields[].options[].note",
+     "agents[].fields[].options[].group?",
+     "agents[].fields[].options[].ref?",
+     "agents[].fields[].options[].context?",
+     "agents[].wired?",
+     "agents[].models?.shown",
+     "agents[].models?.listed",
+     "agents[].drift?",
+     "agents[].cliMissing?",
+     "clients[].id",
+     "settings",
+     "served",
+     "notice?",
+     "connected?.how"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/api.go",
+     "tags": [
+      "agents",
+      "clients",
+      "profiles",
+      "settings",
+      "served",
+      "notice",
+      "connected",
+      "fields",
+      "key",
+      "label",
+      "value",
+      "options",
+      "wired",
+      "drift",
+      "cliMissing",
+      "path"
+     ]
+    },
+    {
+     "file": "internal/agent/agent.go",
+     "tags": [
+      "value",
+      "label",
+      "note",
+      "icon",
+      "icons",
+      "group",
+      "ref",
+      "context"
+     ]
+    },
+    {
+     "file": "internal/gui/agent_models.go",
+     "tags": [
+      "shown",
+      "listed",
+      "by",
+      "names"
+     ]
+    },
+    {
+     "file": "internal/agent/applied.go",
+     "tags": [
+      "how",
+      "field",
+      "value"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/set",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/set\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "agent",
+     "field",
+     "value"
+    ],
+    "response": [
+     "<stateJSON>",
+     "notice?"
+    ]
+   },
+   "note": "untagged struct{ Agent, Field, Value string }; this is how an agent's model is switched"
+  },
+  {
+   "method": "POST",
+   "path": "/api/agents/rescan",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/agents/rescan\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<stateJSON>"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/api/agents/{action}/{id}",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/agents/{action}/{id}\"",
+   "actions": [
+    "reapply",
+    "keep",
+    "connect",
+    "disconnect"
+   ],
+   "fields": {
+    "request": [],
+    "response": [
+     "<stateJSON>",
+     "notice?",
+     "connected?"
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/api/agent-models/{id}",
+   "source": "internal/gui/agent_models.go",
+   "anchor": "mux.HandleFunc(\"GET /api/agent-models/{id}\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "models[].id",
+     "models[].name",
+     "models[].group",
+     "models[].icon?",
+     "models[].icons?",
+     "models[].logo?",
+     "models[].context?",
+     "models[].hidden?",
+     "models[].inUse?",
+     "models[].own?",
+     "ordered",
+     "only",
+     "ownHidden"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/agent_models.go",
+     "tags": [
+      "id",
+      "name",
+      "group",
+      "icon",
+      "icons",
+      "logo",
+      "context",
+      "hidden",
+      "inUse",
+      "own",
+      "shown",
+      "listed",
+      "by",
+      "names",
+      "n"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/agent-models/{id}",
+   "source": "internal/gui/agent_models.go",
+   "anchor": "mux.HandleFunc(\"POST /api/agent-models/{id}\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "hidden?",
+     "shown?",
+     "order?",
+     "only?",
+     "ownHidden?"
+    ],
+    "response": [
+     "models[]",
+     "count?",
+     "only?",
+     "ordered?",
+     "ownHidden?"
+    ]
+   },
+   "note": "untagged struct; send exactly one of the fields"
+  },
+  {
+   "method": "GET",
+   "path": "/api/providers",
+   "source": "internal/gui/providers.go",
+   "anchor": "mux.HandleFunc(\"GET /api/providers\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "providers[].id",
+     "providers[].name",
+     "providers[].icon",
+     "providers[].preset",
+     "providers[].host",
+     "providers[].chat",
+     "providers[].responses",
+     "providers[].anthropic",
+     "providers[].gemini?",
+     "providers[].baseAPI?",
+     "providers[].headers?",
+     "providers[].proxy",
+     "providers[].key.set",
+     "providers[].key.masked",
+     "providers[].key.optional",
+     "providers[].ready",
+     "providers[].off",
+     "providers[].chosen",
+     "providers[].fallback",
+     "providers[].routing",
+     "providers[].affinity",
+     "providers[].models[].id",
+     "providers[].models[].name",
+     "providers[].models[].on",
+     "providers[].models[].context?",
+     "providers[].models[].efforts?",
+     "providers[].models[].images",
+     "providers[].exposed",
+     "providers[].noModels",
+     "providers[].bestInFamily",
+     "providers[].fetched?",
+     "providers[].listError?",
+     "providers[].agents[].id",
+     "providers[].agents[].current",
+     "providers[].agents[].model?",
+     "providers[].keyList[].id",
+     "providers[].keyList[].name?",
+     "providers[].keyList[].masked",
+     "providers[].keyList[].active",
+     "providers[].keyList[].on",
+     "providers[].account?.agent",
+     "providers[].account?.user",
+     "providers[].account?.plan?",
+     "providers[].account?.agentName",
+     "presets[].id",
+     "gateway.url",
+     "gateway.lan",
+     "gateway.lanURLs?",
+     "gateway.running",
+     "gateway.version?",
+     "gateway.models",
+     "moved?",
+     "added?",
+     "had?",
+     "removed?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/providers.go",
+     "tags": [
+      "providers",
+      "presets",
+      "excluded",
+      "gateway",
+      "moved",
+      "added",
+      "had",
+      "removed",
+      "id",
+      "name",
+      "icon",
+      "preset",
+      "host",
+      "chat",
+      "responses",
+      "anthropic",
+      "gemini",
+      "baseAPI",
+      "headers",
+      "proxy",
+      "key",
+      "set",
+      "masked",
+      "optional",
+      "ready",
+      "off",
+      "chosen",
+      "fallback",
+      "routing",
+      "affinity",
+      "models",
+      "on",
+      "context",
+      "efforts",
+      "images",
+      "exposed",
+      "noModels",
+      "bestInFamily",
+      "fetched",
+      "listError",
+      "agents",
+      "current",
+      "model",
+      "keyList",
+      "account",
+      "agentName",
+      "url",
+      "lan",
+      "lanURLs",
+      "running",
+      "version"
+     ]
+    },
+    {
+     "file": "internal/provider/keys.go",
+     "tags": [
+      "id",
+      "name",
+      "masked",
+      "active",
+      "on",
+      "protocol",
+      "weight",
+      "plan",
+      "rest"
+     ]
+    },
+    {
+     "file": "internal/provider/account.go",
+     "tags": [
+      "agent",
+      "user",
+      "plan"
+     ]
+    },
+    {
+     "file": "internal/provider/provider.go",
+     "tags": [
+      "id",
+      "name",
+      "preset",
+      "key",
+      "chat",
+      "responses",
+      "anthropic",
+      "gemini",
+      "baseAPI",
+      "fallback",
+      "routing",
+      "affinity",
+      "headers",
+      "models",
+      "noModels",
+      "bestInFamily",
+      "off",
+      "proxy",
+      "keepLogin",
+      "keepLoginAs"
+     ]
+    }
+   ],
+   "note": "query ?wait, ?last=1"
+  },
+  {
+   "method": "POST",
+   "path": "/api/provider/{action}",
+   "source": "internal/gui/providers.go",
+   "anchor": "mux.HandleFunc(\"POST /api/provider/{action}\"",
+   "actions": [
+    "show",
+    "move",
+    "adopt",
+    "moveback",
+    "quiet",
+    "tuck",
+    "untuck",
+    "forget",
+    "keychain-retry",
+    "save",
+    "key",
+    "name",
+    "efforts",
+    "images",
+    "arrange",
+    "accountmodels",
+    "accountcap",
+    "accountname",
+    "windowcap",
+    "accountconcurrency",
+    "accountweight",
+    "route",
+    "off",
+    "on",
+    "keeplogin",
+    "switchonly",
+    "capstop",
+    "capcareful",
+    "affinity",
+    "sink",
+    "delete",
+    "teststop",
+    "test",
+    "detect",
+    "balance",
+    "unfetch",
+    "list",
+    "models"
+   ],
+   "fields": {
+    "request": [
+     "id",
+     "<provider.Provider fields>",
+     "proxy",
+     "insecureTLS",
+     "limitRestOff",
+     "maxConcurrency",
+     "queueLimit",
+     "queueWait",
+     "maxRPM",
+     "limit",
+     "rateWindows",
+     "priceRate",
+     "accountOrder",
+     "new",
+     "clearBalanceToken",
+     "accessKeyID",
+     "clearAccessKey",
+     "from",
+     "copyOf",
+     "model",
+     "modelName",
+     "efforts",
+     "images",
+     "modelPrefs",
+     "outputs",
+     "compacts",
+     "routing",
+     "affinity",
+     "sink",
+     "nativeCompaction",
+     "authHeader",
+     "test",
+     "as",
+     "run",
+     "detectModels",
+     "picked",
+     "account",
+     "allow",
+     "cap",
+     "window",
+     "weight",
+     "alias",
+     "typed",
+     "base",
+     "noModels",
+     "bestInFamily"
+    ],
+    "response": [
+     "<providersJSON>",
+     "key (action key)",
+     "results (test/detect)",
+     "provider (test/models)",
+     "count (models)",
+     "dropped? (models)",
+     "models[].id (list)",
+     "ok,amount,error? (balance)"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/providers.go",
+     "tags": [
+      "proxy",
+      "insecureTLS",
+      "limitRestOff",
+      "maxConcurrency",
+      "queueLimit",
+      "queueWait",
+      "maxRPM",
+      "limit",
+      "rateWindows",
+      "priceRate",
+      "accountOrder",
+      "new",
+      "clearBalanceToken",
+      "accessKeyID",
+      "clearAccessKey",
+      "from",
+      "copyOf",
+      "model",
+      "modelName",
+      "efforts",
+      "images",
+      "modelPrefs",
+      "outputs",
+      "compacts",
+      "routing",
+      "affinity",
+      "sink",
+      "nativeCompaction",
+      "authHeader",
+      "test",
+      "as",
+      "run",
+      "detectModels",
+      "picked",
+      "account",
+      "allow",
+      "cap",
+      "window",
+      "weight",
+      "alias",
+      "typed",
+      "base",
+      "noModels",
+      "bestInFamily",
+      "results",
+      "provider",
+      "count",
+      "dropped"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/providers/arrange",
+   "source": "internal/gui/providers.go",
+   "anchor": "mux.HandleFunc(\"POST /api/providers/arrange\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "order"
+    ],
+    "response": [
+     "<providersJSON>"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/api/keys/{action}",
+   "source": "internal/gui/providers.go",
+   "anchor": "mux.HandleFunc(\"POST /api/keys/{action}\"",
+   "actions": [
+    "add",
+    "import",
+    "protocol",
+    "weight",
+    "plan",
+    "use",
+    "remove",
+    "remove-many",
+    "rename",
+    "replace",
+    "on",
+    "off"
+   ],
+   "fields": {
+    "request": [
+     "id",
+     "key",
+     "name",
+     "ref",
+     "refs",
+     "protocol",
+     "weight",
+     "plan"
+    ],
+    "response": [
+     "<providersJSON>",
+     "moved?",
+     "added?",
+     "had?",
+     "removed?"
+    ]
+   },
+   "note": "untagged struct"
+  },
+  {
+   "method": "POST",
+   "path": "/api/settings/disabled-models",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/settings/disabled-models\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "models"
+    ],
+    "response": [
+     "<settingsJSON>"
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/api/groups",
+   "source": "internal/gui/groups.go",
+   "anchor": "mux.HandleFunc(\"GET /api/groups\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "groups[].id",
+     "groups[].name",
+     "groups[].members",
+     "groups[].routing?",
+     "groups[].affinity?",
+     "groups[].pick?",
+     "groups[].disabled?",
+     "groups[].hidden?",
+     "groups[].ready",
+     "groups[].memberInfo[].id",
+     "groups[].memberInfo[].ready",
+     "groups[].memberInfo[].provider?",
+     "groups[].memberInfo[].name?",
+     "groups[].memberInfo[].model?",
+     "groups[].memberInfo[].on",
+     "groups[].picked?",
+     "groups[].ref",
+     "models[].id",
+     "models[].name",
+     "models[].provider",
+     "models[].providerName",
+     "found",
+     "skip",
+     "templates[].kind",
+     "moved?",
+     "shared?",
+     "imported?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/groups.go",
+     "tags": [
+      "groups",
+      "models",
+      "pools",
+      "deciders",
+      "found",
+      "skip",
+      "skippable",
+      "moved",
+      "templates",
+      "clock",
+      "shared",
+      "imported",
+      "ready",
+      "memberInfo",
+      "holds",
+      "offers",
+      "picked",
+      "patterns",
+      "ref",
+      "provider",
+      "providerName",
+      "on",
+      "from",
+      "order",
+      "ids",
+      "kind",
+      "text"
+     ]
+    },
+    {
+     "file": "internal/provider/group.go",
+     "tags": [
+      "id",
+      "name",
+      "members",
+      "routing",
+      "affinity",
+      "pick",
+      "disabled",
+      "hidden",
+      "off",
+      "weights"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/groups/{action}",
+   "source": "internal/gui/groups.go",
+   "anchor": "mux.HandleFunc(\"POST /api/groups/{action}\"",
+   "actions": [
+    "found",
+    "skip",
+    "save",
+    "delete",
+    "show",
+    "copy",
+    "share",
+    "import",
+    "template",
+    "switch",
+    "arrange",
+    "pick"
+   ],
+   "fields": {
+    "request": [
+     "id",
+     "name",
+     "members",
+     "routing?",
+     "affinity?",
+     "pick?",
+     "from?",
+     "on?",
+     "skip?",
+     "order?",
+     "ids?",
+     "kind?",
+     "text?"
+    ],
+    "response": [
+     "<groupsJSON>"
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/api/caller-keys",
+   "source": "internal/gui/caller_keys.go",
+   "anchor": "mux.HandleFunc(\"GET /api/caller-keys\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "keys[].id",
+     "keys[].name",
+     "keys[].off?",
+     "keys[].lan?",
+     "keys[].masked?",
+     "keys[].limit?.period",
+     "keys[].limit?.cost?",
+     "keys[].limit?.tokens?",
+     "keys[].moreLimits?",
+     "keys[].models?",
+     "keys[].accounts?",
+     "keys[].readOnly?",
+     "keys[].expires?",
+     "keys[].used?.reset",
+     "keys[].used?.costLeft",
+     "keys[].used?.tokensLeft",
+     "keys[].used?.spent",
+     "keys[].usedAll?",
+     "accountNames"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/access/access.go",
+     "tags": [
+      "id",
+      "name",
+      "off",
+      "lan",
+      "secret",
+      "masked",
+      "limit",
+      "moreLimits",
+      "models",
+      "accounts",
+      "quotas",
+      "readOnly",
+      "expires",
+      "issuer",
+      "issues",
+      "key",
+      "index"
+     ]
+    },
+    {
+     "file": "internal/access/limit.go",
+     "tags": [
+      "period",
+      "days",
+      "hours",
+      "tokens",
+      "cost",
+      "cacheReads",
+      "since"
+     ]
+    },
+    {
+     "file": "internal/budget/budget.go",
+     "tags": [
+      "period",
+      "start",
+      "reset",
+      "calls",
+      "tokens",
+      "cost",
+      "tokenLimit",
+      "costLimit",
+      "tokensLeft",
+      "costLeft",
+      "spent"
+     ]
+    },
+    {
+     "file": "internal/gui/caller_keys.go",
+     "tags": [
+      "used",
+      "usedAll"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/caller-keys/models",
+   "source": "internal/gui/caller_keys.go",
+   "anchor": "mux.HandleFunc(\"GET /api/caller-keys/models\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "models[].id",
+     "models[].name",
+     "models[].provider?",
+     "models[].providerName?",
+     "models[].group?",
+     "accounts[].id",
+     "accounts[].account?",
+     "accounts[].key?",
+     "accounts[].plan?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/caller_keys.go",
+     "tags": [
+      "id",
+      "name",
+      "provider",
+      "providerName",
+      "group",
+      "account",
+      "key",
+      "plan"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/caller-keys/{action}",
+   "source": "internal/gui/caller_keys.go",
+   "anchor": "mux.HandleFunc(\"POST /api/caller-keys/{action}\"",
+   "actions": [
+    "add-key",
+    "rotate-key",
+    "rename-key",
+    "limit-key",
+    "reset-limit-key",
+    "models-key",
+    "accounts-key",
+    "quotas-key",
+    "issuer-key",
+    "access-key",
+    "on-key",
+    "off-key",
+    "remove-key",
+    "move-key",
+    "copy-key"
+   ],
+   "fields": {
+    "request": [
+     "key",
+     "name",
+     "limit?",
+     "index?",
+     "models?",
+     "accounts?",
+     "quotas?",
+     "readOnly?",
+     "issues?",
+     "secret?"
+    ],
+    "response": [
+     "keys",
+     "accountNames",
+     "secret"
+    ]
+   },
+   "note": "actions are cases in internal/access/access.go Update()"
+  },
+  {
+   "method": "POST",
+   "path": "/api/settings/lan",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/settings/lan\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "on",
+     "newKey"
+    ],
+    "response": [
+     "<settingsJSON>",
+     "rekeyed?"
+    ]
+   },
+   "note": "untagged struct{ On, NewKey bool }"
+  },
+  {
+   "method": "POST",
+   "path": "/api/settings/port",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/settings/port\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "port"
+    ],
+    "response": [
+     "settings",
+     "port.port",
+     "port.moved?",
+     "port.error?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/port.go",
+     "tags": [
+      "port",
+      "moved",
+      "error"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/signin",
+   "source": "internal/gui/providers.go",
+   "anchor": "mux.HandleFunc(\"POST /api/signin\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "agent",
+     "site?",
+     "proxy?",
+     "user?"
+    ],
+    "response": [
+     "id",
+     "agent",
+     "url",
+     "code?",
+     "state",
+     "pasteCallback?",
+     "user?",
+     "error?",
+     "openError?",
+     "linkOnly?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/provider/signin.go",
+     "tags": [
+      "id",
+      "agent",
+      "url",
+      "code",
+      "state",
+      "pasteCallback",
+      "user",
+      "error"
+     ]
+    }
+   ],
+   "note": "WKWebView flow; listed for reference"
+  },
+  {
+   "method": "GET",
+   "path": "/api/signin/{id}",
+   "source": "internal/gui/providers.go",
+   "anchor": "mux.HandleFunc(\"GET /api/signin/{id}\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<SignInState>"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/api/backup/import",
+   "source": "internal/gui/backup.go",
+   "anchor": "mux.HandleFunc(\"POST /api/backup/import\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "data",
+     "pass",
+     "agents",
+     "library?"
+    ],
+    "response": []
+   },
+   "note": "WKWebView flow; listed for reference"
+  },
+  {
+   "method": "GET",
+   "path": "/api/usage/quotas",
+   "source": "internal/gui/usage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/usage/quotas\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": []
+   },
+   "note": "duplicates gateway /v1/magpie/*; reference only"
+  }
+ ]
+}

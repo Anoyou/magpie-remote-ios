@@ -9,6 +9,7 @@ let package = Package(
     products: [.library(name: "MagpieRemoteCore", targets: ["MagpieRemoteCore"])],
     targets: [
         .target(name: "MagpieRemoteCore"),
-        .testTarget(name: "MagpieRemoteCoreTests", dependencies: ["MagpieRemoteCore"]),
+        // Fixtures/live：contract.yml 用真实 magpie 抓取并脱敏的响应（contract/export_fixtures.py 生成）。
+        .testTarget(name: "MagpieRemoteCoreTests", dependencies: ["MagpieRemoteCore"], resources: [.copy("Fixtures")]),
     ]
 )

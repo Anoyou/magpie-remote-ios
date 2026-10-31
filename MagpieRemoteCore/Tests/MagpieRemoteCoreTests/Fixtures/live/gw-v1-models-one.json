@@ -1,0 +1,1 @@
+{"created":0,"created_at":"2025-01-01T00:00:00Z","display_name":"mock-gpt-1","id":"mock/mock-gpt-1","native_endpoints":["/v1/chat/completions"],"object":"model","owned_by":"mock","reasoning":false,"reasoning_levels":[],"supported_parameters":["tools","tool_choice"],"supported_reasoning_levels":[],"tool_call":true,"type":"model"}

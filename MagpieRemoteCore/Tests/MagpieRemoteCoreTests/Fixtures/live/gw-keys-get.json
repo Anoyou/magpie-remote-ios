@@ -1,0 +1,1 @@
+{"keys":[{"expired":false,"expires":"2026-10-31T20:06:06.961524073Z","id":"9cab48eacf53dfe7159be36d","key":"sk-magpie-key-…aa9e1a","limit":{"period":"hours","hours":1,"tokens":10000,"since":"2026-10-31T19:06:06.961524073Z"},"models":["mock/mock-gpt-1"],"name":"contract-temp"}]}

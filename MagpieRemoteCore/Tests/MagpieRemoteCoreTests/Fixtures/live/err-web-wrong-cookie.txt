@@ -1,0 +1,1 @@
+open the link magpie web printed when it started: it carries the key. This browser's sign-in cookie holds a key that isn't this magpie web's: the key changed after it signed in (MAGPIE_WEB_KEY changed, or a start without it made a new one).
