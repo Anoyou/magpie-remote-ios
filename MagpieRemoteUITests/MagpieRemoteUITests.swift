@@ -38,7 +38,7 @@ final class MagpieRemoteUITests: XCTestCase {
 
     func testFixtureHostConnectsAndShowsQuota() {
         let app = launch()
-        XCTAssertTrue(element(containing: "示例供应商 A", in: app).waitForExistence(timeout: 15))
+        XCTAssertTrue(element(containing: "工作 Claude", in: app).waitForExistence(timeout: 15))
     }
 
     func testHostSheetOpensAndAddForm() {
