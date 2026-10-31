@@ -1,0 +1,6 @@
+data: {"id":"chatcmpl-7b2f0c5e9a1d4e3f","object":"chat.completion.chunk","created":1793472032,"model":"claude-sonnet-4-6","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-7b2f0c5e9a1d4e3f","object":"chat.completion.chunk","created":1793472032,"model":"claude-sonnet-4-6","choices":[{"index":0,"delta":{"content":"Partial answer"},"finish_reason":null}],"usage":null}
+
+data: {"error":{"message":"anthropic/claude-sonnet-4-6: upstream closed the stream (502: you can retry your request)","type":"api_error"}}
+

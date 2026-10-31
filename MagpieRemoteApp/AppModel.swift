@@ -42,6 +42,8 @@ final class AppModel {
     let environment: AppEnvironment
     private let store: HostStore
     private let service: any RemoteServing
+    /// 「对话」页的状态（对话列表、当前对话、模型目录）。
+    let chat: ChatController
 
     private(set) var hosts: HostList
     private(set) var connection: ConnectionState = .noHost
@@ -63,9 +65,13 @@ final class AppModel {
             }
             store = HostStore(persistence: InMemoryHostListPersistence(list), keychain: keychain)
             service = FixtureRemoteService(offline: environment.fixtureOffline)
+            // 每次启动一个全新的临时目录：UI 测试互不影响。
+            chat = ChatController(store: ChatStore(directory: FileManager.default.temporaryDirectory
+                .appendingPathComponent("fixture-chats-\(UUID().uuidString)", isDirectory: true)), defaults: nil)
         } else {
             store = HostStore(persistence: UserDefaultsHostListPersistence(), keychain: SystemKeychainStore())
             service = LiveRemoteService()
+            chat = ChatController(store: .applicationSupport(), defaults: .standard)
         }
         hosts = store.load()
     }
@@ -152,8 +158,15 @@ final class AppModel {
         return try await service.gatewayKeys(host: host, issuerKey: store.secret(.issuerKey, host: host.id))
     }
 
-    func reply(to messages: [ChatMessage]) async throws -> String {
+    // MARK: 对话
+
+    func chatModels() async throws -> ModelCatalog {
         guard let host = activeHost else { throw MagpieError.invalidURL }
-        return try await service.reply(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id), to: messages)
+        return try await service.chatModels(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id))
+    }
+
+    func chatStream(_ request: ChatCompletionRequest, sessionID: UUID) -> AsyncThrowingStream<ChatStreamEvent, any Error> {
+        guard let host = activeHost else { return AsyncThrowingStream { $0.finish(throwing: MagpieError.invalidURL) } }
+        return service.chatStream(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id), request: request, sessionID: sessionID)
     }
 }

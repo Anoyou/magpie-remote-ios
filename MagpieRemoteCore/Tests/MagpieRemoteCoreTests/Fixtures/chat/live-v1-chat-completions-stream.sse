@@ -1,0 +1,18 @@
+data: {"id": "chatcmpl-f57f5aa7efa5", "object": "chat.completion.chunk", "created": 1793473566, "model": "mock-gpt-1", "choices": [{"index": 0, "delta": {"role": "assistant", "content": ""}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-f57f5aa7efa5", "object": "chat.completion.chunk", "created": 1793473566, "model": "mock-gpt-1", "choices": [{"index": 0, "delta": {"content": "Hello "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-f57f5aa7efa5", "object": "chat.completion.chunk", "created": 1793473566, "model": "mock-gpt-1", "choices": [{"index": 0, "delta": {"content": "from "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-f57f5aa7efa5", "object": "chat.completion.chunk", "created": 1793473566, "model": "mock-gpt-1", "choices": [{"index": 0, "delta": {"content": "the "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-f57f5aa7efa5", "object": "chat.completion.chunk", "created": 1793473566, "model": "mock-gpt-1", "choices": [{"index": 0, "delta": {"content": "mock "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-f57f5aa7efa5", "object": "chat.completion.chunk", "created": 1793473566, "model": "mock-gpt-1", "choices": [{"index": 0, "delta": {"content": "upstream. "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-f57f5aa7efa5", "object": "chat.completion.chunk", "created": 1793473566, "model": "mock-gpt-1", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
+
+data: {"id": "chatcmpl-f57f5aa7efa5", "object": "chat.completion.chunk", "created": 1793473566, "model": "mock-gpt-1", "choices": [], "usage": {"prompt_tokens": 12, "completion_tokens": 7, "total_tokens": 19}}
+
+data: [DONE]
+

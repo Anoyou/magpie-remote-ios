@@ -6,7 +6,8 @@ protocol RemoteServing: UsageServing, Sendable {
     func testConnection(host: HostProfile, gatewayKey: String?) async throws -> ConnectionReport
     func quota(host: HostProfile, gatewayKey: String?) async throws -> [QuotaItem]
     func gatewayKeys(host: HostProfile, issuerKey: String?) async throws -> [GatewayKeySummary]
-    func reply(host: HostProfile, gatewayKey: String?, to messages: [ChatMessage]) async throws -> String
+    func chatModels(host: HostProfile, gatewayKey: String?) async throws -> ModelCatalog
+    func chatStream(host: HostProfile, gatewayKey: String?, request: ChatCompletionRequest, sessionID: UUID) -> AsyncThrowingStream<ChatStreamEvent, any Error>
 }
 
 struct LiveRemoteService: RemoteServing {
@@ -18,9 +19,16 @@ struct LiveRemoteService: RemoteServing {
     func quota(host: HostProfile, gatewayKey: String?) async throws -> [QuotaItem] { [] }
     func gatewayKeys(host: HostProfile, issuerKey: String?) async throws -> [GatewayKeySummary] { [] }
 
-    func reply(host: HostProfile, gatewayKey: String?, to messages: [ChatMessage]) async throws -> String {
-        // TODO(spec): 用 GatewayClient.events 调 /v1/chat/completions（stream: true）逐段显示；需要先确定模型列表接口。
-        throw MagpieError.http(status: 501, message: "对话功能还在接入中，下一个版本开放。")
+    func chatModels(host: HostProfile, gatewayKey: String?) async throws -> ModelCatalog {
+        guard let gatewayKey, !gatewayKey.isEmpty else { throw MagpieError.missingKey(.gatewayKey) }
+        return try await GatewayClient(baseURL: host.gatewayURL, key: gatewayKey).chatModels()
+    }
+
+    func chatStream(host: HostProfile, gatewayKey: String?, request: ChatCompletionRequest, sessionID: UUID) -> AsyncThrowingStream<ChatStreamEvent, any Error> {
+        guard let gatewayKey, !gatewayKey.isEmpty else {
+            return AsyncThrowingStream { $0.finish(throwing: MagpieError.missingKey(.gatewayKey)) }
+        }
+        return GatewayClient(baseURL: host.gatewayURL, key: gatewayKey).chatStream(request, sessionID: sessionID)
     }
 }
 
@@ -45,8 +53,12 @@ struct FixtureRemoteService: RemoteServing {
          GatewayKeySummary(id: "k2", name: "旧电脑", masked: "sk-magpie-…OLD0", enabled: false)]
     }
 
-    func reply(host: HostProfile, gatewayKey: String?, to messages: [ChatMessage]) async throws -> String {
+    func chatModels(host: HostProfile, gatewayKey: String?) async throws -> ModelCatalog {
         try await Task.sleep(for: .milliseconds(100))
-        return "这是界面测试数据：已收到「\(messages.last?.text ?? "")」。"
+        return FixtureChat.catalog
+    }
+
+    func chatStream(host: HostProfile, gatewayKey: String?, request: ChatCompletionRequest, sessionID: UUID) -> AsyncThrowingStream<ChatStreamEvent, any Error> {
+        FixtureChat.stream(for: request)
     }
 }

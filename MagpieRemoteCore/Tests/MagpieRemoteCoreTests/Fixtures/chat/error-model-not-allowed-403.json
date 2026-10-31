@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "The gateway key \"ios-temp\" may not use deepseek/deepseek-chat; it may use anthropic/claude-sonnet-4-6. Change the key's models in magpie's Gateway page, or use a model it has.",
+    "type": "permission_error",
+    "code": null,
+    "param": null
+  }
+}

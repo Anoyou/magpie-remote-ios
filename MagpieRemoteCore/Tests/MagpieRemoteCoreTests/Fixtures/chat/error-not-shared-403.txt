@@ -1,0 +1,1 @@
+magpie isn't shared on the local network

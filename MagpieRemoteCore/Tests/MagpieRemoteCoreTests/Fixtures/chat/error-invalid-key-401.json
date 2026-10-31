@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "the API key ending in 0000 is not an enabled magpie gateway key: it is disabled, removed or mistyped",
+    "type": "authentication_error",
+    "code": null,
+    "param": null
+  }
+}

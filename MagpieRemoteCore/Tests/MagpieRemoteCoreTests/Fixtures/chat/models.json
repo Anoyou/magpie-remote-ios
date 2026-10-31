@@ -1,0 +1,118 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "group/coding",
+      "object": "model",
+      "type": "model",
+      "created": 0,
+      "owned_by": "anthropic",
+      "display_name": "coding",
+      "modalities": {
+        "input": [
+          "text",
+          "image"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "tool_call": true,
+      "magpie_label": "coding · routing group"
+    },
+    {
+      "id": "auto/gpt-5.5",
+      "object": "model",
+      "type": "model",
+      "created": 0,
+      "owned_by": "codex",
+      "display_name": "gpt-5.5",
+      "modalities": {
+        "input": [
+          "text",
+          "image"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "tool_call": true,
+      "magpie_label": "gpt-5.5 · routing group"
+    },
+    {
+      "id": "anthropic/claude-sonnet-4-6",
+      "object": "model",
+      "type": "model",
+      "created": 0,
+      "owned_by": "anthropic",
+      "display_name": "Claude Sonnet 4.6",
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "tool_call": true,
+      "magpie_label": "Claude Sonnet 4.6 · Anthropic",
+      "native_endpoints": [
+        "/v1/messages"
+      ]
+    },
+    {
+      "id": "codex/gpt-5.5",
+      "object": "model",
+      "type": "model",
+      "created": 0,
+      "owned_by": "codex",
+      "display_name": "GPT-5.5",
+      "modalities": {
+        "input": [
+          "text",
+          "image"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "tool_call": true,
+      "magpie_label": "GPT-5.5 · Codex",
+      "native_endpoints": [
+        "/v1/responses"
+      ],
+      "service_tiers": [
+        {
+          "id": "priority",
+          "name": "Fast"
+        }
+      ]
+    },
+    {
+      "id": "deepseek/deepseek-chat",
+      "object": "model",
+      "type": "model",
+      "created": 0,
+      "owned_by": "deepseek",
+      "display_name": "deepseek-chat",
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "tool_call": true,
+      "magpie_label": "deepseek-chat · DeepSeek",
+      "native_endpoints": [
+        "/v1/chat/completions"
+      ]
+    }
+  ],
+  "has_more": false,
+  "first_id": "group/coding",
+  "last_id": "deepseek/deepseek-chat"
+}

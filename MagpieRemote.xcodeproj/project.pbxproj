@@ -20,11 +20,16 @@
 		6F993518B8F8F51B4EFE11B7 /* SetupGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA9472625D556D20B30C141 /* SetupGuideView.swift */; };
 		7992886DB34CB4F2EA75D5AB /* ManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */; };
 		915FEEF1B6DAAC51D0831145 /* UsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778AD74AE35795A31AAC5EF5 /* UsageService.swift */; };
+		9C3D6FAD32863EB8F27CA822 /* ChatModelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */; };
+		9E7415EC73D396F9C776BFB7 /* ChatController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B078F07A52896FF08A607 /* ChatController.swift */; };
 		ACB33B7408218952BAB7DCEA /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */; };
 		C6DE229BF1A03CDAF48362D1 /* StateViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE47489B641118574213CF4B /* StateViews.swift */; };
+		D7C5EBC022010B9B427677A5 /* ChatFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920C3FE60DF8536524B583C5 /* ChatFixture.swift */; };
 		DD521DD87C92F1A377CCCDE9 /* CHANGELOG.md in Resources */ = {isa = PBXBuildFile; fileRef = 788E39132F8D99761903C1B9 /* CHANGELOG.md */; };
+		E7CB34A969EA832028A86108 /* ChatEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86AA82BDA306FEE58D7F8194 /* ChatEntryView.swift */; };
 		EF80407E0147C1DF6F320FC7 /* HostSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A22DB1B3CA4B1806EC581871 /* HostSettingsView.swift */; };
 		F94960CEA4249CC3B13ABFCA /* UsageRequestsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F2981ECFC5419AD87AB50B /* UsageRequestsView.swift */; };
+		F9AB72B1384D0F39D65D4857 /* ChatSessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8557DBC761BFF4F7F4FD457B /* ChatSessionsView.swift */; };
 		FAAB278A01FFEDFE162E560D /* MagpieRemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E63161272BA6285AB49CEDD /* MagpieRemoteApp.swift */; };
 		FEFCF121BD88C91B431F0842 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C638097B82CFCE192E68F6B3 /* Assets.xcassets */; };
 		FF51B2EAE72A2A70428D3694 /* MagpieRemoteUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */; };
@@ -47,16 +52,21 @@
 		2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		4276B4618D4C2849903B8C78 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		53B3684D1FBFD9F309DF04EE /* UsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageView.swift; sourceTree = "<group>"; };
+		561B078F07A52896FF08A607 /* ChatController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatController.swift; sourceTree = "<group>"; };
 		58959F16F79E9B000864BC3D /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		6048AA6534925611CC245088 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		778AD74AE35795A31AAC5EF5 /* UsageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageService.swift; sourceTree = "<group>"; };
 		788E39132F8D99761903C1B9 /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
 		78C3B92FB2353A6F4894F947 /* MainTabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabs.swift; sourceTree = "<group>"; };
 		78FA878BBA76AA7F8933F959 /* MagpieRemote.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MagpieRemote.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8557DBC761BFF4F7F4FD457B /* ChatSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSessionsView.swift; sourceTree = "<group>"; };
+		86AA82BDA306FEE58D7F8194 /* ChatEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatEntryView.swift; sourceTree = "<group>"; };
 		8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagpieRemoteUITests.swift; sourceTree = "<group>"; };
+		920C3FE60DF8536524B583C5 /* ChatFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatFixture.swift; sourceTree = "<group>"; };
 		A22DB1B3CA4B1806EC581871 /* HostSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostSettingsView.swift; sourceTree = "<group>"; };
 		AA94709041B2267F5A16D011 /* MagpieRemoteCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MagpieRemoteCore; path = MagpieRemoteCore; sourceTree = SOURCE_ROOT; };
 		B7CCE5AB6E8CB53877120CC9 /* MagpieRemoteUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MagpieRemoteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModelPicker.swift; sourceTree = "<group>"; };
 		C638097B82CFCE192E68F6B3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE47489B641118574213CF4B /* StateViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateViews.swift; sourceTree = "<group>"; };
 		DC159FECE3AE2C80CE293EBA /* RemoteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteService.swift; sourceTree = "<group>"; };
@@ -121,6 +131,11 @@
 				2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */,
 				58959F16F79E9B000864BC3D /* AppModel.swift */,
 				C638097B82CFCE192E68F6B3 /* Assets.xcassets */,
+				561B078F07A52896FF08A607 /* ChatController.swift */,
+				86AA82BDA306FEE58D7F8194 /* ChatEntryView.swift */,
+				920C3FE60DF8536524B583C5 /* ChatFixture.swift */,
+				BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */,
+				8557DBC761BFF4F7F4FD457B /* ChatSessionsView.swift */,
 				6048AA6534925611CC245088 /* ChatView.swift */,
 				FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */,
 				A22DB1B3CA4B1806EC581871 /* HostSettingsView.swift */,
@@ -250,6 +265,11 @@
 				50E72EACFE9D1C8D82D2138A /* AboutView.swift in Sources */,
 				ACB33B7408218952BAB7DCEA /* AppEnvironment.swift in Sources */,
 				4B61D5B1A09F2430742A3519 /* AppModel.swift in Sources */,
+				9E7415EC73D396F9C776BFB7 /* ChatController.swift in Sources */,
+				E7CB34A969EA832028A86108 /* ChatEntryView.swift in Sources */,
+				D7C5EBC022010B9B427677A5 /* ChatFixture.swift in Sources */,
+				9C3D6FAD32863EB8F27CA822 /* ChatModelPicker.swift in Sources */,
+				F9AB72B1384D0F39D65D4857 /* ChatSessionsView.swift in Sources */,
 				6192FC374175FDDD000BC5CB /* ChatView.swift in Sources */,
 				11E8AFC6D13D95573FC05019 /* GlassStyle.swift in Sources */,
 				EF80407E0147C1DF6F320FC7 /* HostSettingsView.swift in Sources */,
