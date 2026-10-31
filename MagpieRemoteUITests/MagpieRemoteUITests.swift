@@ -83,7 +83,14 @@ final class MagpieRemoteUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["关于"].waitForExistence(timeout: 10))
         app.buttons["about.changelog"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["更新日志"].waitForExistence(timeout: 10))
-        XCTAssertTrue(element(containing: "0.1.0", in: app).waitForExistence(timeout: 5))
+        // 「未发布」条目变多后 0.1.0 段落可能在屏幕下方（List 懒加载），需要往下滚。
+        let release = element(containing: "0.1.0", in: app)
+        var found = release.waitForExistence(timeout: 5)
+        for _ in 0..<6 where !found {
+            app.swipeUp()
+            found = release.waitForExistence(timeout: 1)
+        }
+        XCTAssertTrue(found, "更新日志里没有 0.1.0")
     }
 
     // MARK: 用量
@@ -167,6 +174,54 @@ final class MagpieRemoteUITests: XCTestCase {
         XCTAssertFalse(element(id: "usage.totalCost", in: app).exists, "受限密钥不应显示总花费")
         openRequests(app)
         XCTAssertTrue(element(id: "usage.request.0", in: app).waitForExistence(timeout: 10), "受限密钥看不到自己的请求记录")
+    }
+
+    // MARK: 对话（fixture：假模型目录 + 假的流式回答）
+
+    private func openChatAndSend(_ text: String, in app: XCUIApplication) {
+        app.tabBars.buttons["对话"].tap()
+        let composer = app.descendants(matching: .any)["chat.composer"].firstMatch
+        XCTAssertTrue(composer.waitForExistence(timeout: 15), "没有出现输入框")
+        // 模型目录加载后自动选中第一个路由组。
+        XCTAssertTrue(element(containing: "示例路由组", in: app).waitForExistence(timeout: 15), "没有自动选中模型")
+        composer.tap()
+        composer.typeText(text)
+        let send = app.buttons["chat.send"].firstMatch
+        XCTAssertTrue(send.waitForExistence(timeout: 5))
+        send.tap()
+    }
+
+    func testChatSendsMessageAndStreamsReply() {
+        let app = launch()
+        openChatAndSend("hello", in: app)
+        XCTAssertTrue(element(containing: "流式回复", in: app).waitForExistence(timeout: 15), "没有出现流式回答")
+        XCTAssertTrue(element(containing: "已收到「hello」", in: app).waitForExistence(timeout: 15), "回答没有完整显示")
+        XCTAssertTrue(element(containing: "由 example/example-model-1 回答", in: app).waitForExistence(timeout: 10), "没有显示实际回答的模型")
+        XCTAssertTrue(app.buttons["chat.send"].waitForExistence(timeout: 10), "回答结束后应恢复发送按钮")
+    }
+
+    func testChatCreateAndDeleteSession() {
+        let app = launch()
+        openChatAndSend("first chat", in: app)
+        XCTAssertTrue(element(containing: "由 example/example-model-1 回答", in: app).waitForExistence(timeout: 15))
+
+        app.buttons["chat.new"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["chat.empty"].firstMatch.waitForExistence(timeout: 10), "新对话应为空")
+
+        app.buttons["chat.sessions.open"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["对话列表"].waitForExistence(timeout: 10))
+        XCTAssertTrue(element(containing: "first chat", in: app).waitForExistence(timeout: 10), "对话列表里没有刚才的对话")
+
+        let menu = app.buttons["chat.session.menu"].firstMatch
+        XCTAssertTrue(menu.waitForExistence(timeout: 5))
+        menu.tap()
+        let delete = app.buttons["chat.session.delete"].firstMatch
+        XCTAssertTrue(delete.waitForExistence(timeout: 5))
+        delete.tap()
+        let confirm = app.buttons["chat.session.confirmDelete"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "删除前应要求确认")
+        confirm.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["chat.sessions.empty"].firstMatch.waitForExistence(timeout: 10), "删除后列表应为空")
     }
 }
 

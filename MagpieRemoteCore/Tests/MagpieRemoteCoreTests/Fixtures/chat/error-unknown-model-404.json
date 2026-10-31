@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "magpie knows no model \"anthropic/claude-sonet-4-6\"; did you mean anthropic/claude-sonnet-4-6? Name a model as provider/model (as /v1/models lists it), a routing group's id or name, or a bare model id; it has anthropic, codex, deepseek",
+    "type": "not_found_error",
+    "code": null,
+    "param": null
+  }
+}
