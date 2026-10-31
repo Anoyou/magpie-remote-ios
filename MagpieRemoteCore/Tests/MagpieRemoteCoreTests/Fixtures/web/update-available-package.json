@@ -1,0 +1,1 @@
+{"state":"available","current":"v0.1.2438","latest":"v0.1.2450","url":"https://example.com/releases/v0.1.2450","stuck":"package","packaged":{"manager":"Homebrew","package":"magpie","command":"brew upgrade magpie"}}

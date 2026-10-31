@@ -6,12 +6,13 @@ import json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 G = "internal/gui/"
 
-def R(method, path, file, actions=None, req=None, res=None, tags=None, note=None):
+def R(method, path, file, actions=None, req=None, res=None, tags=None, note=None, contains=None):
     d = {"method": method, "path": path, "source": file,
          "anchor": f'mux.HandleFunc("{method} {path}"', "actions": actions or [],
          "fields": {"request": req or [], "response": res or []}}
     if tags: d["goTags"] = tags          # [{file, tags[]}] json tags that must exist
     if note: d["note"] = note
+    if contains: d["contains"] = contains  # source snippets the App relies on (values that aren't `case "x"`)
     return d
 
 PROVIDER_RES = ["providers[].id","providers[].name","providers[].icon","providers[].preset","providers[].host","providers[].chat","providers[].responses","providers[].anthropic","providers[].gemini?","providers[].baseAPI?","providers[].headers?","providers[].proxy","providers[].key.set","providers[].key.masked","providers[].key.optional","providers[].ready","providers[].off","providers[].chosen","providers[].fallback","providers[].routing","providers[].affinity","providers[].models[].id","providers[].models[].name","providers[].models[].on","providers[].models[].context?","providers[].models[].efforts?","providers[].models[].images","providers[].exposed","providers[].noModels","providers[].bestInFamily","providers[].fetched?","providers[].listError?","providers[].agents[].id","providers[].agents[].current","providers[].agents[].model?","providers[].keyList[].id","providers[].keyList[].name?","providers[].keyList[].masked","providers[].keyList[].active","providers[].keyList[].on","providers[].account?.agent","providers[].account?.user","providers[].account?.plan?","providers[].account?.agentName","presets[].id","gateway.url","gateway.lan","gateway.lanURLs?","gateway.running","gateway.version?","gateway.models","moved?","added?","had?","removed?"]
@@ -28,10 +29,41 @@ KEYS_ACTIONS = ["add","import","protocol","weight","plan","use","remove","remove
 CK_ACTIONS = ["add-key","rotate-key","rename-key","limit-key","reset-limit-key","models-key","accounts-key","quotas-key","issuer-key","access-key","on-key","off-key","remove-key","move-key","copy-key"]
 AGENT_ACTIONS = ["reapply","keep","connect","disconnect"]
 
+UPDATE_STATES = ["checking","latest","found","downloading","ready","available","source","error","blocked"]
+UPDATE_RES = ["state","current","latest?","notes?","url?","stuck?","stuckDir?","packaged?.manager","packaged?.command?","retry?","mirror?","network?","error?","done?","total?","size?","blocked?.version","blocked?.error","busy?.requests","busy?.tools","waiting?","gaveUp?","handover?"]
+UPDATE_TAGS = [{"file":G+"update.go","tags":["state","current","latest","notes","url","stuck","stuckDir","packaged","retry","mirror","network","error","done","blocked","total","size","busy","waiting","gaveUp","handover","manager","package","command"]},
+ {"file":"internal/update/blocked.go","tags":["version","error","policy"]},{"file":"internal/gateway/busy.go","tags":["requests","tools"]}]
+TUNE_TAGS = [{"file":G+"tune.go","tags":["knob","model","setting","compact","ttl","own","async","percent","value","window","held","days","agents","agent","calls","advice"]},
+ {"file":"internal/agent/tune.go","tags":["value","source","locked","ours"]},
+ {"file":"internal/tune/tune.go","tags":["model","current","window","best","cost","low","curve","facts","wait","wait_best","cheapest","wait_cheapest","short","hour","calls","streams","compacts","peak","after","growth","rework","long","quick","pause","away","sessions","took","timed"]},
+ {"file":"internal/agent/codex_async.go","tags":["kind","version"]}]
+PM_RES = ["on","chosen?","model","supported","installed","size","downloading?","done?","total?","error?","running?","device?","via?","gpu?","gpuError?","failed?","minScore","defaultScore","models[].model","models[].supported","models[].installed","models[].size"]
+PM_TAGS = [{"file":G+"privacymodel.go","tags":["on","chosen","minScore","defaultScore","models"]},
+ {"file":"internal/pii/pii.go","tags":["model","supported","installed","size","downloading","done","total","error","running","device","via","gpu","loadMs","gpuError","failed","loading","waiting"]}]
+
 routes = [
  R("GET","/api/settings",G+"api.go", res=["version","gateway","lan?","port?","lanURLs?","lanPublic?","publicURL?","onNetwork?","addrEnv?","allowIPs?","lanKeyId?","disabledModels?","web?","gatewayOn?","dir"],
    tags=[{"file":G+"api.go","tags":["version","dir","gateway","lanURLs","lanPublic","publicURL","onNetwork","addrEnv","web","gatewayOn"]},{"file":"internal/settings/settings.go","tags":["lan","port","allowIPs","lanKeyId","disabledModels","corsOrigins"]}]),
- R("GET","/api/update",G+"update.go", res=["state","current","latest?","notes?","url?"], tags=[{"file":G+"update.go","tags":["state","current","latest","notes","url"]}]),
+ R("GET","/api/update",G+"update.go", res=UPDATE_RES, tags=UPDATE_TAGS, note="?fresh=1 asks the feed again when stale; ?lang=zh for Chinese notes",
+   contains=['r.URL.Query().Get("fresh") == "1"', 'updates.jsonIn(askedLang(r))'] + ['"%s"' % s for s in UPDATE_STATES]),
+ R("POST","/api/update/check",G+"update.go", res=["<updateJSON>"], contains=["updates.check()"]),
+ R("GET","/api/update/notes",G+"update.go", res=["latest?","releases[].version","releases[].notes","releases[].url?","releases[].pending?","error?"],
+   tags=[{"file":G+"update.go","tags":["latest","releases","error"]},{"file":"internal/update/notes.go","tags":["version","notes","url","pending"]}]),
+ R("POST","/api/update/install",G+"update.go", req=["when?"], res=["<updateJSON>","204 = restarting"],
+   tags=[{"file":G+"update.go","tags":["view","when"]}],
+   contains=['in.When == "cancel"', 'in.When != "now"', 'rw.WriteHeader(http.StatusNoContent)', 'j.State == "error" && j.Retry, j.State == "found"', 'j.State == "available" && j.URL != ""'],
+   note="found/error+retry: starts the download; ready: 204 then the host restarts (busy: waits unless when=now); available: opens the release page on the Mac only, so the App never sends it"),
+ R("GET","/api/tune",G+"tune.go", res=["days","agents[].agent","agents[].calls","agents[].advice[].knob","agents[].advice[].model?","agents[].advice[].setting.value?","agents[].advice[].setting.source?","agents[].advice[].setting.locked?","agents[].advice[].setting.ours?","agents[].advice[].compact?.current","agents[].advice[].compact?.window","agents[].advice[].compact?.best","agents[].advice[].compact?.cost","agents[].advice[].compact?.low","agents[].advice[].compact?.curve","agents[].advice[].compact?.facts","agents[].advice[].ttl?.current","agents[].advice[].ttl?.best","agents[].advice[].ttl?.cost","agents[].advice[].ttl?.low","agents[].advice[].own?.model","agents[].advice[].async?.percent"],
+   tags=TUNE_TAGS, contains=['days <= 0 || days > 30', 'for _, name := range []string{"claude", "codex"}'], note="?days=1..30 (else 7)"),
+ R("POST","/api/tune/apply",G+"tune.go", req=["agent","knob","model","value"], res=["<agent.TuneSetting>"], tags=[{"file":"internal/agent/tune.go","tags":["value","source","locked","ours"]}],
+   contains=["Agent, Knob, Model, Value string"], note="untagged struct; knob compact|cache_ttl|subagent_cache_ttl|async_compact"),
+ R("POST","/api/tune/undo",G+"tune.go", req=["agent","knob","model"], res=["<agent.TuneSetting>"], contains=["agent.TuneUndo(\"\", in.Agent, in.Knob, in.Model)"]),
+ R("GET","/api/privacy-model",G+"privacymodel.go", res=PM_RES, tags=PM_TAGS),
+ R("POST","/api/privacy-model",G+"privacymodel.go", actions=["pick","score","on","off","cancel","remove"], req=["do","model?","score?"], res=["<privacyModelJSON>"],
+   tags=[{"file":G+"privacymodel.go","tags":["do","model","score"]}],
+   contains=['in.Model != pii.PrivacyFilter && in.Model != pii.AstrLinkGuard', 'in.Score >= pii.Floor && in.Score < 1',
+             {"file": "internal/pii/pii.go", "contains": ['PrivacyFilter = "privacy-filter"', 'AstrLinkGuard = "astrlink-guard"', 'const Floor = guard.Floor']},
+             {"file": "internal/pii/guard/guard.go", "contains": ["const Floor = 0.5"]}], note="model must be privacy-filter or astrlink-guard; score 0 = model default"),
  R("GET","/api/state",G+"api.go", res=["agents[].id","agents[].name","agents[].icon","agents[].path","agents[].fields[].key","agents[].fields[].label","agents[].fields[].value","agents[].fields[].options[].value","agents[].fields[].options[].label?","agents[].fields[].options[].note","agents[].fields[].options[].group?","agents[].fields[].options[].ref?","agents[].fields[].options[].context?","agents[].wired?","agents[].models?.shown","agents[].models?.listed","agents[].drift?","agents[].cliMissing?","clients[].id","settings","served","notice?","connected?.how"],
    tags=[{"file":G+"api.go","tags":["agents","clients","profiles","settings","served","notice","connected","fields","key","label","value","options","wired","drift","cliMissing","path"]},{"file":"internal/agent/agent.go","tags":["value","label","note","icon","icons","group","ref","context"]},{"file":G+"agent_models.go","tags":["shown","listed","by","names"]},{"file":"internal/agent/applied.go","tags":["how","field","value"]}]),
  R("POST","/api/set",G+"api.go", req=["agent","field","value"], res=["<stateJSON>","notice?"], note="untagged struct{ Agent, Field, Value string }; this is how an agent's model is switched"),
@@ -87,6 +119,11 @@ if __name__ == "__main__":
             src = s + (rd("internal/access/access.go") if r["path"] == "/api/caller-keys/{action}" else "")
             for a in r["actions"]:
                 if not re.search(r'(case [^\n]*|== )"%s"' % re.escape(a), src): bad.append(f'{r["path"]}: action gone {a}')
+            for snippet in r.get("contains", []):
+                if isinstance(snippet, dict):
+                    other = rd(snippet["file"])
+                    bad += [f'{snippet["file"]}: {r["path"]} relies on {x!r}, gone' for x in snippet["contains"] if x not in other]
+                elif snippet not in s: bad.append(f'{r["source"]}: {r["path"]} relies on {snippet!r}, gone')
             for t in r.get("goTags", []):
                 s2 = rd(t["file"])
                 for tag in t["tags"]:

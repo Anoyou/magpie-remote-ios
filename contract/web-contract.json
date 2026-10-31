@@ -107,7 +107,25 @@
      "current",
      "latest?",
      "notes?",
-     "url?"
+     "url?",
+     "stuck?",
+     "stuckDir?",
+     "packaged?.manager",
+     "packaged?.command?",
+     "retry?",
+     "mirror?",
+     "network?",
+     "error?",
+     "done?",
+     "total?",
+     "size?",
+     "blocked?.version",
+     "blocked?.error",
+     "busy?.requests",
+     "busy?.tools",
+     "waiting?",
+     "gaveUp?",
+     "handover?"
     ]
    },
    "goTags": [
@@ -118,7 +136,425 @@
       "current",
       "latest",
       "notes",
-      "url"
+      "url",
+      "stuck",
+      "stuckDir",
+      "packaged",
+      "retry",
+      "mirror",
+      "network",
+      "error",
+      "done",
+      "blocked",
+      "total",
+      "size",
+      "busy",
+      "waiting",
+      "gaveUp",
+      "handover",
+      "manager",
+      "package",
+      "command"
+     ]
+    },
+    {
+     "file": "internal/update/blocked.go",
+     "tags": [
+      "version",
+      "error",
+      "policy"
+     ]
+    },
+    {
+     "file": "internal/gateway/busy.go",
+     "tags": [
+      "requests",
+      "tools"
+     ]
+    }
+   ],
+   "note": "?fresh=1 asks the feed again when stale; ?lang=zh for Chinese notes",
+   "contains": [
+    "r.URL.Query().Get(\"fresh\") == \"1\"",
+    "updates.jsonIn(askedLang(r))",
+    "\"checking\"",
+    "\"latest\"",
+    "\"found\"",
+    "\"downloading\"",
+    "\"ready\"",
+    "\"available\"",
+    "\"source\"",
+    "\"error\"",
+    "\"blocked\""
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/update/check",
+   "source": "internal/gui/update.go",
+   "anchor": "mux.HandleFunc(\"POST /api/update/check\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<updateJSON>"
+    ]
+   },
+   "contains": [
+    "updates.check()"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/update/notes",
+   "source": "internal/gui/update.go",
+   "anchor": "mux.HandleFunc(\"GET /api/update/notes\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "latest?",
+     "releases[].version",
+     "releases[].notes",
+     "releases[].url?",
+     "releases[].pending?",
+     "error?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/update.go",
+     "tags": [
+      "latest",
+      "releases",
+      "error"
+     ]
+    },
+    {
+     "file": "internal/update/notes.go",
+     "tags": [
+      "version",
+      "notes",
+      "url",
+      "pending"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/update/install",
+   "source": "internal/gui/update.go",
+   "anchor": "mux.HandleFunc(\"POST /api/update/install\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "when?"
+    ],
+    "response": [
+     "<updateJSON>",
+     "204 = restarting"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/update.go",
+     "tags": [
+      "view",
+      "when"
+     ]
+    }
+   ],
+   "note": "found/error+retry: starts the download; ready: 204 then the host restarts (busy: waits unless when=now); available: opens the release page on the Mac only, so the App never sends it",
+   "contains": [
+    "in.When == \"cancel\"",
+    "in.When != \"now\"",
+    "rw.WriteHeader(http.StatusNoContent)",
+    "j.State == \"error\" && j.Retry, j.State == \"found\"",
+    "j.State == \"available\" && j.URL != \"\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/tune",
+   "source": "internal/gui/tune.go",
+   "anchor": "mux.HandleFunc(\"GET /api/tune\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "days",
+     "agents[].agent",
+     "agents[].calls",
+     "agents[].advice[].knob",
+     "agents[].advice[].model?",
+     "agents[].advice[].setting.value?",
+     "agents[].advice[].setting.source?",
+     "agents[].advice[].setting.locked?",
+     "agents[].advice[].setting.ours?",
+     "agents[].advice[].compact?.current",
+     "agents[].advice[].compact?.window",
+     "agents[].advice[].compact?.best",
+     "agents[].advice[].compact?.cost",
+     "agents[].advice[].compact?.low",
+     "agents[].advice[].compact?.curve",
+     "agents[].advice[].compact?.facts",
+     "agents[].advice[].ttl?.current",
+     "agents[].advice[].ttl?.best",
+     "agents[].advice[].ttl?.cost",
+     "agents[].advice[].ttl?.low",
+     "agents[].advice[].own?.model",
+     "agents[].advice[].async?.percent"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/tune.go",
+     "tags": [
+      "knob",
+      "model",
+      "setting",
+      "compact",
+      "ttl",
+      "own",
+      "async",
+      "percent",
+      "value",
+      "window",
+      "held",
+      "days",
+      "agents",
+      "agent",
+      "calls",
+      "advice"
+     ]
+    },
+    {
+     "file": "internal/agent/tune.go",
+     "tags": [
+      "value",
+      "source",
+      "locked",
+      "ours"
+     ]
+    },
+    {
+     "file": "internal/tune/tune.go",
+     "tags": [
+      "model",
+      "current",
+      "window",
+      "best",
+      "cost",
+      "low",
+      "curve",
+      "facts",
+      "wait",
+      "wait_best",
+      "cheapest",
+      "wait_cheapest",
+      "short",
+      "hour",
+      "calls",
+      "streams",
+      "compacts",
+      "peak",
+      "after",
+      "growth",
+      "rework",
+      "long",
+      "quick",
+      "pause",
+      "away",
+      "sessions",
+      "took",
+      "timed"
+     ]
+    },
+    {
+     "file": "internal/agent/codex_async.go",
+     "tags": [
+      "kind",
+      "version"
+     ]
+    }
+   ],
+   "note": "?days=1..30 (else 7)",
+   "contains": [
+    "days <= 0 || days > 30",
+    "for _, name := range []string{\"claude\", \"codex\"}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/tune/apply",
+   "source": "internal/gui/tune.go",
+   "anchor": "mux.HandleFunc(\"POST /api/tune/apply\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "agent",
+     "knob",
+     "model",
+     "value"
+    ],
+    "response": [
+     "<agent.TuneSetting>"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/agent/tune.go",
+     "tags": [
+      "value",
+      "source",
+      "locked",
+      "ours"
+     ]
+    }
+   ],
+   "note": "untagged struct; knob compact|cache_ttl|subagent_cache_ttl|async_compact",
+   "contains": [
+    "Agent, Knob, Model, Value string"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/tune/undo",
+   "source": "internal/gui/tune.go",
+   "anchor": "mux.HandleFunc(\"POST /api/tune/undo\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "agent",
+     "knob",
+     "model"
+    ],
+    "response": [
+     "<agent.TuneSetting>"
+    ]
+   },
+   "contains": [
+    "agent.TuneUndo(\"\", in.Agent, in.Knob, in.Model)"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/privacy-model",
+   "source": "internal/gui/privacymodel.go",
+   "anchor": "mux.HandleFunc(\"GET /api/privacy-model\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "on",
+     "chosen?",
+     "model",
+     "supported",
+     "installed",
+     "size",
+     "downloading?",
+     "done?",
+     "total?",
+     "error?",
+     "running?",
+     "device?",
+     "via?",
+     "gpu?",
+     "gpuError?",
+     "failed?",
+     "minScore",
+     "defaultScore",
+     "models[].model",
+     "models[].supported",
+     "models[].installed",
+     "models[].size"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/privacymodel.go",
+     "tags": [
+      "on",
+      "chosen",
+      "minScore",
+      "defaultScore",
+      "models"
+     ]
+    },
+    {
+     "file": "internal/pii/pii.go",
+     "tags": [
+      "model",
+      "supported",
+      "installed",
+      "size",
+      "downloading",
+      "done",
+      "total",
+      "error",
+      "running",
+      "device",
+      "via",
+      "gpu",
+      "loadMs",
+      "gpuError",
+      "failed",
+      "loading",
+      "waiting"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/privacy-model",
+   "source": "internal/gui/privacymodel.go",
+   "anchor": "mux.HandleFunc(\"POST /api/privacy-model\"",
+   "actions": [
+    "pick",
+    "score",
+    "on",
+    "off",
+    "cancel",
+    "remove"
+   ],
+   "fields": {
+    "request": [
+     "do",
+     "model?",
+     "score?"
+    ],
+    "response": [
+     "<privacyModelJSON>"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/privacymodel.go",
+     "tags": [
+      "do",
+      "model",
+      "score"
+     ]
+    }
+   ],
+   "note": "model must be privacy-filter or astrlink-guard; score 0 = model default",
+   "contains": [
+    "in.Model != pii.PrivacyFilter && in.Model != pii.AstrLinkGuard",
+    "in.Score >= pii.Floor && in.Score < 1",
+    {
+     "file": "internal/pii/pii.go",
+     "contains": [
+      "PrivacyFilter = \"privacy-filter\"",
+      "AstrLinkGuard = \"astrlink-guard\"",
+      "const Floor = guard.Floor"
+     ]
+    },
+    {
+     "file": "internal/pii/guard/guard.go",
+     "contains": [
+      "const Floor = 0.5"
      ]
     }
    ]

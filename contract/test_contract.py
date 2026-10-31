@@ -414,7 +414,10 @@ WEB_GETS = [("web-settings", "/api/settings", "/api/settings"), ("web-state", "/
             ("web-agent-models-codex", "/api/agent-models/codex", "/api/agent-models/{id}"),
             ("web-providers", "/api/providers", "/api/providers"), ("web-groups", "/api/groups", "/api/groups"),
             ("web-caller-keys", "/api/caller-keys", "/api/caller-keys"),
-            ("web-caller-keys-models", "/api/caller-keys/models", "/api/caller-keys/models")]
+            ("web-caller-keys-models", "/api/caller-keys/models", "/api/caller-keys/models"),
+            # 主机工具：更新状态（不带 fresh，不访问发布源）、自动调优、本地脱敏模型
+            ("web-update", "/api/update?lang=zh", "/api/update"), ("web-tune", "/api/tune?days=7", "/api/tune"),
+            ("web-privacy-model", "/api/privacy-model", "/api/privacy-model")]
 
 
 def t_web(errs):
@@ -430,6 +433,14 @@ def t_web(errs):
         if path == "/api/state":
             ids = [a.get("id") for a in (r.json or {}).get("agents") or []]
             expect("codex" in ids and "claude" in ids, f"web /api/state: 应检测到 codex 与 claude，实际 {ids}", errs)
+        if route == "/api/update":
+            states = ["", "checking", "latest", "found", "downloading", "ready", "available", "source", "error", "blocked"]
+            expect((r.json or {}).get("state") in states, f"web /api/update: 未知 state {(r.json or {}).get('state')!r}", errs)
+        if route == "/api/tune":
+            expect((r.json or {}).get("days") == 7, f"web /api/tune?days=7: days 应为 7，实际 {(r.json or {}).get('days')}", errs)
+        if route == "/api/privacy-model":
+            ids = [m.get("model") for m in (r.json or {}).get("models") or []]
+            expect(set(ids) <= {"privacy-filter", "astrlink-guard"} and ids, f"web /api/privacy-model: 模型 id 应为 privacy-filter / astrlink-guard，实际 {ids}", errs)
         if path == "/api/caller-keys":
             names = [k.get("name") for k in (r.json or {}).get("keys") or []]
             expect("Magpie" in names, f"web /api/caller-keys: 开启共享后应有名为 Magpie 的 lan 密钥，实际 {names}", errs)
