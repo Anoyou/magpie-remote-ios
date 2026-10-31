@@ -1,0 +1,1 @@
+{"error":{"code":"gateway_key_held","message":"this gateway key is held to a budget, models or accounts, so it is told nothing of this magpie's accounts: GET /v1/magpie/limit tells it its own limit","type":"permission_error"}}

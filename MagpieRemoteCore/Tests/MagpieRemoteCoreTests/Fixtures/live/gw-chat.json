@@ -1,0 +1,1 @@
+{"id": "chatcmpl-32cd3fa9b7e6", "object": "chat.completion", "created": 1793473566, "model": "mock-gpt-mini", "choices": [{"index": 0, "message": {"role": "assistant", "content": "Hello from the mock upstream."}, "finish_reason": "stop"}], "usage": {"prompt_tokens": 12, "completion_tokens": 7, "total_tokens": 19}}

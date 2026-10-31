@@ -1,0 +1,1 @@
+{"error":{"code":null,"message":"The gateway key \"contract-temp\" may not use mock/mock-gpt-mini; it may use mock/mock-gpt-1. Change the key's models in magpie's Gateway page, or use a model it has.","param":null,"type":"permission_error"}}

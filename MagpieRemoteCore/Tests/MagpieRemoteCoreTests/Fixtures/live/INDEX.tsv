@@ -1,0 +1,62 @@
+file	status	content_type	request
+gw-v1.json	200	application/json	GET http://100.64.0.1:3425/v1
+gw-api-hello.json	200	application/json	GET http://100.64.0.1:3425/api/hello
+gw-v1-readonly.json	200	application/json	GET http://100.64.0.1:3425/v1
+err-no-key.json	401	application/json	GET http://100.64.0.1:3425/v1/models
+err-wrong-key.json	401	application/json	GET http://100.64.0.1:3425/v1/models
+loopback-no-key-models.json	200	application/json	GET http://100.64.0.1:3425/v1/models
+err-no-key-x-real-ip.json	401	application/json	GET http://100.64.0.1:3425/v1/models
+err-no-key-forwarded.json	401	application/json	GET http://100.64.0.1:3425/v1/models
+gw-v1-models.json	200	application/json	GET http://100.64.0.1:3425/v1/models
+gw-v1-models-one.json	200	application/json	GET http://100.64.0.1:3425/v1/models/mock/mock-gpt-1
+err-model-unknown.json	404	application/json	GET http://100.64.0.1:3425/v1/models/nosuch/model
+err-readonly-models.json	403	application/json	GET http://100.64.0.1:3425/v1/models
+gw-chat.json	200	application/json	POST http://100.64.0.1:3425/v1/chat/completions
+gw-chat-stream.sse	200	text/event-stream	POST http://100.64.0.1:3425/v1/chat/completions
+gw-chat-group-stream.sse	200	text/event-stream	POST http://100.64.0.1:3425/v1/chat/completions
+err-readonly-chat.json	403	application/json	POST http://100.64.0.1:3425/v1/chat/completions
+gw-responses-stream.sse	200	text/event-stream; charset=utf-8	POST http://100.64.0.1:3425/v1/responses
+gw-usage-today.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/usage?period=today
+gw-usage-7d.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/usage?period=7d
+gw-usage-30d.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/usage?period=30d
+gw-usage-all.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/usage?period=all
+gw-usage-week.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/usage?period=week
+gw-usage-readonly.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/usage?period=today
+gw-usage-requests.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/usage/requests?period=all
+gw-usage-requests-limit1.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/usage/requests?period=all&limit=1&offset=0
+gw-chat-ua.json	200	application/json	POST http://100.64.0.1:3425/v1/chat/completions
+gw-usage-requests-agent.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/usage/requests?period=all&agent=RemoteContract
+gw-quotas.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/quotas
+gw-quotas-kept.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/quotas?kept=1
+gw-quotas-cards.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/quotas/cards
+gw-quotas-history.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/quotas/history?days=7
+gw-limit.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/limit
+gw-concurrency.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/concurrency
+gw-me.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/me
+err-keys-nonissuer.json	403	application/json	GET http://100.64.0.1:3425/v1/magpie/keys
+gw-keys-post.json	201	application/json	POST http://100.64.0.1:3425/v1/magpie/keys
+gw-keys-get.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/keys
+held-models.json	200	application/json	GET http://100.64.0.1:3425/v1/models
+held-limit.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/limit
+held-me.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/me
+err-held-usage.json	403	application/json	GET http://100.64.0.1:3425/v1/magpie/usage
+err-held-quotas.json	403	application/json	GET http://100.64.0.1:3425/v1/magpie/quotas
+err-held-concurrency.json	403	application/json	GET http://100.64.0.1:3425/v1/magpie/concurrency
+held-usage-requests.json	200	application/json	GET http://100.64.0.1:3425/v1/magpie/usage/requests?period=today
+err-held-model.json	403	application/json	POST http://100.64.0.1:3425/v1/chat/completions
+gw-keys-delete.json	200	application/json	DELETE http://100.64.0.1:3425/v1/magpie/keys/9cab48eacf53dfe7159be36d
+err-revoked-key.json	401	application/json	GET http://100.64.0.1:3425/v1/magpie/limit
+web-settings.json	200	application/json	GET http://100.64.0.1:3430/api/settings
+web-state.json	200	application/json	GET http://100.64.0.1:3430/api/state
+web-agent-models-codex.json	200	application/json	GET http://100.64.0.1:3430/api/agent-models/codex
+web-providers.json	200	application/json	GET http://100.64.0.1:3430/api/providers
+web-groups.json	200	application/json	GET http://100.64.0.1:3430/api/groups
+web-caller-keys.json	200	application/json	GET http://100.64.0.1:3430/api/caller-keys
+web-caller-keys-models.json	200	application/json	GET http://100.64.0.1:3430/api/caller-keys/models
+err-web-no-cookie.txt	401	text/plain; charset=utf-8	GET http://100.64.0.1:3430/api/providers
+err-web-wrong-cookie.txt	401	text/plain; charset=utf-8	GET http://100.64.0.1:3430/api/providers
+err-web-unknown-agent.json	400	application/json	GET http://100.64.0.1:3430/api/agent-models/nosuchagent
+web-lan-off.json	200	application/json	POST http://100.64.0.1:3430/api/settings/lan
+err-not-shared-proxied.txt	403	text/plain; charset=utf-8	GET http://100.64.0.1:3425/v1/models
+web-lan-on.json	200	application/json	POST http://100.64.0.1:3430/api/settings/lan
+gw-after-reshare.json	200	application/json	GET http://100.64.0.1:3425/v1

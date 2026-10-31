@@ -1,21 +1,115 @@
 name: magpie 兼容性（每周）
 
-# TODO（另一位协作者负责填充）：
-# - 每周对 magpie 最新发布版 / 默认分支跑一遍 contract.yml 的契约测试，发现接口变化时报告
-#   （例如开 issue 或在摘要里列出变化的字段），提醒更新 MagpieRemoteCore 与 MagpieCompatibility.minimumHostVersion。
-# - runs-on: ubuntu-latest。
+# 每周一 01:00 UTC：取 yetone/magpie 的最新发布版，复用 contract.yml 跑静态与实时契约测试。
+# 不兼容时开（或更新）一个标题为「magpie <tag> 接口兼容性检查失败」的 issue，正文是中文差异报告；
+# 之后通过时自动在该 issue 里留言并关闭。修复后记得同步 MagpieRemoteCore 与
+# MagpieCompatibility.minimumHostVersion / testedHostVersion。
 on:
   schedule:
-    - cron: "17 2 * * 1" # 每周一 02:17 UTC
+    - cron: "0 1 * * 1" # 每周一 01:00 UTC
   workflow_dispatch:
+    inputs:
+      magpie_ref:
+        description: "要检查的 magpie tag；留空 = 最新发布版"
+        required: false
+        default: ""
 
 permissions:
   contents: read
 
+concurrency:
+  group: magpie-compat
+  cancel-in-progress: false
+
 jobs:
-  placeholder:
-    name: 兼容性检查（待实现）
+  resolve:
+    name: 解析 magpie 最新发布版
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
-      - run: echo "TODO：对最新 magpie 运行契约测试（见本文件顶部注释）"
+      - id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_REF: ${{ inputs.magpie_ref }}
+        run: |
+          set -euo pipefail
+          tag="${INPUT_REF:-}"
+          if [ -z "$tag" ]; then
+            tag=$(gh api repos/yetone/magpie/releases/latest --jq .tag_name)
+          fi
+          if [ -z "$tag" ]; then echo "::error::无法解析 magpie 最新发布版"; exit 1; fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "本周检查 magpie \`$tag\`" >> "$GITHUB_STEP_SUMMARY"
+
+  contract:
+    name: 契约测试
+    needs: resolve
+    uses: ./.github/workflows/contract.yml
+    with:
+      magpie_ref: ${{ needs.resolve.outputs.tag }}
+
+  report:
+    name: 报告结果
+    needs: [resolve, contract]
+    if: always() && needs.resolve.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: 下载契约报告
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        continue-on-error: true
+        with:
+          name: contract-report
+          path: report
+
+      - name: 开 / 更新 / 关闭 issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+          RESULT: ${{ needs.contract.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          title="magpie $TAG 接口兼容性检查失败"
+          existing=$(gh issue list --repo "$REPO" --state open --limit 100 --json number,title \
+            --jq ".[] | select(.title == \"$title\") | .number" | head -n1)
+          if [ "$RESULT" = success ]; then
+            echo "magpie $TAG 与 Magpie Remote 的接口契约兼容。" >> "$GITHUB_STEP_SUMMARY"
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --repo "$REPO" --body "重新检查已通过（[运行记录]($RUN_URL)），关闭此 issue。"
+              gh issue close "$existing" --repo "$REPO"
+            fi
+            exit 0
+          fi
+          {
+            echo "每周兼容性检查发现 magpie \`$TAG\` 与 Magpie Remote 依赖的接口不一致（契约测试结果：\`$RESULT\`）。"
+            echo
+            echo "- 运行记录：$RUN_URL （失败时附有脱敏后的响应 \`contract-captures\`）"
+            echo "- 契约文件：\`contract/gateway-contract.json\`、\`contract/web-contract.json\`"
+            echo "- 处理方式：确认变化后更新 MagpieRemoteCore 的模型与解码；若旧版 magpie 不再兼容，"
+            echo "  同步调整 \`MagpieCompatibility.minimumHostVersion\` / \`testedHostVersion\`，"
+            echo "  再用 \`contract/tools/build_contract.py\` 与 \`contract/gen_web_contract.py\` 重新生成契约。"
+            echo
+            echo "## 差异"
+            echo
+            if [ -f report/summary.md ]; then
+              head -c 60000 report/summary.md
+            else
+              echo "（没有拿到报告文件：契约测试可能在构建或启动 magpie 时就失败了，请查看运行记录。）"
+            fi
+          } > body.md
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --repo "$REPO" --body-file body.md
+            gh issue comment "$existing" --repo "$REPO" --body "再次检查仍未通过（[运行记录]($RUN_URL)），正文已更新为最新差异。"
+            echo "已更新 issue #$existing" >> "$GITHUB_STEP_SUMMARY"
+          else
+            url=$(gh issue create --repo "$REPO" --title "$title" --body-file body.md)
+            echo "已创建 issue：$url" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit 1

@@ -36,8 +36,14 @@ public struct SemanticVersion: Comparable, CustomStringConvertible, Hashable, Se
 
 public enum MagpieCompatibility {
     /// App 支持的最低 magpie 版本。
-    /// TODO(spec): 以 spec/ 中确定的接口契约首次出现的 magpie 版本为准，contract.yml 会校验。
-    public static let minimumHostVersion = SemanticVersion(0, 0, 0)
+    /// v0.1.2438（提交 80af3b8）是接口契约（contract/gateway-contract.json、contract/web-contract.json）
+    /// 生成时所基于、并经实时契约测试验证过的版本；更早的版本未经验证。
+    /// contract.yml（每个 PR）与 magpie-compat.yml（每周）会对 magpie 最新发布版再跑一遍契约测试；
+    /// 接口出现不兼容变化时，更新 MagpieRemoteCore 后再把这里与 `testedHostVersion` 一起调整。
+    public static let minimumHostVersion = SemanticVersion(0, 1, 2438)
+
+    /// 最近一次通过实时契约测试的 magpie 版本（仅作记录，不参与判断；无已知上限）。
+    public static let testedHostVersion = SemanticVersion(0, 1, 2438)
 
     /// 主机报告的版本是否可用；无法解析时视为可用（不因版本号格式阻止使用），由接口层面的错误兜底。
     public static func check(hostVersion: String?) -> MagpieError? {

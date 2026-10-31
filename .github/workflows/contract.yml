@@ -1,24 +1,219 @@
 name: magpie 契约测试
 
-# TODO（另一位协作者负责填充）：
-# - 触发：pull_request / push 到 main（MagpieRemoteCore/**、spec/**、本文件变化时）。
-# - runs-on: ubuntu-latest（不需要 macOS）。
-# - 步骤草案：
-#   1. 检出本仓库与 magpie 源码（固定到 spec/ 记录的提交）；
-#   2. 用 Go 从源码构建 magpie（CGO_ENABLED=0 go build -tags nogui）；
-#   3. 以隔离的 HOME 启动网关（3425）与 `magpie web`（3430，MAGPIE_WEB_KEY=示例值）；
-#   4. 运行契约测试：用 spec/fixtures 校验各接口的 JSON 形状，并在 Linux 上 `swift test` MagpieRemoteCore 的解码测试。
-# 在此之前只保留手动触发的占位 job，避免出现无效的工作流文件。
+# 用真实的 magpie 校验 Magpie Remote 依赖的接口（只需 Ubuntu，不需要 macOS）：
+#   1. 解析要测的 magpie 版本：输入的 ref → 否则 yetone/magpie 的最新发布版 → 都失败时用已验证的提交；
+#   2. 静态检查：对 magpie 源码跑 contract/gen_web_contract.py --check 与 contract/check_gateway_contract.py；
+#   3. 实时检查：contract/run-magpie-fixture.sh 从源码构建 magpie（nogui）、接上 mock 上游、写入 provider /
+#      group / 密钥并开启局域网共享，然后 contract/test_contract.py 逐条调用网关与 web 接口；
+#   4. 把抓到的响应脱敏（contract/export_fixtures.py）并跑隐私检查；失败时上传脱敏后的响应供排查。
+# magpie-compat.yml 每周通过 workflow_call 复用本文件。
 on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      magpie_ref:
+        description: "magpie 的 tag 或完整提交 SHA；留空 = 最新发布版"
+        required: false
+        default: ""
+      fallback_ref:
+        description: "解析最新发布版失败时使用的 ref（已验证的提交）"
+        required: false
+        default: "80af3b86a449c53bd0d26b08ac4d0a4cac191948"
+  workflow_call:
+    inputs:
+      magpie_ref:
+        type: string
+        required: false
+        default: ""
+      fallback_ref:
+        type: string
+        required: false
+        default: "80af3b86a449c53bd0d26b08ac4d0a4cac191948"
+    outputs:
+      magpie_ref:
+        description: "实际测试的 magpie ref"
+        value: ${{ jobs.contract.outputs.ref }}
 
 permissions:
   contents: read
 
+concurrency:
+  group: contract-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # 已验证的 magpie 提交（v0.1.2438）；workflow_dispatch / workflow_call 可覆盖。
+  TESTED_MAGPIE_REF: 80af3b86a449c53bd0d26b08ac4d0a4cac191948
+
 jobs:
-  placeholder:
-    name: 契约测试（待实现）
+  contract:
+    name: magpie 接口契约
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 30
+    outputs:
+      ref: ${{ steps.ref.outputs.ref }}
     steps:
-      - run: echo "TODO：构建 magpie 并运行契约测试（见本文件顶部注释）"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: 解析 magpie 版本
+        id: ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_REF: ${{ inputs.magpie_ref }}
+          FALLBACK_REF: ${{ inputs.fallback_ref }}
+        run: |
+          set -euo pipefail
+          ref="${INPUT_REF:-}"
+          how="输入指定"
+          if [ -z "$ref" ]; then
+            ref=$(gh api repos/yetone/magpie/releases/latest --jq .tag_name 2>/dev/null || true)
+            how="最新发布版"
+          fi
+          if [ -z "$ref" ]; then
+            ref="${FALLBACK_REF:-$TESTED_MAGPIE_REF}"
+            how="回退到已验证的提交"
+          fi
+          version=""
+          if [[ "$ref" =~ ^v[0-9] ]]; then version="$ref"; fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "测试 magpie $ref（$how）"
+          echo "测试的 magpie：\`$ref\`（$how）" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 检出 magpie 源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: yetone/magpie
+          ref: ${{ steps.ref.outputs.ref }}
+          path: magpie-src
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: magpie-src/go.mod
+          cache-dependency-path: magpie-src/go.sum
+
+      - name: 静态检查：web 接口
+        id: static_web
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          mkdir -p "$RUNNER_TEMP/reports"
+          python3 contract/gen_web_contract.py --check magpie-src | tee "$RUNNER_TEMP/reports/web-static.txt"
+
+      - name: 静态检查：网关接口
+        id: static_gateway
+        continue-on-error: true
+        run: python3 contract/check_gateway_contract.py magpie-src --report "$RUNNER_TEMP/reports/gateway-static.md"
+
+      - name: 构建并启动 magpie（mock 上游、共享开启）
+        id: fixture
+        env:
+          MAGPIE_VERSION: ${{ steps.ref.outputs.version }}
+          MOCK_PORT: "18080"
+        # 脚本先用 ::add-mask:: 遮住临时密钥，再打印 KEY=VALUE（同时写入 $GITHUB_ENV）
+        run: contract/run-magpie-fixture.sh magpie-src "$RUNNER_TEMP/magpie-fixture"
+
+      - name: 实时契约测试
+        id: live
+        continue-on-error: true
+        env:
+          CONTRACT_CAPTURE_DIR: ${{ runner.temp }}/captures
+        run: python3 contract/test_contract.py "$MAGPIE_FIXTURE_DIR/fixture.env"
+
+      - name: 脱敏响应并做隐私检查
+        if: always() && steps.fixture.outcome == 'success'
+        env:
+          MOCK_PORT: "18080"
+        run: |
+          set -euo pipefail
+          python3 contract/export_fixtures.py "$RUNNER_TEMP/captures" "$MAGPIE_FIXTURE_DIR/fixture.env" \
+            MagpieRemoteCore/Tests/MagpieRemoteCoreTests/Fixtures/live
+          python3 scripts/check-privacy.py
+          cp -R MagpieRemoteCore/Tests/MagpieRemoteCoreTests/Fixtures/live "$RUNNER_TEMP/redacted-captures"
+          cp "$RUNNER_TEMP/captures/report.md" "$RUNNER_TEMP/reports/live.md" 2>/dev/null || true
+
+      - name: 汇总
+        if: always()
+        env:
+          REF: ${{ steps.ref.outputs.ref }}
+          WEB: ${{ steps.static_web.outcome }}
+          GATEWAY: ${{ steps.static_gateway.outcome }}
+          FIXTURE: ${{ steps.fixture.outcome }}
+          LIVE: ${{ steps.live.outcome }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/reports"
+          {
+            echo "## magpie $REF 契约测试"
+            echo
+            echo "| 检查 | 结果 |"
+            echo "|---|---|"
+            echo "| web 接口静态检查 | $WEB |"
+            echo "| 网关接口静态检查 | $GATEWAY |"
+            echo "| 构建并启动 magpie | $FIXTURE |"
+            echo "| 实时契约测试 | $LIVE |"
+            echo
+            if [ "$WEB" != success ] && [ -f "$RUNNER_TEMP/reports/web-static.txt" ]; then
+              echo "### web 接口静态检查（magpie 源码中已不存在的路由 / 动作 / json 标签）"
+              echo '```'; cat "$RUNNER_TEMP/reports/web-static.txt"; echo '```'; echo
+            fi
+            cat "$RUNNER_TEMP/reports/gateway-static.md" 2>/dev/null || true
+            echo
+            cat "$RUNNER_TEMP/reports/live.md" 2>/dev/null || cat "$RUNNER_TEMP/captures/report.md" 2>/dev/null || true
+          } > "$RUNNER_TEMP/reports/summary.md"
+          echo "ref=$REF" > "$RUNNER_TEMP/reports/result.env"
+          echo "ok=$([ "$WEB$GATEWAY$FIXTURE$LIVE" = successsuccesssuccesssuccess ] && echo true || echo false)" >> "$RUNNER_TEMP/reports/result.env"
+          cat "$RUNNER_TEMP/reports/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 上传报告
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: contract-report
+          path: ${{ runner.temp }}/reports
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: 准备脱敏日志（失败时）
+        if: failure() || steps.live.outcome == 'failure' || steps.static_web.outcome == 'failure' || steps.static_gateway.outcome == 'failure'
+        run: |
+          mkdir -p "$RUNNER_TEMP/redacted-captures"
+          # serve.log 也脱敏：只保留 fixture 本身产生的内容，密钥替换为示例值
+          if [ -n "${MAGPIE_FIXTURE_DIR:-}" ] && [ -f "$MAGPIE_FIXTURE_DIR/serve.log" ]; then
+            sed -E 's/sk-magpie-key-[A-Za-z0-9]+/sk-magpie-key-EXAMPLE/g' "$MAGPIE_FIXTURE_DIR/serve.log" \
+              | tail -n 400 > "$RUNNER_TEMP/redacted-captures/serve.log.txt" || true
+          fi
+
+      - name: 上传脱敏后的响应（失败时）
+        if: failure() || steps.live.outcome == 'failure' || steps.static_web.outcome == 'failure' || steps.static_gateway.outcome == 'failure'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: contract-captures
+          path: ${{ runner.temp }}/redacted-captures
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: 停止 magpie
+        if: always()
+        run: |
+          if [ -n "${MAGPIE_FIXTURE_DIR:-}" ] && [ -f "$MAGPIE_FIXTURE_DIR/pids" ]; then
+            kill $(cat "$MAGPIE_FIXTURE_DIR/pids") 2>/dev/null || true
+          fi
+
+      - name: 判定
+        if: always()
+        env:
+          WEB: ${{ steps.static_web.outcome }}
+          GATEWAY: ${{ steps.static_gateway.outcome }}
+          FIXTURE: ${{ steps.fixture.outcome }}
+          LIVE: ${{ steps.live.outcome }}
+        run: |
+          if [ "$WEB$GATEWAY$FIXTURE$LIVE" != successsuccesssuccesssuccess ]; then
+            echo "::error::契约测试未通过（web 静态 $WEB / 网关静态 $GATEWAY / 启动 $FIXTURE / 实时 $LIVE），详见作业摘要"
+            exit 1
+          fi
+          echo "契约测试全部通过"
