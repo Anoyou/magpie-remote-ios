@@ -42,10 +42,18 @@ public struct UsageFixtureData: Sendable {
         var index = 0
         while time > oldest {
             let agentPick = next(10)
-            let pick: (agent: String, name: String, key: (id: String, name: String)?) =
-                agentPick < 5 ? ("claude", "Claude Code", nil) : agentPick < 8 ? ("codex", "Codex", laptopKey) : ("MagpieRemote", "MagpieRemote", iPhoneKey)
-            let agent = pick.agent, agentName = pick.name, key = pick.key
-            let upstream = agent == "claude" ? upstreams[next(4) == 0 ? 2 : 0] : upstreams[next(upstreams.count)]
+            var agent = "MagpieRemote"
+            var agentName = "MagpieRemote"
+            var keyID: String? = iPhoneKey.id
+            var keyName: String? = iPhoneKey.name
+            if agentPick < 5 {
+                agent = "claude"; agentName = "Claude Code"; keyID = nil; keyName = nil
+            } else if agentPick < 8 {
+                agent = "codex"; agentName = "Codex"; keyID = laptopKey.id; keyName = laptopKey.name
+            }
+            let upstreamIndex: Int
+            if agent == "claude" { upstreamIndex = next(4) == 0 ? 2 : 0 } else { upstreamIndex = next(upstreams.count) }
+            let upstream = upstreams[upstreamIndex]
             let input = 400 + next(24_000)
             let cacheRead = upstream.provider == "anthropic" ? next(80_000) : next(4_000)
             let cacheWrite = next(5) == 0 ? next(6_000) : 0
@@ -68,26 +76,30 @@ public struct UsageFixtureData: Sendable {
                 cost = Double(input) * upstream.priceIn + Double(output) * upstream.priceOut
                     + Double(cacheRead) * upstream.priceCache + Double(cacheWrite) * upstream.priceIn * 1.25
             }
-            let ms = failed ? (status == 502 ? 30_012 : 420) : 800 + next(14_000)
+            let ms: Int
+            if failed { ms = status == 502 ? 30_012 : 420 } else { ms = 800 + next(14_000) }
             let requested = agent == "MagpieRemote" && index % 3 == 0 ? "group/coding" : "\(upstream.provider)/\(upstream.model)"
             let endpoint = agent == "claude" ? "/v1/messages" : agent == "codex" ? "/v1/responses" : "/v1/chat/completions"
             let session: String? = agent == "claude" ? "5f0e7c1a-\(index / 25)" : agent == "MagpieRemote" ? "ios-7E1C5A40" : nil
-            rows.append(UsageRequestRow(
-                time: UsageTimestamp(date: time, timeZone: timeZone),
-                routeId: 1_793_472_000_000 - Int64(index) * 37,
+            let reasoning = upstream.provider == "openai" && !failed ? next(900) : 0
+            let ttft: Int? = failed ? nil : 300 + next(1_500)
+            let routeId: Int64 = 1_793_472_000_000 - Int64(index) * 37
+            let row = UsageRequestRow(
+                time: UsageTimestamp(date: time, timeZone: timeZone), routeId: routeId,
                 agent: agent, agentName: agentName,
                 provider: upstream.provider, providerName: upstream.providerName, host: upstream.host,
-                providerAccount: upstream.account, callerKeyId: key?.id, callerKeyName: key?.name,
+                providerAccount: upstream.account, callerKeyId: keyID, callerKeyName: keyName,
                 model: upstream.model, requested: requested,
                 input: failed ? 0 : input, output: output, cacheRead: failed ? 0 : cacheRead, cacheWrite: failed ? 0 : cacheWrite,
-                reasoning: upstream.provider == "openai" && !failed ? next(900) : 0,
-                ms: ms, ttftMs: failed ? nil : 300 + next(1_500), status: status,
+                reasoning: reasoning, ms: ms, ttftMs: ttft, status: status,
                 error: error, errorType: errorType, tries: tries,
                 endpoint: endpoint, session: session,
-                cost: cost, priced: true, access: upstream.access))
+                cost: cost, priced: true, access: upstream.access)
+            rows.append(row)
             index += 1
             // 最近的十几条间隔几分钟，之后平均一个多小时一条。
-            time = time.addingTimeInterval(-(index < 15 ? Double(60 + next(240)) : Double(600 + next(7_800))))
+            let gap: Int = index < 15 ? 60 + next(240) : 600 + next(7_800)
+            time = time.addingTimeInterval(-Double(gap))
         }
         return rows
     }
