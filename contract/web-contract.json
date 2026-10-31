@@ -764,6 +764,33 @@
      "groups[].memberInfo[].on",
      "groups[].picked?",
      "groups[].ref",
+     "groups[].sink?",
+     "groups[].firstToken?",
+     "groups[].patience?",
+     "groups[].off?",
+     "groups[].weights?",
+     "groups[].fast?",
+     "groups[].match?",
+     "groups[].matched?",
+     "groups[].unlists?",
+     "groups[].rules?",
+     "groups[].classifier?",
+     "groups[].patterns[].pattern",
+     "groups[].patterns[].models",
+     "groups[].memberInfo[].of?",
+     "groups[].memberInfo[].effort?",
+     "groups[].memberInfo[].group?",
+     "groups[].memberInfo[].providerOff?",
+     "groups[].memberInfo[].canFast?",
+     "groups[].memberInfo[].context?",
+     "groups[].memberInfo[].images?",
+     "groups[].memberInfo[].imagesUnknown?",
+     "pools[].provider",
+     "pools[].name",
+     "pools[].kind",
+     "pools[].who",
+     "pools[].routing",
+     "pools[].affinity",
      "models[].id",
      "models[].name",
      "models[].provider",
@@ -806,7 +833,19 @@
       "order",
       "ids",
       "kind",
-      "text"
+      "text",
+      "who",
+      "sink",
+      "protocol",
+      "group",
+      "providerOff",
+      "of",
+      "effort",
+      "canFast",
+      "context",
+      "images",
+      "imagesUnknown",
+      "classifierFailed"
      ]
     },
     {
@@ -821,7 +860,25 @@
       "disabled",
       "hidden",
       "off",
-      "weights"
+      "weights",
+      "sink",
+      "firstToken",
+      "patience",
+      "fast",
+      "match",
+      "matched",
+      "placed",
+      "unlists",
+      "rules",
+      "classifier",
+      "auto"
+     ]
+    },
+    {
+     "file": "internal/provider/groupmatch.go",
+     "tags": [
+      "pattern",
+      "models"
      ]
     }
    ]
@@ -850,8 +907,16 @@
      "id",
      "name",
      "members",
+     "placed?",
      "routing?",
      "affinity?",
+     "sink?",
+     "off?",
+     "weights?",
+     "fast?",
+     "firstToken?",
+     "patience?",
+     "unlists?",
      "pick?",
      "from?",
      "on?",
@@ -865,6 +930,136 @@
      "<groupsJSON>"
     ]
    }
+  },
+  {
+   "method": "GET",
+   "path": "/api/model-speeds",
+   "source": "internal/gui/speeds.go",
+   "anchor": "mux.HandleFunc(\"GET /api/model-speeds\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": []
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/speeds.go",
+     "tags": [
+      "ttft",
+      "tps",
+      "n"
+     ]
+    }
+   ],
+   "note": "map provider/model \u2192 {ttft ms?, tps?, n}; the Routing page shows each group member's speed"
+  },
+  {
+   "method": "GET",
+   "path": "/api/gateway/trace",
+   "source": "internal/gui/trace.go",
+   "anchor": "mux.HandleFunc(\"GET /api/gateway/trace\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "seq",
+     "routes[].id",
+     "routes[].seq",
+     "routes[].agent",
+     "routes[].model",
+     "routes[].provider",
+     "routes[].order[].id",
+     "routes[].order[].provider",
+     "routes[].order[].name",
+     "routes[].order[].kind",
+     "routes[].order[].model",
+     "routes[].order[].routing",
+     "routes[].order[].used",
+     "routes[].tries[].id",
+     "routes[].tries[].start",
+     "routes[].tries[].done",
+     "routes[].done",
+     "routes[].cost",
+     "routes[].priced",
+     "totals.requests",
+     "totals.rerouted",
+     "totals.errors",
+     "mine",
+     "now"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gateway/trace.go",
+     "tags": [
+      "seq",
+      "id",
+      "time",
+      "agent",
+      "model",
+      "provider",
+      "group",
+      "order",
+      "tries",
+      "done",
+      "status",
+      "error",
+      "ms",
+      "ttft",
+      "tokens",
+      "out",
+      "kind",
+      "name",
+      "routing",
+      "members",
+      "who",
+      "plan",
+      "fixed",
+      "fast",
+      "fallback",
+      "known",
+      "used",
+      "balance",
+      "unit",
+      "free",
+      "rest",
+      "unlisted",
+      "window",
+      "credits",
+      "usedRenews",
+      "renews",
+      "start",
+      "fail",
+      "again",
+      "routes",
+      "totals",
+      "ids",
+      "requests",
+      "rerouted",
+      "errors"
+     ]
+    },
+    {
+     "file": "internal/gui/trace.go",
+     "tags": [
+      "mine",
+      "now",
+      "routes",
+      "sessionTitle",
+      "cost",
+      "priced"
+     ]
+    },
+    {
+     "file": "internal/gateway/routing.go",
+     "tags": [
+      "why",
+      "status",
+      "until"
+     ]
+    }
+   ],
+   "note": "query ?after=<seq>[&wait=1] (long poll \u226425 s); the live Routing stage. Gateway /v1/magpie/trace is loopback-only"
   },
   {
    "method": "GET",

@@ -1,0 +1,188 @@
+{
+ "groups": [
+  {
+   "id": "smart",
+   "name": "Smart group",
+   "members": [
+    "relay-one/gpt-4.1",
+    "codex/gpt-5",
+    "openrouter/free-a"
+   ],
+   "match": [
+    "openrouter/*:free"
+   ],
+   "matched": [
+    "openrouter/free-a"
+   ],
+   "routing": "weight",
+   "affinity": "session",
+   "sink": true,
+   "firstToken": 60,
+   "patience": -1,
+   "off": [
+    "codex/gpt-5"
+   ],
+   "weights": {
+    "relay-one/gpt-4.1": 3
+   },
+   "rules": [
+    {
+     "use": "codex/gpt-5",
+     "effort": "high"
+    }
+   ],
+   "classifier": "relay-one/gpt-4.1-mini",
+   "family": "work",
+   "levels": [
+    "low",
+    "high"
+   ],
+   "unlists": true,
+   "ready": true,
+   "ref": "group/smart",
+   "holds": [],
+   "offers": [],
+   "shared": [],
+   "patterns": [
+    {
+     "pattern": "openrouter/*:free",
+     "models": 1
+    }
+   ],
+   "classifierFailed": {
+    "error": "timeout",
+    "at": "2026-11-01T09:00:00Z"
+   },
+   "memberInfo": [
+    {
+     "id": "relay-one/gpt-4.1",
+     "ready": true,
+     "provider": "relay-one",
+     "name": "Relay One",
+     "model": "gpt-4.1",
+     "on": 2,
+     "of": "relay-one/gpt-4.1",
+     "canFast": true,
+     "context": 1000000,
+     "images": true
+    },
+    {
+     "id": "codex/gpt-5",
+     "ready": true,
+     "provider": "codex",
+     "name": "Codex",
+     "model": "gpt-5",
+     "on": 1,
+     "of": "codex/gpt-5",
+     "effort": ""
+    },
+    {
+     "id": "openrouter/free-a",
+     "ready": false,
+     "provider": "openrouter",
+     "name": "OpenRouter",
+     "model": "free-a",
+     "on": 0,
+     "of": "openrouter/free-a",
+     "providerOff": true
+    }
+   ]
+  },
+  {
+   "id": "pick",
+   "name": "Pick one",
+   "members": [
+    "relay-one/gpt-4.1",
+    "group/smart"
+   ],
+   "routing": "manual",
+   "pick": "group/smart",
+   "picked": "group/smart",
+   "ready": true,
+   "ref": "group/pick",
+   "memberInfo": [
+    {
+     "id": "relay-one/gpt-4.1",
+     "ready": true,
+     "provider": "relay-one",
+     "name": "Relay One",
+     "model": "gpt-4.1",
+     "on": 2
+    },
+    {
+     "id": "group/smart",
+     "ready": true,
+     "group": true,
+     "name": "Smart group",
+     "on": 3
+    }
+   ]
+  },
+  {
+   "id": "auto-gpt-5",
+   "name": "gpt-5",
+   "members": [
+    "codex/gpt-5"
+   ],
+   "auto": true,
+   "hidden": true,
+   "ready": true,
+   "ref": "auto/gpt-5",
+   "memberInfo": []
+  },
+  {
+   "id": "plug",
+   "name": "Plugin routed",
+   "members": [
+    "relay-one/gpt-4.1"
+   ],
+   "routing": "rotation/sticky",
+   "ready": true,
+   "ref": "group/plug",
+   "memberInfo": []
+  }
+ ],
+ "models": [
+  {
+   "id": "relay-one/gpt-4.1",
+   "name": "gpt-4.1",
+   "provider": "relay-one",
+   "providerName": "Relay One"
+  }
+ ],
+ "pools": [
+  {
+   "provider": "relay-one",
+   "name": "Relay One",
+   "kind": "key",
+   "who": [
+    "主 Key",
+    "备用 Key"
+   ],
+   "routing": "usage",
+   "affinity": "turn",
+   "sink": true
+  },
+  {
+   "provider": "anthropic",
+   "name": "Anthropic",
+   "kind": "key",
+   "who": [
+    "a",
+    "b"
+   ],
+   "routing": "",
+   "affinity": "",
+   "protocol": "anthropic"
+  }
+ ],
+ "deciders": [],
+ "found": false,
+ "skip": [],
+ "skippable": [],
+ "templates": [],
+ "clock": {
+  "zone": "Asia/Shanghai",
+  "offset": 28800
+ }
+}

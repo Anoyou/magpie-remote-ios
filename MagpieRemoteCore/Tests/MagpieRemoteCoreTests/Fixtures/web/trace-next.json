@@ -1,0 +1,87 @@
+{
+ "seq": 5,
+ "routes": [
+  {
+   "seq": 5,
+   "id": 42,
+   "time": "2026-11-01T10:00:00+08:00",
+   "agent": "claude",
+   "model": "relay-one/gpt-4.1",
+   "provider": "relay-one",
+   "order": [
+    {
+     "id": "relay-one#k1",
+     "provider": "relay-one",
+     "name": "Relay One",
+     "who": "主 Key",
+     "kind": "key",
+     "model": "gpt-4.1",
+     "routing": "",
+     "used": 0
+    }
+   ],
+   "tries": [
+    {
+     "id": "relay-one#k1",
+     "model": "gpt-4.1",
+     "start": "2026-11-01T10:00:00.1+08:00",
+     "done": true,
+     "status": 502,
+     "ms": 900,
+     "fail": "other",
+     "error": "upstream closed"
+    }
+   ],
+   "done": true,
+   "cost": 0,
+   "priced": false,
+   "unpriced": 0,
+   "status": 502,
+   "error": "upstream closed",
+   "ms": 900
+  },
+  {
+   "seq": 5,
+   "id": 43,
+   "time": "2026-11-01T10:00:02+08:00",
+   "agent": "codex",
+   "model": "codex/gpt-5",
+   "provider": "codex",
+   "order": [
+    {
+     "id": "codex#someone",
+     "provider": "codex",
+     "name": "Codex",
+     "who": "someone@example.com",
+     "kind": "account",
+     "plan": "plus",
+     "model": "gpt-5",
+     "routing": "",
+     "known": true,
+     "used": 72.5,
+     "usedRenews": "2026-11-01T12:00:00.123456789+08:00",
+     "renews": [
+      "2026-11-01T12:00:00+08:00"
+     ]
+    }
+   ],
+   "tries": [],
+   "done": false,
+   "cost": 0,
+   "priced": false,
+   "unpriced": 0
+  }
+ ],
+ "totals": {
+  "requests": 8,
+  "rerouted": 2,
+  "errors": 2
+ },
+ "ids": [
+  41,
+  42,
+  43
+ ],
+ "mine": true,
+ "now": "2026-11-01T10:00:03+08:00"
+}

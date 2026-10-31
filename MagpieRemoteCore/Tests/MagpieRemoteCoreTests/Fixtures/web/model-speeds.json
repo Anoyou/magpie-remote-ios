@@ -1,0 +1,15 @@
+{
+ "relay-one/gpt-4.1": {
+  "ttft": 820,
+  "tps": 61.5,
+  "n": 14
+ },
+ "codex/gpt-5": {
+  "ttft": 1430,
+  "tps": 38.2,
+  "n": 9
+ },
+ "deepseek/deepseek-chat": {
+  "n": 2
+ }
+}
