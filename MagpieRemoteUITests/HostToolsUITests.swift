@@ -117,5 +117,4 @@ final class HostToolsUITests: XCTestCase {
         expectation(for: NSPredicate(format: "label CONTAINS %@", text), evaluatedWith: element)
         waitForExpectations(timeout: timeout)
     }
-    }
 }
