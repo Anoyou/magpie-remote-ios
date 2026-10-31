@@ -443,6 +443,94 @@ def t_web(errs):
     expect(r.status == 400, f"web 未知 agent 应得 400，实际 {r.status}", errs)
 
 
+def t_plugins(errs):
+    """「管理 › 插件」依赖的 web 接口：列表、内置插件开关与设置、检查更新、页面 / 面板、市场、插件供应商开关。不安装任何插件。"""
+    def web(name, method, path, body=None):
+        return call(name, method, WEB + path, remote=False, cookie=COOKIE, body=body)
+
+    r = web("web-plugins", "GET", "/api/plugins")
+    status_is(r, 200, "application/json", errs, "web GET /api/plugins")
+    errs += check_web_fields(("GET", "/api/plugins"), r.json or {}, "web GET /api/plugins")
+    expect(isinstance((r.json or {}).get("plugins"), list), "web /api/plugins: plugins 应为数组", errs)
+    expect(isinstance((r.json or {}).get("bun"), bool), "web /api/plugins: bun 应为布尔", errs)
+
+    r = web("web-plugins-builtin", "GET", "/api/plugins/builtin")
+    status_is(r, 200, "application/json", errs, "web GET /api/plugins/builtin")
+    builtins = r.json if isinstance(r.json, list) else []
+    expect(bool(builtins), f"web /api/plugins/builtin: 应为非空数组，实际 {r.text[:120]}", errs)
+    for b in builtins:
+        for k, typ in (("id", str), ("name", str), ("on", bool), ("chosen", bool), ("state", str), ("inUse", int)):
+            expect(isinstance(b.get(k), typ), f"web /api/plugins/builtin: {b.get('id')} 的 {k} 应为 {typ.__name__}", errs)
+        if b.get("schema") is not None:
+            expect(isinstance(b["schema"].get("properties"), dict), f"web /api/plugins/builtin: {b.get('id')} 的 schema.properties 应为对象", errs)
+    expect("usage" in [b.get("id") for b in builtins], "web /api/plugins/builtin: 应有内置插件 usage", errs)
+
+    # 开关一个没在使用的内置插件，再恢复原状
+    # 只动只影响窗口的插件（会话、资源库、预热与签到），不碰网关路径上的
+    free = next((b for b in builtins if b.get("id") in ("sessions", "library", "warmups") and not b.get("inUse") and not b.get("broken")), None)
+    if free:
+        was = bool(free.get("chosen"))
+        r = web("web-plugins-builtin-switch", "POST", "/api/plugins/builtin", {"id": free["id"], "on": not was})
+        status_is(r, 200, "application/json", errs, f"web POST /api/plugins/builtin 切换 {free['id']}")
+        now = next((b for b in (r.json or []) if isinstance(b, dict) and b.get("id") == free["id"]), {})
+        expect(now.get("chosen") == (not was), f"web /api/plugins/builtin: {free['id']} 的 chosen 应变为 {not was}", errs)
+        r = web("web-plugins-builtin-restore", "POST", "/api/plugins/builtin", {"id": free["id"], "on": was})
+        status_is(r, 200, "application/json", errs, f"web POST /api/plugins/builtin 恢复 {free['id']}")
+    used = next((b for b in builtins if b.get("inUse")), None)
+    if used:
+        r = web("err-web-plugins-builtin-in-use", "POST", "/api/plugins/builtin", {"id": used["id"], "on": False})
+        expect(r.status == 400 and "error" in (r.json or {}), f"web /api/plugins/builtin: 关闭正在使用的 {used['id']} 应得 400 JSON，实际 {r.status}", errs)
+    withschema = next((b for b in builtins if b.get("schema")), None)
+    if withschema:
+        r = web("web-plugins-builtin-config", "POST", "/api/plugins/builtin", {"id": withschema["id"], "config": {}})
+        status_is(r, 200, "application/json", errs, f"web POST /api/plugins/builtin config {withschema['id']}")
+        r = web("err-web-plugins-builtin-config", "POST", "/api/plugins/builtin", {"id": withschema["id"], "config": {"no-such-setting": 1}})
+        expect(r.status == 400, f"web /api/plugins/builtin: 不存在的设置应得 400，实际 {r.status}", errs)
+
+    r = web("web-plugins-check", "POST", "/api/plugins/check", {})
+    status_is(r, 200, "application/json", errs, "web POST /api/plugins/check")
+    errs += check_web_fields(("POST", "/api/plugins/check"), r.json or {}, "web POST /api/plugins/check")
+    expect(isinstance(((r.json or {}).get("state") or {}).get("plugins"), list), "web /api/plugins/check: state.plugins 应为数组", errs)
+
+    for name, path in (("web-plugin-pages", "/api/plugin-pages"), ("web-plugin-panels", "/api/plugin-panels")):
+        r = web(name, "GET", path)
+        status_is(r, 200, "application/json", errs, f"web GET {path}")
+        expect(isinstance(r.json, list), f"web {path}: 应为数组，实际 {r.text[:80]}", errs)
+        for e in r.json if isinstance(r.json, list) else []:
+            expect(isinstance(e.get("key"), str) and isinstance(e.get("url"), str), f"web {path}: 每项应有 key 与 url", errs)
+
+    # 市场是第三方的列表（包名、作者、链接），只校验形状，不留抓取文件
+    r = web("web-plugins-listings", "GET", "/api/plugins/listings")
+    status_is(r, 200, "application/json", errs, "web GET /api/plugins/listings")
+    ls = (r.json or {}).get("listings")
+    expect(isinstance(ls, list), "web /api/plugins/listings: listings 应为数组", errs)
+    for l in ls if isinstance(ls, list) else []:
+        expect(isinstance(l.get("package"), str) and isinstance(l.get("name"), str), "web /api/plugins/listings: 每项应有 package 与 name", errs)
+    r2 = web("web-plugins-agents", "GET", "/api/plugins/agents")
+    status_is(r2, 200, "application/json", errs, "web GET /api/plugins/agents")
+    expect(isinstance(r2.json, list) and all(isinstance(x, str) for x in r2.json), "web /api/plugins/agents: 应为字符串数组", errs)
+    for name in ("web-plugins-listings", "web-plugins-agents"):
+        try:
+            os.remove(os.path.join(CAP, name + ".json"))
+        except OSError:
+            pass
+
+    # 不存在的插件：操作被拒，400 JSON
+    for op, body in (("off", {"spec": "example-no-such-plugin", "off": True}), ("options", {"spec": "example-no-such-plugin", "options": {"a": 1}}),
+                     ("remove", {"spec": "example-no-such-plugin"})):
+        r = web(f"err-web-plugins-{op}", "POST", f"/api/plugins/{op}", body)
+        expect(r.status == 400 and "no plugin" in str((r.json or {}).get("error", "")),
+               f"web /api/plugins/{op}: 不存在的插件应得 400 JSON「no plugin…」，实际 {r.status} {r.text[:120]}", errs)
+
+    r = web("web-providers-plugins", "GET", "/api/providers")
+    expect(isinstance((r.json or {}).get("plugins"), list), "web /api/providers: plugins（插件供应商）应为数组", errs)
+    r = web("web-plugin-option", "POST", "/api/settings/plugin-option", {"provider": "example", "key": "fast-mode", "on": True})
+    status_is(r, 200, "application/json", errs, "web POST /api/settings/plugin-option")
+    errs += check_web_fields(("GET", "/api/settings"), r.json or {}, "web POST /api/settings/plugin-option")
+    r = web("err-web-plugin-option", "POST", "/api/settings/plugin-option", {"provider": "example", "key": "Not A Key!"})
+    expect(r.status == 400, f"web /api/settings/plugin-option: 不合法的 key 应得 400，实际 {r.status}", errs)
+
+
 def t_sharing_off(errs):
     """最后执行：通过 web API 关掉共享，确认远程请求得到纯文本 403，再打开。"""
     r = call("web-lan-off", "POST", WEB + "/api/settings/lan", remote=False, cookie=COOKIE, body={"On": False})
@@ -458,7 +546,7 @@ def t_sharing_off(errs):
     status_is(r, 200, "application/json", errs, "重新共享后 GET /v1")
 
 
-TESTS = [t_info, t_auth, t_models, t_chat, t_responses, t_usage, t_quotas_limit, t_keys, t_web, t_sharing_off]
+TESTS = [t_info, t_auth, t_models, t_chat, t_responses, t_usage, t_quotas_limit, t_keys, t_web, t_plugins, t_sharing_off]
 
 
 def main() -> int:

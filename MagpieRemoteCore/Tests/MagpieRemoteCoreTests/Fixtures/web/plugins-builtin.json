@@ -1,0 +1,92 @@
+[
+ {
+  "id": "usage",
+  "name": "Usage",
+  "sub": "Your allowances, what was spent and on what, each request, and what filled the context window",
+  "on": true,
+  "chosen": true,
+  "source": "in use",
+  "state": "active",
+  "inUse": 2,
+  "use": "Used by 2 pages",
+  "parts": [
+   {
+    "Slot": "page",
+    "Key": "usage"
+   }
+  ]
+ },
+ {
+  "id": "sessions",
+  "name": "Sessions",
+  "sub": "Your agents' past conversations: read, search, resume and export them",
+  "on": false,
+  "chosen": false,
+  "source": "user",
+  "state": "off",
+  "inUse": 0
+ },
+ {
+  "id": "otel",
+  "name": "Observability",
+  "sub": "Send each request's traces and metrics to an OpenTelemetry collector, such as Langfuse",
+  "on": true,
+  "chosen": true,
+  "source": "default",
+  "state": "active",
+  "inUse": 0,
+  "schema": {
+   "type": "object",
+   "x-order": [
+    "endpoint",
+    "sample",
+    "insecure",
+    "protocol"
+   ],
+   "properties": {
+    "endpoint": {
+     "type": "string",
+     "title": "Endpoint",
+     "description": "Collector URL",
+     "default": ""
+    },
+    "sample": {
+     "type": "number",
+     "title": "Sample rate",
+     "minimum": 0,
+     "maximum": 1,
+     "default": 1
+    },
+    "insecure": {
+     "type": "boolean",
+     "title": "Allow plain HTTP",
+     "default": false
+    },
+    "protocol": {
+     "type": "string",
+     "title": "Protocol",
+     "enum": [
+      "grpc",
+      "http"
+     ],
+     "default": "http"
+    }
+   }
+  },
+  "config": {
+   "endpoint": "https://collector.example",
+   "sample": 0.5
+  }
+ },
+ {
+  "id": "newfuture",
+  "name": "Something New",
+  "sub": "From a newer magpie",
+  "on": true,
+  "chosen": true,
+  "source": "default",
+  "state": "failed",
+  "why": "needs gateway",
+  "inUse": 0
+ }
+]

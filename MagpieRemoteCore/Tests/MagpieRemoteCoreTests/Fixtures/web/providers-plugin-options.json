@@ -1,0 +1,41 @@
+{
+ "providers": [],
+ "presets": [],
+ "plugins": [
+  {
+   "id": "plugin-example",
+   "pid": "example",
+   "name": "Example Cloud",
+   "icon": "generic",
+   "spec": "@magpie-community/example-auth",
+   "methods": [],
+   "signedIn": true,
+   "models": 3,
+   "options": [
+    {
+     "key": "fast-mode",
+     "label": "Fast mode",
+     "description": "Use the faster endpoint",
+     "default": false,
+     "on": true
+    },
+    {
+     "key": "share-usage",
+     "label": "Share usage",
+     "confirm": "Sends usage to the vendor",
+     "default": true,
+     "on": false
+    }
+   ]
+  },
+  {
+   "id": "plugin-other",
+   "pid": "other",
+   "name": "Other",
+   "spec": "x",
+   "methods": [],
+   "signedIn": false,
+   "models": 0
+  }
+ ]
+}

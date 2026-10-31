@@ -14,8 +14,10 @@ def R(method, path, file, actions=None, req=None, res=None, tags=None, note=None
     if note: d["note"] = note
     return d
 
-PROVIDER_RES = ["providers[].id","providers[].name","providers[].icon","providers[].preset","providers[].host","providers[].chat","providers[].responses","providers[].anthropic","providers[].gemini?","providers[].baseAPI?","providers[].headers?","providers[].proxy","providers[].key.set","providers[].key.masked","providers[].key.optional","providers[].ready","providers[].off","providers[].chosen","providers[].fallback","providers[].routing","providers[].affinity","providers[].models[].id","providers[].models[].name","providers[].models[].on","providers[].models[].context?","providers[].models[].efforts?","providers[].models[].images","providers[].exposed","providers[].noModels","providers[].bestInFamily","providers[].fetched?","providers[].listError?","providers[].agents[].id","providers[].agents[].current","providers[].agents[].model?","providers[].keyList[].id","providers[].keyList[].name?","providers[].keyList[].masked","providers[].keyList[].active","providers[].keyList[].on","providers[].account?.agent","providers[].account?.user","providers[].account?.plan?","providers[].account?.agentName","presets[].id","gateway.url","gateway.lan","gateway.lanURLs?","gateway.running","gateway.version?","gateway.models","moved?","added?","had?","removed?"]
+PROVIDER_RES = ["providers[].id","providers[].name","providers[].icon","providers[].preset","providers[].host","providers[].chat","providers[].responses","providers[].anthropic","providers[].gemini?","providers[].baseAPI?","providers[].headers?","providers[].proxy","providers[].key.set","providers[].key.masked","providers[].key.optional","providers[].ready","providers[].off","providers[].chosen","providers[].fallback","providers[].routing","providers[].affinity","providers[].models[].id","providers[].models[].name","providers[].models[].on","providers[].models[].context?","providers[].models[].efforts?","providers[].models[].images","providers[].exposed","providers[].noModels","providers[].bestInFamily","providers[].fetched?","providers[].listError?","providers[].agents[].id","providers[].agents[].current","providers[].agents[].model?","providers[].keyList[].id","providers[].keyList[].name?","providers[].keyList[].masked","providers[].keyList[].active","providers[].keyList[].on","providers[].account?.agent","providers[].account?.user","providers[].account?.plan?","providers[].account?.agentName","presets[].id","gateway.url","gateway.lan","gateway.lanURLs?","gateway.running","gateway.version?","gateway.models","moved?","added?","had?","removed?","plugins[].pid","plugins[].name","plugins[].spec","plugins[].options[]?.key","plugins[].options[]?.label","plugins[].options[]?.on"]
 PROVIDER_TAGS = [
+ {"file": G+"plugins.go", "tags": ["id","pid","name","icon","spec","methods","signedIn","models","options","on"]},
+ {"file": "internal/plugin/providers.go", "tags": ["key","label","description","default","confirm"]},
  {"file": G+"providers.go", "tags": ["providers","presets","excluded","gateway","moved","added","had","removed","id","name","icon","preset","host","chat","responses","anthropic","gemini","baseAPI","headers","proxy","key","set","masked","optional","ready","off","chosen","fallback","routing","affinity","models","on","context","efforts","images","exposed","noModels","bestInFamily","fetched","listError","agents","current","model","keyList","account","agentName","url","lan","lanURLs","running","version"]},
  {"file": "internal/provider/keys.go", "tags": ["id","name","masked","active","on","protocol","weight","plan","rest"]},
  {"file": "internal/provider/account.go", "tags": ["agent","user","plan"]},
@@ -27,6 +29,12 @@ GROUP_ACTIONS = ["found","skip","save","delete","show","copy","share","import","
 KEYS_ACTIONS = ["add","import","protocol","weight","plan","use","remove","remove-many","rename","replace","on","off"]
 CK_ACTIONS = ["add-key","rotate-key","rename-key","limit-key","reset-limit-key","models-key","accounts-key","quotas-key","issuer-key","access-key","on-key","off-key","remove-key","move-key","copy-key"]
 AGENT_ACTIONS = ["reapply","keep","connect","disconnect"]
+PLUGIN_OPS = ["add","remove","update","upgrade","off","options","prefer"]
+PLUGINS_RES = ["plugins[].spec","plugins[].off?","plugins[].options?","plugins[].error?","plugins[].providers","plugins[].version?","plugins[].latest?","plugins[].icon?","plugins[].package?","plugins[].ownName?","plugins[].commit?","plugins[].head?","plugins[].optionsExample?","plugins[].isMiddleware?","plugins[].isGateway?","plugins[].isAgent?","plugins[].page?.title?","plugins[].page?.reads","plugins[].panels[]?.slot","plugins[].tools[]?.name","bun","bunVersion","error?","mirror"]
+PLUGINS_TAGS = [
+ {"file": G+"plugins.go", "tags": ["plugins","bun","bunVersion","error","mirror","providers","version","latest","icon","package","ownName","commit","head","optionsExample","isMiddleware","isGateway","isAgent","page","panels","tools","title","reads","slot","name","listings","npm"]},
+ {"file": "internal/plugin/store.go", "tags": ["spec","off","options"]},
+]
 
 routes = [
  R("GET","/api/settings",G+"api.go", res=["version","gateway","lan?","port?","lanURLs?","lanPublic?","publicURL?","onNetwork?","addrEnv?","allowIPs?","lanKeyId?","disabledModels?","web?","gatewayOn?","dir"],
@@ -59,6 +67,24 @@ routes = [
  R("GET","/api/signin/{id}",G+"providers.go", res=["<SignInState>"]),
  R("POST","/api/backup/import",G+"backup.go", req=["data","pass","agents","library?"], note="WKWebView flow; listed for reference"),
  R("GET","/api/usage/quotas",G+"usage.go", note="duplicates gateway /v1/magpie/*; reference only"),
+ # 「管理 › 插件」（PR feat/plugins）
+ R("GET","/api/plugins",G+"plugins.go", res=PLUGINS_RES, tags=PLUGINS_TAGS),
+ R("POST","/api/plugins/{op}",G+"plugins.go", actions=PLUGIN_OPS, req=["spec","off?","options?","provider?"], res=["<pluginsJSON>"],
+   note="untagged struct{ Spec string; Off bool; Options map[string]any; Provider string }; options replaces the whole map; add/update/upgrade may take minutes (Bun download, npm install)"),
+ R("POST","/api/plugins/check",G+"plugins.go", res=["at","plugins[].spec","plugins[].package","plugins[].version","plugins[].status","plugins[].latest?","plugins[].why?","plugins[].error?","state"],
+   tags=[{"file":"internal/plugin/updates.go","tags":["at","plugins","spec","package","version","latest","status","commit","head","why","error","limited","auto"]}], note="asks npm now; installs nothing"),
+ R("GET","/api/plugins/builtin",G+"builtins.go", res=["<[]builtinJSON>"],
+   tags=[{"file":G+"builtins.go","tags":["id","name","sub","on","chosen","source","state","why","inUse","use","parts","schema","config","broken"]},{"file":"internal/pluginrt/schema.go","tags":["type","properties","x-order","title","description","enum","minimum","maximum","default"]}],
+   note="a JSON array; each: id, name (English), sub, on, chosen, state (off|pending|active|failed|disposed), inUse, schema?, config?"),
+ R("POST","/api/plugins/builtin",G+"builtins.go", req=["id","on?","config?"], res=["<[]builtinJSON>"], note="exactly one of on / config; config is merged after schema validation; one in use is refused off"),
+ R("GET","/api/plugins/listings",G+"plugins.go", res=["listings[].package","listings[].name","listings[].kind?","listings[].summary?","listings[].npm?"],
+   tags=[{"file":"internal/plugin/market.go","tags":["package","name","icon","providers","community","replaces","kind","summary","version","description","weekly"]}]),
+ R("GET","/api/plugins/agents",G+"plugins.go", res=["<[]string>"], note="names of agent plugins in the market that are not installed"),
+ R("GET","/api/plugin-pages",G+"pluginpage.go", res=["<[]pluginPage>"],
+   tags=[{"file":G+"pluginpage.go","tags":["spec","name","key","title","titles","url","icon","replaces","reads","slot"]}],
+   note="a JSON array; open a page in the web shell as /?view=<key> (the page file itself expects the window's bridge)"),
+ R("GET","/api/plugin-panels",G+"pluginpage.go", res=["<[]pluginPanel>"]),
+ R("POST","/api/settings/plugin-option",G+"api.go", req=["provider","key","on"], res=["<settingsJSON>"], note="untagged struct{ Provider, Key string; On bool }; provider = the plugin's own provider id (pid)"),
 ]
 contract = {
  "magpieCommit": "80af3b86",

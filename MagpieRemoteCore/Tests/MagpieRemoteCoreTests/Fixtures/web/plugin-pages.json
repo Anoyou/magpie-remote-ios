@@ -1,0 +1,24 @@
+[
+ {
+  "spec": "github:example-owner/magpie-dash",
+  "name": "magpie-dash",
+  "key": "magpie-dash",
+  "title": "Dash",
+  "titles": {
+   "zh": "仪表盘"
+  },
+  "url": "/_magpie/plugin/0123456789abcdef0123456789abcdef/index.html",
+  "reads": [
+   "usage:summary"
+  ]
+ },
+ {
+  "spec": "example-page",
+  "name": "example-page",
+  "key": "example-page",
+  "title": "",
+  "url": "/_magpie/plugin/fedcba9876543210fedcba9876543210/page.html",
+  "replaces": "usage",
+  "reads": []
+ }
+]
