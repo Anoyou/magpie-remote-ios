@@ -1,0 +1,176 @@
+{
+ "providers": [
+  {
+   "searches": false,
+   "pinUpstream": false,
+   "unredacted": false,
+   "insecureTLS": false,
+   "limitRestOff": false,
+   "nativeCompaction": false,
+   "passUserAgent": false,
+   "authHeader": "",
+   "proxy": "",
+   "balanceToken": {
+    "takes": false,
+    "set": false
+   },
+   "marksKinds": true,
+   "ready": true,
+   "routing": "",
+   "affinity": "",
+   "maxConcurrency": null,
+   "unlisted": false,
+   "noModels": false,
+   "bestInFamily": false,
+   "off": false,
+   "agents": [],
+   "sponsored": false,
+   "id": "deepseek",
+   "name": "DeepSeek",
+   "icon": "deepseek-color",
+   "preset": "deepseek",
+   "host": "api.deepseek.com",
+   "chat": "https://api.deepseek.com/v1",
+   "responses": "https://api.deepseek.com/v1",
+   "anthropic": "https://api.deepseek.com/anthropic",
+   "catalog": "deepseek",
+   "website": "https://platform.deepseek.com",
+   "keysUrl": "https://platform.deepseek.com/api_keys",
+   "key": {
+    "set": true,
+    "masked": "sk-d…2222",
+    "optional": false
+   },
+   "chosen": [],
+   "fallback": [],
+   "exposed": 2,
+   "models": [
+    {
+     "id": "deepseek-chat",
+     "name": "DeepSeek Chat",
+     "images": false,
+     "on": true
+    },
+    {
+     "id": "deepseek-reasoner",
+     "name": "DeepSeek Reasoner",
+     "images": false,
+     "on": true
+    }
+   ],
+   "keyList": [
+    {
+     "id": "3dbebec1f4",
+     "masked": "sk-d…2222",
+     "active": true,
+     "on": true
+    }
+   ]
+  },
+  {
+   "searches": false,
+   "pinUpstream": false,
+   "unredacted": false,
+   "insecureTLS": false,
+   "limitRestOff": false,
+   "nativeCompaction": false,
+   "passUserAgent": false,
+   "authHeader": "",
+   "proxy": "",
+   "balanceToken": {
+    "takes": false,
+    "set": false
+   },
+   "marksKinds": true,
+   "ready": true,
+   "routing": "",
+   "affinity": "",
+   "maxConcurrency": null,
+   "unlisted": false,
+   "noModels": false,
+   "bestInFamily": false,
+   "off": false,
+   "agents": [],
+   "sponsored": false,
+   "id": "relay-one",
+   "name": "Relay One",
+   "icon": "",
+   "preset": "",
+   "host": "127.0.0.1:13499",
+   "chat": "http://127.0.0.1:13499/v1",
+   "responses": "",
+   "anthropic": "",
+   "catalog": "",
+   "website": "",
+   "keysUrl": "",
+   "key": {
+    "set": true,
+    "masked": "sk-r…1111",
+    "optional": false
+   },
+   "chosen": [
+    "gpt-4.1",
+    "o3"
+   ],
+   "fallback": [],
+   "exposed": 2,
+   "fetched": "Sun 2026-11-01 2:37 AM CST (UTC+08:00)",
+   "models": [
+    {
+     "id": "gpt-4.1",
+     "name": "GPT 4.1 (relay)",
+     "images": false,
+     "on": true
+    },
+    {
+     "id": "gpt-4.1-mini",
+     "name": "GPT 4.1 mini",
+     "images": false,
+     "on": false
+    },
+    {
+     "id": "o3",
+     "name": "OpenAI o3",
+     "images": false,
+     "on": true
+    }
+   ],
+   "keyList": [
+    {
+     "id": "5e670202bf",
+     "masked": "sk-r…1111",
+     "active": true,
+     "on": true
+    },
+    {
+     "id": "3dcdaa824e",
+     "name": "backup",
+     "masked": "sk-r…3333",
+     "active": false,
+     "on": true
+    }
+   ]
+  }
+ ],
+ "presets": [
+  {
+   "id": "deepseek",
+   "name": "DeepSeek"
+  }
+ ],
+ "excluded": [],
+ "gateway": {
+  "url": "http://127.0.0.1:3425",
+  "lan": true,
+  "running": true,
+  "mine": true,
+  "window": false,
+  "models": 5,
+  "calls": [],
+  "groups": [],
+  "archive": {
+   "on": false
+  }
+ },
+ "plugins": []
+}

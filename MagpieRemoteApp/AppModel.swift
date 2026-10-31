@@ -169,4 +169,18 @@ final class AppModel {
         guard let host = activeHost else { return AsyncThrowingStream { $0.finish(throwing: MagpieError.invalidURL) } }
         return service.chatStream(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id), request: request, sessionID: sessionID)
     }
+
+    // MARK: 管理页
+
+    /// 当前主机保存在钥匙串里的某种密钥（管理页用 Web 密钥与签发密钥）。
+    func manageSecret(_ kind: HostSecretKind) -> String? {
+        guard let host = activeHost else { return nil }
+        return store.secret(kind, host: host.id)
+    }
+
+    /// 把刚创建的网关密钥保存为当前主机的网关密钥。
+    func useAsGatewayKey(_ secret: String) throws {
+        guard let host = activeHost else { return }
+        try save(host, secrets: [.gatewayKey: secret])
+    }
 }

@@ -1,0 +1,16 @@
+{
+ "id": "9cab48eacf53dfe7159be36d",
+ "name": "contract-temp",
+ "key": "sk-magpie-key-EXAMPLE",
+ "expires": "2026-10-31T20:06:06.961524073Z",
+ "issuer": "3be1bdaeeab5c2c339f9e31e",
+ "models": [
+  "mock/mock-gpt-1"
+ ],
+ "limit": {
+  "period": "hours",
+  "hours": 1,
+  "tokens": 10000,
+  "since": "2026-10-31T19:06:06.961524073Z"
+ }
+}

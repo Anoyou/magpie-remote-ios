@@ -1,0 +1,853 @@
+{
+ "agents": [
+  {
+   "id": "claude",
+   "name": "Claude Code",
+   "icon": "claudecode-color",
+   "path": "~/.claude/settings.json",
+   "fields": [
+    {
+     "key": "model",
+     "label": "model",
+     "value": "opus",
+     "options": [
+      {
+       "value": "opus",
+       "label": "opus · claude-opus-5-5",
+       "note": "Claude Opus 5.5",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-haiku-5-5",
+       "note": "Claude Haiku 5.5",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-sonnet-5-5",
+       "note": "Claude Sonnet 5.5",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-opus-5-5",
+       "note": "Claude Opus 5.5",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-fable-5-1",
+       "note": "Claude Fable 5.1",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-opus-5",
+       "note": "Claude Opus 5",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-sonnet-5",
+       "note": "Claude Sonnet 5",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-fable-5",
+       "note": "Claude Fable 5",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-opus-4-8",
+       "note": "Claude Opus 4.8",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-opus-4-7",
+       "note": "Claude Opus 4.7",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-sonnet-4-6",
+       "note": "Claude Sonnet 4.6",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-opus-4-6",
+       "note": "Claude Opus 4.6",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-opus-4-5",
+       "note": "Claude Opus 4.5 (latest)",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-opus-4-5-20251101",
+       "note": "Claude Opus 4.5",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic",
+       "alias": "claude-opus-4-5"
+      },
+      {
+       "value": "claude-haiku-4-5",
+       "note": "Claude Haiku 4.5 (latest)",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-haiku-4-5-20251001",
+       "note": "Claude Haiku 4.5",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic",
+       "alias": "claude-haiku-4-5"
+      },
+      {
+       "value": "claude-sonnet-4-5",
+       "note": "Claude Sonnet 4.5 (latest)",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      },
+      {
+       "value": "claude-sonnet-4-5-20250929",
+       "note": "Claude Sonnet 4.5",
+       "icon": "claude-color",
+       "group": "Claude Code",
+       "direct": "Anthropic",
+       "alias": "claude-sonnet-4-5"
+      },
+      {
+       "value": "group/fast",
+       "label": "fast",
+       "note": "routing group · via magpie",
+       "icons": [
+        ""
+       ],
+       "group": "Routing groups",
+       "ref": "group/fast"
+      },
+      {
+       "value": "mock/mock-gpt-1",
+       "label": "mock-gpt-1",
+       "note": "Mock · via magpie",
+       "group": "Mock",
+       "ref": "mock/mock-gpt-1"
+      },
+      {
+       "value": "mock/mock-gpt-mini",
+       "label": "mock-gpt-mini",
+       "note": "Mock · via magpie",
+       "group": "Mock",
+       "ref": "mock/mock-gpt-mini"
+      }
+     ]
+    },
+    {
+     "key": "effort",
+     "label": "effort",
+     "value": "",
+     "options": [
+      {
+       "value": "low",
+       "note": ""
+      },
+      {
+       "value": "medium",
+       "note": ""
+      },
+      {
+       "value": "high",
+       "note": ""
+      },
+      {
+       "value": "xhigh",
+       "note": ""
+      },
+      {
+       "value": "max",
+       "note": ""
+      }
+     ]
+    },
+    {
+     "key": "ultracode",
+     "label": "ultracode",
+     "value": "",
+     "options": [
+      {
+       "value": "on",
+       "note": "Claude plans a workflow for each substantive task"
+      }
+     ]
+    },
+    {
+     "key": "opus",
+     "label": "opus",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "sonnet",
+     "label": "sonnet",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "haiku",
+     "label": "haiku",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "fable",
+     "label": "fable",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "subagent",
+     "label": "subagents",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "opus_effort",
+     "label": "opus effort",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "sonnet_effort",
+     "label": "sonnet effort",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "haiku_effort",
+     "label": "haiku effort",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "fable_effort",
+     "label": "fable effort",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "subagent_effort",
+     "label": "subagent effort",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "auto_mode",
+     "label": "auto mode",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "login",
+     "label": "sign-in",
+     "value": "",
+     "options": []
+    }
+   ],
+   "models": {
+    "shown": 3,
+    "listed": 3,
+    "by": [
+     {
+      "name": "Routing groups",
+      "icons": [
+       ""
+      ],
+      "n": 1
+     },
+     {
+      "name": "Mock",
+      "n": 2
+     }
+    ],
+    "names": [
+     "fast",
+     "mock-gpt-1",
+     "mock-gpt-mini"
+    ]
+   },
+   "cliMissing": true
+  },
+  {
+   "id": "codex",
+   "name": "Codex",
+   "icon": "codex-color",
+   "path": "~/.codex/config.toml",
+   "fields": [
+    {
+     "key": "model",
+     "label": "model",
+     "value": "gpt-5",
+     "options": [
+      {
+       "value": "group/fast",
+       "label": "fast",
+       "note": "routing group · via magpie",
+       "icons": [
+        ""
+       ],
+       "group": "Routing groups",
+       "ref": "group/fast"
+      },
+      {
+       "value": "mock/mock-gpt-1",
+       "label": "mock-gpt-1",
+       "note": "Mock · via magpie",
+       "group": "Mock",
+       "ref": "mock/mock-gpt-1"
+      },
+      {
+       "value": "mock/mock-gpt-mini",
+       "label": "mock-gpt-mini",
+       "note": "Mock · via magpie",
+       "group": "Mock",
+       "ref": "mock/mock-gpt-mini"
+      }
+     ]
+    },
+    {
+     "key": "effort",
+     "label": "effort",
+     "value": "",
+     "options": [
+      {
+       "value": "low",
+       "note": ""
+      },
+      {
+       "value": "medium",
+       "note": ""
+      },
+      {
+       "value": "high",
+       "note": ""
+      },
+      {
+       "value": "xhigh",
+       "note": ""
+      }
+     ]
+    },
+    {
+     "key": "subagent",
+     "label": "subagents",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "subagent_model",
+     "label": "subagent model",
+     "value": "",
+     "options": [
+      {
+       "value": "mock/mock-gpt-1",
+       "label": "mock-gpt-1",
+       "note": "Mock · via magpie",
+       "group": "Mock",
+       "ref": "mock/mock-gpt-1"
+      },
+      {
+       "value": "mock/mock-gpt-mini",
+       "label": "mock-gpt-mini",
+       "note": "Mock · via magpie",
+       "group": "Mock",
+       "ref": "mock/mock-gpt-mini"
+      },
+      {
+       "value": "group/fast",
+       "label": "fast",
+       "note": "routing group · via magpie",
+       "icons": [
+        ""
+       ],
+       "group": "Routing groups",
+       "ref": "group/fast"
+      }
+     ]
+    },
+    {
+     "key": "subagent_effort",
+     "label": "subagent effort",
+     "value": "",
+     "options": [
+      {
+       "value": "low",
+       "note": ""
+      },
+      {
+       "value": "medium",
+       "note": ""
+      },
+      {
+       "value": "high",
+       "note": ""
+      },
+      {
+       "value": "xhigh",
+       "note": ""
+      }
+     ]
+    },
+    {
+     "key": "memories",
+     "label": "memories",
+     "value": "",
+     "options": []
+    },
+    {
+     "key": "login",
+     "label": "sign-in",
+     "value": "",
+     "options": [
+      {
+       "value": "",
+       "label": "ChatGPT",
+       "note": "magpie's models join Codex's own; Codex stays signed in to ChatGPT, and while the Codex app blocks its account (out of allowance, no credits left) magpie is Codex's provider, so the app still sends"
+      },
+      {
+       "value": "chatgpt",
+       "label": "Always ChatGPT",
+       "note": "as ChatGPT, and kept so while the Codex app blocks its account: magpie never becomes Codex's provider. The Codex app may then send nothing till the account has room; Codex CLI goes on through magpie"
+      },
+      {
+       "value": "api",
+       "label": "magpie API",
+       "note": "magpie is Codex's provider, with magpie's models only; the Codex app keeps its ChatGPT account (its chats, projects and Chrome control) while the account has room"
+      }
+     ]
+    }
+   ],
+   "models": {
+    "shown": 3,
+    "listed": 3,
+    "by": [
+     {
+      "name": "Routing groups",
+      "icons": [
+       ""
+      ],
+      "n": 1
+     },
+     {
+      "name": "Mock",
+      "n": 2
+     }
+    ],
+    "names": [
+     "fast",
+     "mock-gpt-1",
+     "mock-gpt-mini"
+    ]
+   },
+   "cliMissing": true
+  }
+ ],
+ "clients": [
+  {
+   "id": "claude",
+   "name": "Claude Code",
+   "icon": "claudecode-color"
+  },
+  {
+   "id": "claude-desktop",
+   "name": "Claude Desktop",
+   "icon": "claude-color"
+  },
+  {
+   "id": "claude-science",
+   "name": "Claude Science",
+   "icon": "claude-color"
+  },
+  {
+   "id": "codex",
+   "name": "Codex",
+   "icon": "codex-color"
+  },
+  {
+   "id": "gemini",
+   "name": "Gemini CLI",
+   "icon": "geminicli-color"
+  },
+  {
+   "id": "agy",
+   "name": "Antigravity CLI",
+   "icon": "antigravity-color"
+  },
+  {
+   "id": "opencode",
+   "name": "OpenCode",
+   "icon": "opencode"
+  },
+  {
+   "id": "openchamber",
+   "name": "OpenChamber",
+   "icon": "openchamber"
+  },
+  {
+   "id": "mimocode",
+   "name": "MiMo Code",
+   "icon": "mimocode"
+  },
+  {
+   "id": "deveco",
+   "name": "DevEco Code",
+   "icon": "deveco-color"
+  },
+  {
+   "id": "pi",
+   "name": "Pi",
+   "icon": "pi"
+  },
+  {
+   "id": "stepcode",
+   "name": "StepCode",
+   "icon": "stepfun-color"
+  },
+  {
+   "id": "mothx",
+   "name": "MothX",
+   "icon": "mothx"
+  },
+  {
+   "id": "penguin",
+   "name": "PenguinHarness",
+   "icon": "penguin-color"
+  },
+  {
+   "id": "aside",
+   "name": "Aside",
+   "icon": "aside"
+  },
+  {
+   "id": "omo",
+   "name": "OmO",
+   "icon": "omo"
+  },
+  {
+   "id": "prime-agent",
+   "name": "Prime Agent",
+   "icon": "prime-agent"
+  },
+  {
+   "id": "goose",
+   "name": "Goose",
+   "icon": "goose"
+  },
+  {
+   "id": "cursor",
+   "name": "Cursor CLI",
+   "icon": "cursor"
+  },
+  {
+   "id": "cursor-local",
+   "name": "Cursor Private Inference",
+   "icon": "cursor"
+  },
+  {
+   "id": "zed",
+   "name": "Zed",
+   "icon": "zed"
+  },
+  {
+   "id": "vscode",
+   "name": "VS Code",
+   "icon": "vscode"
+  },
+  {
+   "id": "vscode-insiders",
+   "name": "VS Code Insiders",
+   "icon": "vscode"
+  },
+  {
+   "id": "vscodium",
+   "name": "VSCodium",
+   "icon": "vscode"
+  },
+  {
+   "id": "zoo-code",
+   "name": "Zoo Code",
+   "icon": "zoo-code"
+  },
+  {
+   "id": "copilot-jetbrains",
+   "name": "Copilot (JetBrains)",
+   "icon": "githubcopilot"
+  },
+  {
+   "id": "air",
+   "name": "JetBrains Air",
+   "icon": "air"
+  },
+  {
+   "id": "copilot",
+   "name": "Copilot CLI",
+   "icon": "githubcopilot"
+  },
+  {
+   "id": "crush",
+   "name": "Crush",
+   "icon": "crush"
+  },
+  {
+   "id": "dsh",
+   "name": "DeepSeek Harness",
+   "icon": "deepseek-color"
+  },
+  {
+   "id": "reasonix",
+   "name": "Reasonix Studio",
+   "icon": "reasonix-color"
+  },
+  {
+   "id": "commandcode",
+   "name": "Command Code",
+   "icon": "commandcode"
+  },
+  {
+   "id": "fx",
+   "name": "fx",
+   "icon": "fx"
+  },
+  {
+   "id": "omp",
+   "name": "omp",
+   "icon": "omp"
+  },
+  {
+   "id": "devin",
+   "name": "Devin",
+   "icon": "devin"
+  },
+  {
+   "id": "hermes",
+   "name": "Hermes Agent",
+   "icon": "hermes"
+  },
+  {
+   "id": "morph",
+   "name": "Mister Morph",
+   "icon": "mistermorph-color"
+  },
+  {
+   "id": "kimi",
+   "name": "Kimi Code",
+   "icon": "kimi"
+  },
+  {
+   "id": "qwen",
+   "name": "Qwen Code",
+   "icon": "qwen-color"
+  },
+  {
+   "id": "muse",
+   "name": "Muse Code",
+   "icon": "meta-color"
+  },
+  {
+   "id": "empryo",
+   "name": "Empryo",
+   "icon": "empryo-color"
+  },
+  {
+   "id": "ante",
+   "name": "Ante",
+   "icon": "generic"
+  },
+  {
+   "id": "astrbot",
+   "name": "AstrBot",
+   "icon": "astrbot"
+  },
+  {
+   "id": "openclaw",
+   "name": "OpenClaw",
+   "icon": "openclaw"
+  },
+  {
+   "id": "jcode",
+   "name": "jcode",
+   "icon": "jcode"
+  },
+  {
+   "id": "minimax-code",
+   "name": "MiniMax Code",
+   "icon": "minimax-color"
+  },
+  {
+   "id": "droid",
+   "name": "Droid",
+   "icon": "factory"
+  },
+  {
+   "id": "cline",
+   "name": "Cline",
+   "icon": "cline"
+  },
+  {
+   "id": "qoder",
+   "name": "Qoder",
+   "icon": "qoder"
+  },
+  {
+   "id": "qoder-cn",
+   "name": "Qoder CN",
+   "icon": "qoder"
+  },
+  {
+   "id": "grok",
+   "name": "Grok Build",
+   "icon": "xai"
+  },
+  {
+   "id": "grok-app",
+   "name": "Grok App",
+   "icon": "grok"
+  },
+  {
+   "id": "zcode",
+   "name": "ZCode",
+   "icon": "zcode"
+  },
+  {
+   "id": "workbuddy",
+   "name": "WorkBuddy",
+   "icon": "workbuddy-color"
+  },
+  {
+   "id": "workbuddy-ai",
+   "name": "WorkBuddy AI",
+   "icon": "workbuddy-color"
+  },
+  {
+   "id": "codebuddy",
+   "name": "CodeBuddy",
+   "icon": "codebuddy-color"
+  },
+  {
+   "id": "pencil",
+   "name": "Pencil",
+   "icon": "generic"
+  },
+  {
+   "id": "openpencil",
+   "name": "OpenPencil",
+   "icon": "generic"
+  },
+  {
+   "id": "newmax",
+   "name": "NewMax",
+   "icon": "generic"
+  },
+  {
+   "id": "raycast",
+   "name": "Raycast",
+   "icon": "raycast"
+  },
+  {
+   "id": "kirocrew",
+   "name": "Kiro Crew",
+   "icon": "generic"
+  },
+  {
+   "id": "t3code",
+   "name": "T3 Code",
+   "icon": "t3code"
+  },
+  {
+   "id": "hanako",
+   "name": "OpenHanako",
+   "icon": "hanako"
+  },
+  {
+   "id": "atomcode",
+   "name": "AtomCode",
+   "icon": "atomcode"
+  },
+  {
+   "id": "snow",
+   "name": "Snow CLI",
+   "icon": "snow"
+  },
+  {
+   "id": "alma",
+   "name": "Alma",
+   "icon": "alma"
+  },
+  {
+   "id": "cindy",
+   "name": "Cindy",
+   "icon": "cindy"
+  },
+  {
+   "id": "aionui",
+   "name": "AionUi",
+   "icon": "aionui"
+  },
+  {
+   "id": "lody",
+   "name": "Lody",
+   "icon": "lody"
+  },
+  {
+   "id": "magpie",
+   "name": "magpie",
+   "icon": "magpie"
+  },
+  {
+   "id": "curl",
+   "name": "curl",
+   "icon": "curl"
+  },
+  {
+   "id": "pi-desktop",
+   "name": "PI-Desktop",
+   "icon": "pi"
+  },
+  {
+   "id": "kimi-code-desktop",
+   "name": "Kimi Code Desktop",
+   "icon": "kimi-code-desktop"
+  },
+  {
+   "id": "raft",
+   "name": "Raft",
+   "icon": "generic"
+  }
+ ],
+ "catalog": "/Users/example/magpie-fixture/home/.cache/magpie/models.json",
+ "served": 2
+}

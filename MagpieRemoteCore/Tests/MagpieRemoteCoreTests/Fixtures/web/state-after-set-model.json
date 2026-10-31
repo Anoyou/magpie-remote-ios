@@ -1,0 +1,83 @@
+{
+ "agents": [
+  {
+   "id": "claude",
+   "name": "Claude Code",
+   "icon": "claudecode-color",
+   "path": "~/.claude/settings.json",
+   "wired": null,
+   "fields": [
+    {
+     "key": "model",
+     "label": "model",
+     "value": "",
+     "options": [
+      {
+       "value": "claude-sonnet-5-5",
+       "note": "Claude Sonnet 5.5",
+       "group": "Claude Code",
+       "direct": "Anthropic"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "codex",
+   "name": "Codex",
+   "icon": "codex-color",
+   "path": "~/.codex/config.toml",
+   "wired": true,
+   "fields": [
+    {
+     "key": "model",
+     "label": "model",
+     "value": "relay-one/gpt-4.1",
+     "options": [
+      {
+       "value": "group/smart",
+       "label": "Smart",
+       "note": "Routing groups · via magpie",
+       "group": "Routing groups",
+       "ref": "group/smart"
+      },
+      {
+       "value": "relay-one/gpt-4.1",
+       "label": "GPT 4.1 (relay)",
+       "note": "Relay One · via magpie",
+       "group": "Relay One",
+       "ref": "relay-one/gpt-4.1"
+      },
+      {
+       "value": "relay-one/o3",
+       "label": "OpenAI o3",
+       "note": "Relay One · via magpie",
+       "group": "Relay One",
+       "ref": "relay-one/o3"
+      }
+     ]
+    },
+    {
+     "key": "effort",
+     "label": "effort",
+     "value": "",
+     "options": [
+      {
+       "value": "low",
+       "note": ""
+      },
+      {
+       "value": "high",
+       "note": ""
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "clients": [],
+ "catalog": "",
+ "served": 5,
+ "notice": "Codex builds its model list at start-up — restart the Codex app to see this.",
+ "connected": null
+}

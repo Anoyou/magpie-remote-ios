@@ -78,6 +78,9 @@ final class MagpieRemoteUITests: XCTestCase {
         let app = launch()
         app.tabBars.buttons["管理"].tap()
         let about = app.buttons["manage.about"].firstMatch
+        XCTAssertTrue(app.navigationBars["管理"].waitForExistence(timeout: 10))
+        // 「关于」在管理页最下面，列表懒加载：先滑到底
+        for _ in 0..<6 where !(about.exists && about.isHittable) { app.swipeUp() }
         XCTAssertTrue(about.waitForExistence(timeout: 10))
         about.tap()
         XCTAssertTrue(app.navigationBars["关于"].waitForExistence(timeout: 10))
