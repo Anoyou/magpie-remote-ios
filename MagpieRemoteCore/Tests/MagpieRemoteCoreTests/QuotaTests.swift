@@ -23,6 +23,11 @@ private func assertNear(_ actual: Date?, _ expected: Date, file: StaticString = 
     XCTAssertEqual(actual.timeIntervalSince(expected), 0, accuracy: 60, file: file, line: line)
 }
 
+/// contract.yml 抓到的真实 magpie 响应（Fixtures/live）。
+private func live(_ name: String) -> String {
+    String(decoding: (try? LiveFixture.data(name)) ?? Data(), as: UTF8.self)
+}
+
 private func decodeList<T: Decodable>(_ type: T.Type, _ json: String) throws -> [T] {
     try JSONDecoder().decode(QuotaList<T>.self, from: Data(json.utf8)).data
 }
@@ -119,10 +124,10 @@ final class QuotaDecodingTests: XCTestCase {
 
     func testLiveEmptyListsAndNulls() throws {
         XCTAssertEqual(try decodeList(QuotaCard.self, QuotaFixtures.gatewayCardsEmpty), [])
-        XCTAssertEqual(try decodeList(QuotaCard.self, QuotaFixtures.liveCards), [])
-        XCTAssertEqual(try decodeList(QuotaCard.self, QuotaFixtures.liveQuotas), [])
-        XCTAssertEqual(try decodeList(QuotaCard.self, QuotaFixtures.liveQuotasKept), [])
-        XCTAssertEqual(try decodeList(QuotaHistorySeries.self, QuotaFixtures.liveHistory7), [])
+        XCTAssertEqual(try decodeList(QuotaCard.self, live("gw-quotas-cards.json")), [])
+        XCTAssertEqual(try decodeList(QuotaCard.self, live("gw-quotas.json")), [])
+        XCTAssertEqual(try decodeList(QuotaCard.self, live("gw-quotas-kept.json")), [])
+        XCTAssertEqual(try decodeList(QuotaHistorySeries.self, live("gw-quotas-history.json")), [])
         XCTAssertEqual(try decodeList(QuotaCard.self, #"{"object":"list","data":null}"#), [])
         // 卡片里的 windows 为 null、类型不对的字段都不该让整张卡片失败。
         let cards = try decodeList(QuotaCard.self, #"{"data":[{"provider":"p","name":"P","windows":null,"used":"x","readAt":"?"}]}"#)
@@ -176,7 +181,7 @@ final class QuotaDecodingTests: XCTestCase {
         XCTAssertFalse(unlimited.limited)
         XCTAssertEqual(unlimited.key, "iPhone")
         XCTAssertTrue(unlimited.allBudgets.isEmpty)
-        XCTAssertFalse(try decoder.decode(KeyLimit.self, from: Data(QuotaFixtures.liveLimit.utf8)).limited)
+        XCTAssertFalse(try decoder.decode(KeyLimit.self, from: Data(live("gw-limit.json").utf8)).limited)
 
         let limited = try decoder.decode(KeyLimit.self, from: Data(QuotaFixtures.gatewayLimitLimited.utf8))
         XCTAssertTrue(limited.limited)
@@ -197,7 +202,7 @@ final class QuotaDecodingTests: XCTestCase {
         XCTAssertNotNil(issued.expires)
         XCTAssertEqual(issued.allBudgets.map(\.periodText), ["每 30 天", "每天"])
 
-        let live = try decoder.decode(KeyLimit.self, from: Data(QuotaFixtures.liveHeldLimit.utf8))
+        let live = try decoder.decode(KeyLimit.self, from: Data(live("held-limit.json").utf8))
         XCTAssertTrue(live.limited)
         XCTAssertNotNil(live.expires)
         XCTAssertNotNil(live.limit?.reset)
@@ -213,8 +218,8 @@ final class QuotaDecodingTests: XCTestCase {
     }
 
     func testAccessErrorsFromFixtures() {
-        XCTAssertEqual(QuotaAccessError.from(status: 403, body: Data(QuotaFixtures.liveHeldQuotas.utf8)), .keyHeld)
-        XCTAssertEqual(QuotaAccessError.from(status: 403, body: Data(QuotaFixtures.liveReadOnly.utf8)), .readOnly)
+        XCTAssertEqual(QuotaAccessError.from(status: 403, body: Data(live("err-held-quotas.json").utf8)), .keyHeld)
+        XCTAssertEqual(QuotaAccessError.from(status: 403, body: Data(live("err-readonly-models.json").utf8)), .readOnly)
         XCTAssertEqual(QuotaAccessError.from(status: 400, body: Data(QuotaFixtures.gatewayRefreshRemoteCard.utf8)), .remoteCard)
         XCTAssertNil(QuotaAccessError.from(status: 403, body: Data(QuotaFixtures.gatewayQuotasNotShared.utf8)))
         XCTAssertNil(QuotaAccessError.from(status: 403, body: Data("magpie is not shared".utf8)))
@@ -379,7 +384,7 @@ final class QuotaClientTests: XCTestCase {
 
     func testSnapshotStillWorksWhenReadingsFail() async throws {
         StubURLProtocol.handler = { request in
-            if request.url?.path == QuotaEndpoint.cards { return (200, [:], Data(QuotaFixtures.liveCards.utf8)) }
+            if request.url?.path == QuotaEndpoint.cards { return (200, [:], Data(live("gw-quotas-cards.json").utf8)) }
             return (500, [:], Data("boom".utf8))
         }
         let snapshot = try await client.quotaSnapshot()
@@ -389,8 +394,8 @@ final class QuotaClientTests: XCTestCase {
     func testHeldKeyFallsBackToOwnLimit() async throws {
         StubURLProtocol.handler = { request in
             switch request.url?.path {
-            case QuotaEndpoint.cards, QuotaEndpoint.quotas: return (403, ["Content-Type": "application/json"], Data(QuotaFixtures.liveHeldQuotas.utf8))
-            case QuotaEndpoint.limit: return (200, [:], Data(QuotaFixtures.liveHeldLimit.utf8))
+            case QuotaEndpoint.cards, QuotaEndpoint.quotas: return (403, ["Content-Type": "application/json"], Data(live("err-held-quotas.json").utf8))
+            case QuotaEndpoint.limit: return (200, [:], Data(live("held-limit.json").utf8))
             default: return (404, [:], Data())
             }
         }
@@ -424,7 +429,7 @@ final class QuotaClientTests: XCTestCase {
     }
 
     func testRefreshReadOnlyAndRemoteCard() async {
-        StubURLProtocol.handler = { _ in (403, [:], Data(QuotaFixtures.liveReadOnly.utf8)) }
+        StubURLProtocol.handler = { _ in (403, [:], Data(live("err-readonly-models.json").utf8)) }
         do { _ = try await client.refreshQuotaCards(); XCTFail("应报错") } catch { XCTAssertEqual(error as? QuotaAccessError, .readOnly) }
         StubURLProtocol.handler = { _ in (400, [:], Data(QuotaFixtures.gatewayRefreshRemoteCard.utf8)) }
         do { _ = try await client.refreshQuotaCards(provider: "x"); XCTFail("应报错") } catch { XCTAssertEqual(error as? QuotaAccessError, .remoteCard) }

@@ -1,6 +1,6 @@
 // 额度模型解码测试用的 fixture（全部为假值：@example.com、13800000000 等）。
 // - gateway*：按 magpie 源码（internal/provider/quotas.go、subscription_usage.go、quota_history.go、internal/budget）的字段写的示例，时间为 RFC 3339；
-// - live*：contract.yml 对真实 magpie v0.1.2438 抓到并脱敏的响应（Fixtures/live 同名文件）。
+// 真实 magpie 的响应直接读 Fixtures/live（LiveFixture）。
 // 内嵌为字符串，避免改动测试 target 的资源配置。
 
 enum QuotaFixtures {
@@ -412,46 +412,6 @@ enum QuotaFixtures {
     "param": null
   }
 }
-"""#
-
-    /// live: gw-quotas-cards.json
-    static let liveCards = #"""
-{"data":[],"object":"list"}
-"""#
-
-    /// live: gw-quotas-history.json
-    static let liveHistory7 = #"""
-{"data":[],"object":"list"}
-"""#
-
-    /// live: gw-quotas.json
-    static let liveQuotas = #"""
-{"data":[],"object":"list"}
-"""#
-
-    /// live: gw-quotas-kept.json
-    static let liveQuotasKept = #"""
-{"data":[],"object":"list"}
-"""#
-
-    /// live: gw-limit.json
-    static let liveLimit = #"""
-{"key":"Contract client","limited":false}
-"""#
-
-    /// live: held-limit.json
-    static let liveHeldLimit = #"""
-{"expires":"2026-10-31T20:06:06.961524073Z","key":"contract-temp","limit":{"period":"hours","hours":1,"start":"2026-10-31T19:06:06.961524073Z","reset":"2026-10-31T20:06:06.961524073Z","calls":0,"tokens":0,"cost":0,"tokenLimit":10000,"tokensLeft":10000,"costLeft":0,"spent":false},"limited":true,"limits":[{"period":"hours","hours":1,"start":"2026-10-31T19:06:06.961524073Z","reset":"2026-10-31T20:06:06.961524073Z","calls":0,"tokens":0,"cost":0,"tokenLimit":10000,"tokensLeft":10000,"costLeft":0,"spent":false}]}
-"""#
-
-    /// live: err-held-quotas.json
-    static let liveHeldQuotas = #"""
-{"error":{"code":"gateway_key_held","message":"this gateway key is held to a budget, models or accounts, so it is told nothing of this magpie's accounts: GET /v1/magpie/limit tells it its own limit","type":"permission_error"}}
-"""#
-
-    /// live: err-readonly-models.json
-    static let liveReadOnly = #"""
-{"error":{"code":"gateway_key_read_only","message":"this gateway key is read-only: it may read magpie's quotas and usage (GET /v1/magpie/quotas, /v1/magpie/quotas/history, /v1/magpie/usage, /v1/magpie/usage/requests, /v1/magpie/limit) and use no model, MCP server or write. Use a key with full access for that (Gateway → Gateway keys, or magpie gateway-key access <id> full)","type":"permission_error"}}
 """#
 
 }
