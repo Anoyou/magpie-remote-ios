@@ -40,6 +40,7 @@ public struct WebClient: Sendable {
         var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = method
         request.httpShouldHandleCookies = false
+        request.setValue(ClientIdentity.userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("\(cookieName)=\(key)", forHTTPHeaderField: "Cookie")
         if let body {

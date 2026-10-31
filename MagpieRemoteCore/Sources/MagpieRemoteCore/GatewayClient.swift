@@ -54,6 +54,7 @@ public struct GatewayClient: Sendable {
         var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(ClientIdentity.userAgent, forHTTPHeaderField: "User-Agent")
         if let key, !key.isEmpty { request.setValue("Bearer " + key, forHTTPHeaderField: "Authorization") }
         if let body {
             request.httpBody = body
