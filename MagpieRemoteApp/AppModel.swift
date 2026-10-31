@@ -133,9 +133,19 @@ final class AppModel {
 
     // MARK: 页面数据
 
-    func loadQuota() async throws -> [QuotaItem] {
+    func loadQuotaSnapshot() async throws -> QuotaSnapshot {
+        guard let host = activeHost else { return .cards([]) }
+        return try await service.quotaSnapshot(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id))
+    }
+
+    func loadQuotaHistory(days: Int) async throws -> [QuotaHistorySeries] {
         guard let host = activeHost else { return [] }
-        return try await service.quota(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id))
+        return try await service.quotaHistory(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id), days: days)
+    }
+
+    func refreshQuotas(provider: String? = nil, user: String? = nil) async throws -> [QuotaCard] {
+        guard let host = activeHost else { return [] }
+        return try await service.refreshQuotas(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id), provider: provider, user: user)
     }
 
     func loadUsageSummary(_ period: UsagePeriod) async throws -> UsageAccess<UsageSummary> {
