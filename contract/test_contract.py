@@ -463,7 +463,8 @@ def _seed_claude_sessions() -> None:
         ]
         path = os.path.join(folder, sid + ".jsonl")
         with open(path, "w", encoding="utf-8") as f:
-            f.write("\n".join(json.dumps(l) for l in lines) + "\n")
+            # 紧凑写法：magpie 按字节找 "type":"user"（不带空格），和 Claude Code 自己写的一样
+            f.write("\n".join(json.dumps(l, ensure_ascii=False, separators=(",", ":")) for l in lines) + "\n")
         os.utime(path, (old, old))
 
 
