@@ -157,30 +157,28 @@ private struct QuotaGroupsView: View {
     @State private var expansion = QuotaExpansionStore.shared
 
     var body: some View {
-        GlassEffectContainer(spacing: 12) {
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(QuotaGroup.group(cards)) { group in
-                    let accounts = QuotaAccount.group(group.cards)
-                    if accounts.count > 1 {
-                        Text("\(group.title) · \(accounts.count) 个账号")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 4)
-                    }
-                    ForEach(accounts) { account in
-                        QuotaAccountView(
-                            account: account, now: now,
-                            expanded: expansion.state.isExpanded(account.id),
-                            refreshing: account.cards.contains { $0.id == refreshingCard },
-                            range: $range,
-                            history: history.map { all in all.filter { account.historyKeys.contains($0.id) } },
-                            historyFailed: historyFailed,
-                            toggle: {
-                                withAnimation(.snappy(duration: 0.3)) { expansion.state.toggle(account.id) }
-                            },
-                            refresh: { if let card = account.refreshCard { refresh(card) } }
-                        )
-                    }
+        VStack(alignment: .leading, spacing: 12) {
+            ForEach(QuotaGroup.group(cards)) { group in
+                let accounts = QuotaAccount.group(group.cards)
+                if accounts.count > 1 {
+                    Text("\(group.title) · \(accounts.count) 个账号")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
+                }
+                ForEach(accounts) { account in
+                    QuotaAccountView(
+                        account: account, now: now,
+                        expanded: expansion.state.isExpanded(account.id),
+                        refreshing: account.cards.contains { $0.id == refreshingCard },
+                        range: $range,
+                        history: history.map { all in all.filter { account.historyKeys.contains($0.id) } },
+                        historyFailed: historyFailed,
+                        toggle: {
+                            withAnimation(.snappy(duration: 0.3)) { expansion.state.toggle(account.id) }
+                        },
+                        refresh: { if let card = account.refreshCard { refresh(card) } }
+                    )
                 }
             }
         }
@@ -203,11 +201,10 @@ private struct QuotaAccountView: View {
             header
             if expanded {
                 detail
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .clipShape(.rect(cornerRadius: 22, style: .continuous))
         .glassCard()
     }
 
@@ -276,8 +273,6 @@ private struct QuotaAccountView: View {
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 16)
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("quota.account.detail")
     }
 }
 

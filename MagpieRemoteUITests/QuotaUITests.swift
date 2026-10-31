@@ -64,9 +64,9 @@ final class QuotaUITests: XCTestCase {
         XCTAssertEqual(work.value as? String, "已展开")
         XCTAssertEqual(cards(app).count, 1, "只应展开点按的那个账号")
         work.tap()
-        let gone = NSPredicate(format: "count == 0")
-        expectation(for: gone, evaluatedWith: cards(app))
-        waitForExpectations(timeout: 5)
+        let collapsed = expectation(for: NSPredicate(format: "value == %@", "已收起"), evaluatedWith: work)
+        wait(for: [collapsed], timeout: 5)
+        XCTAssertTrue(cards(app).firstMatch.waitForNonExistence(timeout: 5), "再次点按后没有收起账号明细")
     }
 
     func testExpandedStateKeptAcrossTabs() {
@@ -86,6 +86,7 @@ final class QuotaUITests: XCTestCase {
         let work = header("工作 Claude", in: app)
         XCTAssertTrue(work.waitForExistence(timeout: 15))
         work.tap()
+        XCTAssertTrue(cards(app).firstMatch.waitForExistence(timeout: 5), "点按后没有展开账号明细")
         let caption = app.staticTexts["quota.history.caption"].firstMatch
         let month = app.buttons["30 天"].firstMatch
         scrollTo(month, in: app)
