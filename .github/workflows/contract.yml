@@ -37,6 +37,8 @@ on:
       - "!scripts/ci-changes.py"
       - "!scripts/print-xcresult-failures.py"
       - "!scripts/ui-test-shards.py"
+      - "!scripts/ci-sim-dyld-cache.sh"
+      - "!.github/workflows/sim-cache.yml"
   push:
     branches: [main]
     paths:
@@ -64,6 +66,8 @@ on:
       - "!scripts/ci-changes.py"
       - "!scripts/print-xcresult-failures.py"
       - "!scripts/ui-test-shards.py"
+      - "!scripts/ci-sim-dyld-cache.sh"
+      - "!.github/workflows/sim-cache.yml"
   workflow_dispatch:
     inputs:
       magpie_ref:

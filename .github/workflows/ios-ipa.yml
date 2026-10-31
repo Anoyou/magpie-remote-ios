@@ -21,6 +21,10 @@ on:
       - ".github/workflows/ios.yml"
       - ".github/workflows/contract.yml"
       - ".github/workflows/magpie-compat.yml"
+      - ".github/workflows/sim-cache.yml"
+      - "scripts/ci-sim-dyld-cache.sh"
+      - "scripts/ui-test-shards.py"
+      - "scripts/ci-changes.py"
   pull_request:
     branches: [main]
     paths:

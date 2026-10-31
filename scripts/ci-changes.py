@@ -53,6 +53,8 @@ RULES: list[tuple[str, tuple[bool, bool]]] = [
     ("scripts/ci-select-simulator.py", IOS),
     ("scripts/print-xcresult-failures.py", IOS),
     ("scripts/ui-test-shards.py", IOS),
+    ("scripts/ci-sim-dyld-cache.sh", IOS),
+    (".github/workflows/sim-cache.yml", IOS),
     # 其他 Markdown（不在 App 包里）：都不需要
     ("*.md", NONE),
 ]

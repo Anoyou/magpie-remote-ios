@@ -1,0 +1,66 @@
+name: 模拟器缓存预热
+
+# 在 main 上生成并保存模拟器 dyld 共享缓存（scripts/ci-sim-dyld-cache.sh），供所有 PR 的「iOS」UI 测试分片恢复。
+# actions/cache 的作用域：main 上保存的缓存所有 PR 都能用；PR 上保存的只有该 PR 自己能用。
+# runner 镜像更新后 key 会变，每天跑一次即可跟上；key 已存在时约 1 分钟就结束。
+on:
+  schedule:
+    - cron: "17 20 * * *" # 每天 20:17 UTC（北京时间 04:17）
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sim-cache.yml"
+      - "scripts/ci-sim-dyld-cache.sh"
+      - "scripts/ci-select-simulator.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  XCODE_APP: /Applications/Xcode_27.app
+
+jobs:
+  warm:
+    name: 生成模拟器 dyld 缓存
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: 选择 Xcode
+        id: xcode
+        run: |
+          sudo xcode-select -s "$XCODE_APP/Contents/Developer"
+          echo "dyld_key=$(bash scripts/ci-sim-dyld-cache.sh key)" >> "$GITHUB_OUTPUT"
+
+      - name: 查找已有缓存
+        id: dyld
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/sim-dyld
+          key: ${{ steps.xcode.outputs.dyld_key }}
+          lookup-only: true
+
+      - name: 启动模拟器并等缓存生成完
+        id: pack
+        if: steps.dyld.outputs.cache-hit != 'true'
+        run: |
+          START=$(date +%s)
+          UDID=$(python3 scripts/ci-select-simulator.py)
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b > /dev/null
+          echo "模拟器启动 $(( $(date +%s) - START )) 秒"
+          bash scripts/ci-sim-dyld-cache.sh pack "$RUNNER_TEMP/sim-dyld"
+          xcrun simctl shutdown "$UDID" || true
+
+      - name: 保存缓存
+        if: steps.pack.outputs.packed == 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/sim-dyld
+          key: ${{ steps.xcode.outputs.dyld_key }}
