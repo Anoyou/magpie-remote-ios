@@ -3,7 +3,7 @@ name: iOS
 # 结构（目标：PR 反馈 ≤ 8 分钟）：
 #   判定（Ubuntu：隐私 / 工程 / 版本校验 + 改动判定 + 同树已全绿则跳过）
 #     ├─ Core 单元测试（Ubuntu，swift 官方容器，缓存 .build）—— 与 macOS 并行
-#     └─ 编译与 UI 测试（macOS ×2 分片并行）：后台启动模拟器 → build-for-testing → 预热（顺带跑完本片最短的用例）
+#     └─ 编译与 UI 测试（macOS ×2 分片并行）：build-for-testing → 启动模拟器 → 预热（顺带跑完本片最短的用例）
 #          → UI 测试（本片其余用例，失败的才重跑一次）；第 1 片额外打未签名 IPA 并按文件树命名上传，
 #          供 main push 时「未签名 IPA」直接复用（scripts/ui-test-shards.py 按预计耗时给第 1 片少分一些用例）
 #   → 汇总「iOS 构建与测试」（Ubuntu：记录已全绿的文件树）
@@ -165,7 +165,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: 选择 Xcode 并后台启动模拟器
+      - name: 选择 Xcode 与模拟器
         id: simulator
         run: |
           sudo xcode-select -s "$XCODE_APP/Contents/Developer"
@@ -173,8 +173,6 @@ jobs:
           UDID=$(python3 scripts/ci-select-simulator.py)
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
           mkdir -p "$RESULTS_DIR"
-          # 编译期间并行完成模拟器启动与一次系统 App 冷启动（新模拟器第一次启动很慢）。
-          nohup sh -c "xcrun simctl boot '$UDID'; xcrun simctl bootstatus '$UDID' -b; xcrun simctl launch '$UDID' com.apple.Preferences; sleep 5; xcrun simctl terminate '$UDID' com.apple.Preferences; touch '$RUNNER_TEMP/sim-ready'" > "$RUNNER_TEMP/boot.log" 2>&1 &
           if command -v xcbeautify >/dev/null; then echo "beautify=xcbeautify --renderer github-actions" >> "$GITHUB_OUTPUT"; else echo "beautify=cat" >> "$GITHUB_OUTPUT"; fi
 
       - name: 本片用例
@@ -197,16 +195,19 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee "$RESULTS_DIR/build.log" | ${{ steps.simulator.outputs.beautify }}
 
-      - name: 等待模拟器并预热
+      - name: 启动模拟器并预热
+        # 编译完再启动模拟器：新模拟器首次启动非常吃 CPU / IO，和编译并行时编译会从约 50 秒拖到 4–8 分钟。
         # 刚启动的模拟器前几次冷启动 App 很慢：用本片预计最短的用例预热（首屏等待放宽到 240 秒），
         # 同时完成 App 与测试运行器的安装。预热通过 = 该用例已通过，后面不再重复跑；最多 2 次，
         # 都没通过就把它留在正式测试里（以正式测试结果为准）。
         env:
           TEST_RUNNER_MAGPIE_REMOTE_WARMUP_TIMEOUT: "240"
         run: |
-          for i in $(seq 1 180); do [ -f "$RUNNER_TEMP/sim-ready" ] && break; sleep 5; done
-          xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
-          cat "$RUNNER_TEMP/boot.log" || true
+          UDID="${{ steps.simulator.outputs.udid }}"
+          T0=$(date +%s)
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b > "$RUNNER_TEMP/boot.log" 2>&1 || { cat "$RUNNER_TEMP/boot.log"; exit 1; }
+          echo "模拟器启动完成：$(( $(date +%s) - T0 )) 秒"
           XCTESTRUN=$(ls "$DERIVED_DATA"/Build/Products/*.xctestrun | head -n 1)
           echo "XCTESTRUN=$XCTESTRUN" >> "$GITHUB_ENV"
           WARMUP=$(cat "$RUNNER_TEMP/warmup-test.txt")
