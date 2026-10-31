@@ -22,6 +22,11 @@ final class MagpieRemoteUITests: XCTestCase {
         app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
     }
 
+    /// 按 identifier 查找，不限元素类型（SwiftUI 可能把按钮暴露成其它类型）。
+    private func element(id identifier: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
     func testFourTabsExist() {
         let app = launch()
         for title in ["额度", "用量", "对话", "管理"] {
@@ -53,17 +58,20 @@ final class MagpieRemoteUITests: XCTestCase {
 
     func testSetupGuideOpensFromEmptyState() {
         let app = launch(["--fixture-empty"])
-        XCTAssertTrue(app.descendants(matching: .any)["state.noHost"].firstMatch.waitForExistence(timeout: 10))
-        app.buttons["guide.open"].firstMatch.tap()
-        XCTAssertTrue(app.navigationBars["配置引导"].waitForExistence(timeout: 10))
-        XCTAssertTrue(element(containing: "开启「在局域网共享」", in: app).exists)
-        XCTAssertTrue(element(containing: "magpie daemon web on --lan", in: app).exists)
+        XCTAssertTrue(element(containing: "还没有添加主机", in: app).waitForExistence(timeout: 10), "空状态没有出现「还没有添加主机」")
+        let guide = element(id: "guide.open", in: app)
+        XCTAssertTrue(guide.waitForExistence(timeout: 10), "空状态里没有「配置引导」按钮（guide.open）")
+        guide.tap()
+        XCTAssertTrue(app.navigationBars["配置引导"].waitForExistence(timeout: 10), "没有打开「配置引导」页")
+        XCTAssertTrue(element(containing: "在局域网共享", in: app).waitForExistence(timeout: 5), "配置引导里缺少「在局域网共享」步骤")
+        XCTAssertTrue(element(containing: "magpie daemon web on --lan", in: app).waitForExistence(timeout: 5), "配置引导里缺少 magpie daemon web on --lan 命令")
     }
 
     func testOfflineHostShowsChineseError() {
         let app = launch(["--fixture-offline"])
-        XCTAssertTrue(element(containing: "连不上主机", in: app).waitForExistence(timeout: 15))
-        XCTAssertTrue(app.buttons["state.retry"].exists)
+        XCTAssertTrue(element(containing: "连不上主机", in: app).waitForExistence(timeout: 15), "没有出现中文错误标题「连不上主机」")
+        XCTAssertTrue(element(containing: "主机都没有回应", in: app).waitForExistence(timeout: 5), "没有出现超时的中文说明")
+        XCTAssertTrue(element(id: "state.retry", in: app).waitForExistence(timeout: 5), "错误页里没有「重试」按钮（state.retry）")
     }
 
     func testAboutShowsVersionAndChangelog() {
