@@ -87,13 +87,18 @@ public struct WebProviders: Hashable, Sendable {
 
     public subscript(id: String) -> WebProvider? { providers.first { $0.id == id } }
 
-    /// 可直接添加的预设（只需填 Key），按名称排序。
-    public var presets: [(id: String, name: String)] {
+    /// 可直接添加的预设（只需填 Key）。
+    public var presets: [WebPreset] {
         (raw["presets"]?.array ?? []).compactMap { preset in
             guard let id = preset["id"]?.string, !id.isEmpty else { return nil }
-            return (id, preset["name"]?.string ?? id)
+            return WebPreset(id: id, name: preset["name"]?.string ?? id)
         }
     }
+}
+
+public struct WebPreset: Hashable, Identifiable, Sendable {
+    public var id: String
+    public var name: String
 }
 
 // MARK: 路由组
