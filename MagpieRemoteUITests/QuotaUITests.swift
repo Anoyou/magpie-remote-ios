@@ -34,10 +34,9 @@ final class QuotaUITests: XCTestCase {
         XCTAssertTrue(element(containing: "剩余 63%", in: app).exists, "5 小时窗口的剩余百分比没有显示")
         XCTAssertTrue(element(containing: "后重置", in: app).exists, "没有显示重置时间")
         XCTAssertTrue(element(containing: "Claude · 2 个账号", in: app).exists, "同一供应商的多个账号没有分组")
-        XCTAssertTrue(element(containing: "¥ 23.71", in: app).waitForExistence(timeout: 5) || {
-            app.swipeUp()
-            return element(containing: "¥ 23.71", in: app).waitForExistence(timeout: 5)
-        }(), "余额卡片没有显示余额文字")
+        let balance = element(containing: "¥ 23.71", in: app)
+        if !balance.exists { app.swipeUp() }
+        XCTAssertTrue(balance.waitForExistence(timeout: 5), "余额卡片没有显示余额文字")
     }
 
     func testHistoryPickerSwitches() {
