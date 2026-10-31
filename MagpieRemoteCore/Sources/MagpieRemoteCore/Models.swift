@@ -25,23 +25,6 @@ public struct QuotaItem: Codable, Hashable, Identifiable, Sendable {
     }
 }
 
-/// 「用量」页：按天 / 按模型汇总的一行。
-public struct UsageRow: Codable, Hashable, Identifiable, Sendable {
-    public var id: String
-    public var label: String
-    public var requests: Int
-    public var inputTokens: Int
-    public var outputTokens: Int
-
-    public init(id: String, label: String, requests: Int, inputTokens: Int, outputTokens: Int) {
-        self.id = id
-        self.label = label
-        self.requests = requests
-        self.inputTokens = inputTokens
-        self.outputTokens = outputTokens
-    }
-}
-
 /// 「对话」页：一条消息。
 public struct ChatMessage: Codable, Hashable, Identifiable, Sendable {
     public enum Role: String, Codable, Sendable { case system, user, assistant }
