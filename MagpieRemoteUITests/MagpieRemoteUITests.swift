@@ -83,7 +83,14 @@ final class MagpieRemoteUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["关于"].waitForExistence(timeout: 10))
         app.buttons["about.changelog"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["更新日志"].waitForExistence(timeout: 10))
-        XCTAssertTrue(element(containing: "0.1.0", in: app).waitForExistence(timeout: 5))
+        // 「未发布」条目变多后 0.1.0 段落可能在屏幕下方（List 懒加载），需要往下滚。
+        let release = element(containing: "0.1.0", in: app)
+        var found = release.waitForExistence(timeout: 5)
+        for _ in 0..<6 where !found {
+            app.swipeUp()
+            found = release.waitForExistence(timeout: 1)
+        }
+        XCTAssertTrue(found, "更新日志里没有 0.1.0")
     }
 
     // MARK: 用量
