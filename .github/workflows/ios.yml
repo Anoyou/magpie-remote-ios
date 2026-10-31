@@ -204,9 +204,14 @@ jobs:
           TEST_RUNNER_MAGPIE_REMOTE_WARMUP_TIMEOUT: "240"
         run: |
           UDID="${{ steps.simulator.outputs.udid }}"
+          # 诊断：启动前后的 dyld 缓存目录与 CPU 占用（每 20 秒采样一次，写入结果包）
+          for d in "$HOME/Library/Developer/CoreSimulator/Caches/dyld" /Library/Developer/CoreSimulator/Caches/dyld; do
+            echo "启动前 $d："; ls -la "$d" 2>&1 | head -n 5; du -sh "$d" 2>/dev/null || true
+          done
+          nohup sh -c 'while true; do date +%T; ps -Ao pcpu,rss,comm -r | head -n 8; sleep 20; done' > "$RESULTS_DIR/cpu.log" 2>&1 &
           T0=$(date +%s)
           xcrun simctl boot "$UDID" || true
-          xcrun simctl bootstatus "$UDID" -b > "$RUNNER_TEMP/boot.log" 2>&1 || { cat "$RUNNER_TEMP/boot.log"; exit 1; }
+          xcrun simctl bootstatus "$UDID" -b 2>&1 | while IFS= read -r line; do echo "[$(( $(date +%s) - T0 ))s] $line"; done
           echo "模拟器启动完成：$(( $(date +%s) - T0 )) 秒"
           XCTESTRUN=$(ls "$DERIVED_DATA"/Build/Products/*.xctestrun | head -n 1)
           echo "XCTESTRUN=$XCTESTRUN" >> "$GITHUB_ENV"
@@ -231,6 +236,16 @@ jobs:
             grep -E "error:|failed" "$RUNNER_TEMP/warmup-$i.log" | head -n 5 || true
           done
           echo "::warning::预热 2 次仍未通过，$WARMUP 留在正式测试里（以测试结果为准）"
+
+      - name: 诊断：模拟器缓存与 CPU
+        if: always()
+        run: |
+          for d in "$HOME/Library/Developer/CoreSimulator/Caches/dyld" /Library/Developer/CoreSimulator/Caches/dyld; do
+            echo "预热后 $d："; find "$d" -maxdepth 3 2>/dev/null | head -n 20; du -sh "$d" 2>/dev/null || true
+          done
+          sw_vers; sysctl -n hw.ncpu hw.memsize
+          xcrun simctl list runtimes -j | python3 -c "import json,sys; [print(r['identifier'], r['buildversion'], r.get('runtimeRoot','')) for r in json.load(sys.stdin)['runtimes']]"
+          cat "$RESULTS_DIR/cpu.log" || true
 
       - name: UI 测试（fixture 模式）
         # 失败的用例自动重跑一次（-retry-tests-on-failure 只重跑失败的那个，通过的不会再跑），两次都失败才判失败。
