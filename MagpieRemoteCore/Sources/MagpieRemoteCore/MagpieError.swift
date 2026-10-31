@@ -34,6 +34,12 @@ public enum MagpieError: Error, Equatable, Sendable {
     /// 主机返回的数据看不懂（多半也是版本不兼容）。
     case decoding(String)
     case cancelled
+    /// Web 管理接口（3430）不认这把 Web 密钥（401 纯文本）。
+    case webKeyInvalid
+    /// Web 管理接口拒绝访问（403 纯文本）：`ownWindowOnly` 为 true 表示被当成了跨站请求，否则是允许列表。
+    case webForbidden(ownWindowOnly: Bool, detail: String?)
+    /// Web 管理接口执行操作失败（400 `{"error","code"}`），`message` 是 magpie 的原文。
+    case webRejected(message: String, code: String?)
 
     public var title: String {
         switch self {
@@ -47,6 +53,9 @@ public enum MagpieError: Error, Equatable, Sendable {
         case .http(let status, _): "主机返回错误（\(status)）"
         case .decoding: "主机版本不兼容"
         case .cancelled: "已取消"
+        case .webKeyInvalid: "页面密钥无效"
+        case .webForbidden: "主机拒绝访问"
+        case .webRejected: "主机没有执行这个操作"
         }
     }
 
@@ -81,6 +90,14 @@ public enum MagpieError: Error, Equatable, Sendable {
             return "主机返回的数据 App 看不懂，通常是 magpie 版本过旧或过新。"
         case .cancelled:
             return "操作已取消。"
+        case .webKeyInvalid:
+            return "magpie 的网页管理不认这把 Web 密钥：可能填错了，或主机上的 MAGPIE_WEB_KEY 已更换。"
+        case .webForbidden(let ownWindowOnly, let detail):
+            if ownWindowOnly { return "magpie 只接受来自它自己页面的管理请求，这次请求被当成了跨站请求。" }
+            let suffix = detail.flatMap { $0.isEmpty ? nil : "（\($0)）" } ?? ""
+            return "这台 iPhone 的地址不在 magpie 的允许列表里\(suffix)。"
+        case .webRejected(let message, _):
+            return "magpie 提示：\(message)"
         }
     }
 
@@ -104,13 +121,24 @@ public enum MagpieError: Error, Equatable, Sendable {
             return status >= 500 ? "主机内部出错，稍后再试；仍有问题请查看 magpie 的日志。" : nil
         case .cancelled:
             return nil
+        case .webKeyInvalid:
+            return "在 Mac 上查看 magpie daemon web 使用的 MAGPIE_WEB_KEY，然后在 App 的「主机」设置里更新 Web 密钥。"
+        case .webForbidden(let ownWindowOnly, _):
+            if ownWindowOnly { return "请把 App 和 magpie 都更新到最新版本；仍有问题可以改用「在网页中打开」。" }
+            return "在 Mac 上打开 magpie → 设置 → 网络与共享，把这台 iPhone 的地址加入允许列表（或清空允许列表）。"
+        case .webRejected(_, let code):
+            switch code {
+            case "runtime_unavailable": return "主机上缺少运行这个操作需要的组件，请在 Mac 上处理后再试。"
+            case "config_blocked": return "Agent 的配置文件被锁定或不可写，请在 Mac 上检查。"
+            default: return nil
+            }
         }
     }
 
     /// 是否值得引导用户去「配置引导」页。
     public var suggestsSetupGuide: Bool {
         switch self {
-        case .lanSharingOff, .unreachable, .invalidKey, .missingKey: true
+        case .lanSharingOff, .unreachable, .invalidKey, .missingKey, .webKeyInvalid: true
         default: false
         }
     }
