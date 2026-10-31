@@ -1,0 +1,21 @@
+name: magpie 兼容性（每周）
+
+# TODO（另一位协作者负责填充）：
+# - 每周对 magpie 最新发布版 / 默认分支跑一遍 contract.yml 的契约测试，发现接口变化时报告
+#   （例如开 issue 或在摘要里列出变化的字段），提醒更新 MagpieRemoteCore 与 MagpieCompatibility.minimumHostVersion。
+# - runs-on: ubuntu-latest。
+on:
+  schedule:
+    - cron: "17 2 * * 1" # 每周一 02:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  placeholder:
+    name: 兼容性检查（待实现）
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: echo "TODO：对最新 magpie 运行契约测试（见本文件顶部注释）"

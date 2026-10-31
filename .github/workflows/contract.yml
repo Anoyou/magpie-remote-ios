@@ -1,0 +1,24 @@
+name: magpie 契约测试
+
+# TODO（另一位协作者负责填充）：
+# - 触发：pull_request / push 到 main（MagpieRemoteCore/**、spec/**、本文件变化时）。
+# - runs-on: ubuntu-latest（不需要 macOS）。
+# - 步骤草案：
+#   1. 检出本仓库与 magpie 源码（固定到 spec/ 记录的提交）；
+#   2. 用 Go 从源码构建 magpie（CGO_ENABLED=0 go build -tags nogui）；
+#   3. 以隔离的 HOME 启动网关（3425）与 `magpie web`（3430，MAGPIE_WEB_KEY=示例值）；
+#   4. 运行契约测试：用 spec/fixtures 校验各接口的 JSON 形状，并在 Linux 上 `swift test` MagpieRemoteCore 的解码测试。
+# 在此之前只保留手动触发的占位 job，避免出现无效的工作流文件。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  placeholder:
+    name: 契约测试（待实现）
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: echo "TODO：构建 magpie 并运行契约测试（见本文件顶部注释）"

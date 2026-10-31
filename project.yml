@@ -1,0 +1,75 @@
+# XcodeGen 定义。仓库同时提交生成后的 MagpieRemote.xcodeproj（CI 不运行 XcodeGen）。
+# 新增 / 删除 Swift 文件后：有 XcodeGen 时执行 `xcodegen generate`；没有时执行 `python3 scripts/sync-xcodeproj.py`
+# （按本文件同样的结构重写 project.pbxproj）。`python3 scripts/check-xcodeproj-sources.py` 校验二者一致。
+name: MagpieRemote
+options:
+  minimumXcodeGenVersion: 2.44.0
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: zh-Hans
+  knownRegions:
+    - zh-Hans
+    - Base
+packages:
+  MagpieRemoteCore:
+    path: MagpieRemoteCore
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+targets:
+  MagpieRemote:
+    type: application
+    platform: iOS
+    sources:
+      - path: MagpieRemoteApp
+        excludes:
+          - Info.plist
+      # App 更新日志随 App 打包，供「管理 → 关于 → 更新日志」离线显示。
+      - path: CHANGELOG.md
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.magpieremote.personal
+        PRODUCT_NAME: MagpieRemote
+        INFOPLIST_FILE: MagpieRemoteApp/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - package: MagpieRemoteCore
+  MagpieRemoteUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: MagpieRemoteUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.magpieremote.personal.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - target: MagpieRemote
+schemes:
+  MagpieRemote:
+    build:
+      targets:
+        MagpieRemote: all
+        MagpieRemoteUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - name: MagpieRemoteUITests
+          parallelizable: false
+    archive:
+      config: Release

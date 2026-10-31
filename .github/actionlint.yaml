@@ -1,0 +1,4 @@
+self-hosted-runner:
+  # 与 TelePilot 相同的 macOS 运行器标签（Xcode 27 / iOS 27 SDK）。
+  labels:
+    - xcode-27
