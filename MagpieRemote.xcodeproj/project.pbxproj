@@ -15,6 +15,7 @@
 		3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */; };
 		35D255575382D36B60E6A361 /* ManageGroupsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 068941B029A4B89038CE9F9F /* ManageGroupsView.swift */; };
 		4461AAA05215104827D8F5CB /* UsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B3684D1FBFD9F309DF04EE /* UsageView.swift */; };
+		48C06B76D88866821E061143 /* AgentSessionsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDF3F3ED69DBC6AF4B0861E /* AgentSessionsUITests.swift */; };
 		4B61D5B1A09F2430742A3519 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58959F16F79E9B000864BC3D /* AppModel.swift */; };
 		4C67294CFC0AA0F7B3D0B5D5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4276B4618D4C2849903B8C78 /* PrivacyInfo.xcprivacy */; };
 		4D9485D18D6FF11ACC483D05 /* MagpieRemoteCore in Frameworks */ = {isa = PBXBuildFile; productRef = 99141DF8C9D127E968BBFCA4 /* MagpieRemoteCore */; };
@@ -73,6 +74,7 @@
 		53B3684D1FBFD9F309DF04EE /* UsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageView.swift; sourceTree = "<group>"; };
 		561B078F07A52896FF08A607 /* ChatController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatController.swift; sourceTree = "<group>"; };
 		58959F16F79E9B000864BC3D /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		5CDF3F3ED69DBC6AF4B0861E /* AgentSessionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionsUITests.swift; sourceTree = "<group>"; };
 		5DD330AB025C638D38D7F4B2 /* QuotaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaService.swift; sourceTree = "<group>"; };
 		6048AA6534925611CC245088 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		6E6139AF65D4C71F91D0F709 /* AgentSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionsView.swift; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 		C62FC932859A024338961F60 /* MagpieRemoteUITests */ = {
 			isa = PBXGroup;
 			children = (
+				5CDF3F3ED69DBC6AF4B0861E /* AgentSessionsUITests.swift */,
 				8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */,
 				2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */,
 				726F02F062C85BC63F1B4072 /* QuotaUITests.swift */,
@@ -293,6 +296,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				48C06B76D88866821E061143 /* AgentSessionsUITests.swift in Sources */,
 				FF51B2EAE72A2A70428D3694 /* MagpieRemoteUITests.swift in Sources */,
 				3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */,
 				B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */,
