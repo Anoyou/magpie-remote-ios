@@ -1165,6 +1165,428 @@
     "response": []
    },
    "note": "duplicates gateway /v1/magpie/*; reference only"
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions",
+   "source": "internal/gui/sessions.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "sessions[].agent",
+     "sessions[].id",
+     "sessions[].cwd",
+     "sessions[].title",
+     "sessions[].nickname?",
+     "sessions[].start",
+     "sessions[].last",
+     "sessions[].models",
+     "sessions[].input",
+     "sessions[].output",
+     "sessions[].cache_read",
+     "sessions[].cache_write",
+     "sessions[].cost",
+     "sessions[].unpriced",
+     "sessions[].path",
+     "sessions[].transcript?",
+     "sessions[].subagents?",
+     "sessions[].gateway?",
+     "sessions[].model_effort?",
+     "sessions[].via?",
+     "sessions[].name",
+     "sessions[].icon",
+     "terminal",
+     "dirs"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/sessions/sessions.go",
+     "tags": [
+      "read_only",
+      "gateway",
+      "agent",
+      "id",
+      "cwd",
+      "title",
+      "nickname",
+      "start",
+      "last",
+      "role",
+      "model_effort",
+      "models",
+      "cost",
+      "unpriced",
+      "resume",
+      "path",
+      "transcript",
+      "subagents",
+      "input",
+      "output",
+      "cache_read",
+      "cache_write",
+      "model",
+      "effort",
+      "priced"
+     ]
+    },
+    {
+     "file": "internal/sessions/subagents.go",
+     "tags": [
+      "id",
+      "title",
+      "kind",
+      "last"
+     ]
+    },
+    {
+     "file": "internal/usage/usage.go",
+     "tags": [
+      "provider",
+      "model",
+      "calls",
+      "tokens"
+     ]
+    }
+   ],
+   "note": "every agent's sessions merged, newest first; reference only (the app lists per agent via /api/sessions/manage)"
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions/manage",
+   "source": "internal/gui/sessions_manage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions/manage\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "agents[].agent",
+     "agents[].count",
+     "agents[].deletable",
+     "agents[].name",
+     "agents[].icon",
+     "agent",
+     "sessions[].agent",
+     "sessions[].id",
+     "sessions[].cwd",
+     "sessions[].title",
+     "sessions[].nickname?",
+     "sessions[].start",
+     "sessions[].last",
+     "sessions[].models",
+     "sessions[].input",
+     "sessions[].output",
+     "sessions[].cache_read",
+     "sessions[].cache_write",
+     "sessions[].cost",
+     "sessions[].unpriced",
+     "sessions[].path",
+     "sessions[].transcript?",
+     "sessions[].subagents?",
+     "sessions[].gateway?",
+     "sessions[].model_effort?",
+     "sessions[].via?",
+     "sessions[].size",
+     "sessions[].messages",
+     "sessions[].files",
+     "sessions[].deletable",
+     "sessions[].pending?",
+     "trash",
+     "trashDir",
+     "recording",
+     "recorded",
+     "reads.asked",
+     "reads.all",
+     "reads.found[].agent",
+     "reads.found[].name",
+     "reads.found[].on"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/sessions/sessions.go",
+     "tags": [
+      "read_only",
+      "gateway",
+      "agent",
+      "id",
+      "cwd",
+      "title",
+      "nickname",
+      "start",
+      "last",
+      "role",
+      "model_effort",
+      "models",
+      "cost",
+      "unpriced",
+      "resume",
+      "path",
+      "transcript",
+      "subagents",
+      "input",
+      "output",
+      "cache_read",
+      "cache_write",
+      "model",
+      "effort",
+      "priced"
+     ]
+    },
+    {
+     "file": "internal/sessions/subagents.go",
+     "tags": [
+      "id",
+      "title",
+      "kind",
+      "last"
+     ]
+    },
+    {
+     "file": "internal/usage/usage.go",
+     "tags": [
+      "provider",
+      "model",
+      "calls",
+      "tokens"
+     ]
+    },
+    {
+     "file": "internal/gui/sessions_manage.go",
+     "tags": [
+      "agents",
+      "agent",
+      "sessions",
+      "terminal",
+      "trash",
+      "trashDir",
+      "home",
+      "recording",
+      "recorded",
+      "reads"
+     ]
+    },
+    {
+     "file": "internal/sessions/manage.go",
+     "tags": [
+      "agent",
+      "count",
+      "deletable",
+      "size",
+      "messages",
+      "files",
+      "pending",
+      "key",
+      "deleted"
+     ]
+    },
+    {
+     "file": "internal/gui/sessions_reads.go",
+     "tags": [
+      "asked",
+      "all",
+      "found",
+      "agent",
+      "name",
+      "on"
+     ]
+    }
+   ],
+   "note": "?agent= picks the agent listed (else the one with the most sessions); fresh installs read no agent until POST /api/sessions/reads"
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions/transcript",
+   "source": "internal/gui/sessions.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions/transcript\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?agent",
+     "?id",
+     "?sub"
+    ],
+    "response": [
+     "parts[].role",
+     "parts[].kind",
+     "parts[].text",
+     "parts[].name?",
+     "parts[].cut?",
+     "parts[].model?",
+     "cut?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/sessions/transcript.go",
+     "tags": [
+      "parts",
+      "cut"
+     ]
+    },
+    {
+     "file": "internal/sessions/content.go",
+     "tags": [
+      "role",
+      "kind",
+      "name",
+      "text",
+      "cut",
+      "model"
+     ]
+    }
+   ],
+   "note": "400 {error} for an unknown session or an agent whose conversations can't be read"
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions/search",
+   "source": "internal/gui/sessions_manage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions/search\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?agent",
+     "?q (>=2 runes)"
+    ],
+    "response": [
+     "hits[].id",
+     "hits[].role",
+     "hits[].kind",
+     "hits[].before",
+     "hits[].match",
+     "hits[].after",
+     "searched",
+     "total",
+     "cut?",
+     "unread?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/sessions_manage.go",
+     "tags": [
+      "hits",
+      "searched",
+      "total",
+      "cut",
+      "unread",
+      "id"
+     ]
+    },
+    {
+     "file": "internal/sessions/search.go",
+     "tags": [
+      "role",
+      "kind",
+      "before",
+      "match",
+      "after"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions/markdown",
+   "source": "internal/gui/sessions.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions/markdown\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?agent",
+     "?id"
+    ],
+    "response": [
+     "<text/markdown body; Content-Disposition attachment filename>"
+    ]
+   },
+   "note": "the app shares this file through the iOS share sheet"
+  },
+  {
+   "method": "POST",
+   "path": "/api/sessions/export",
+   "source": "internal/gui/sessions.go",
+   "anchor": "mux.HandleFunc(\"POST /api/sessions/export\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?agent",
+     "?id"
+    ],
+    "response": [
+     "path"
+    ]
+   },
+   "note": "saves the same Markdown into the host's Downloads folder; untagged map {path}"
+  },
+  {
+   "method": "POST",
+   "path": "/api/sessions/delete",
+   "source": "internal/gui/sessions_manage.go",
+   "anchor": "mux.HandleFunc(\"POST /api/sessions/delete\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "agent",
+     "ids"
+    ],
+    "response": [
+     "deleted",
+     "refused[].id",
+     "refused[].error",
+     "refused[].active"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/sessions_manage.go",
+     "tags": [
+      "agent",
+      "ids",
+      "deleted",
+      "refused",
+      "id",
+      "error",
+      "active"
+     ]
+    }
+   ],
+   "note": "moves into magpie's trash; a session written to in the last minute is refused with active=true"
+  },
+  {
+   "method": "POST",
+   "path": "/api/sessions/reads",
+   "source": "internal/gui/sessions_reads.go",
+   "anchor": "mux.HandleFunc(\"POST /api/sessions/reads\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "all?",
+     "agents"
+    ],
+    "response": [
+     "asked",
+     "all",
+     "found[].agent",
+     "found[].name",
+     "found[].on"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/sessions_reads.go",
+     "tags": [
+      "all",
+      "agents",
+      "asked",
+      "found",
+      "on"
+     ]
+    }
+   ]
   }
  ]
 }

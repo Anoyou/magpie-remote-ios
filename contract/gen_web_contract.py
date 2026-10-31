@@ -27,6 +27,11 @@ GROUP_ACTIONS = ["found","skip","save","delete","show","copy","share","import","
 KEYS_ACTIONS = ["add","import","protocol","weight","plan","use","remove","remove-many","rename","replace","on","off"]
 CK_ACTIONS = ["add-key","rotate-key","rename-key","limit-key","reset-limit-key","models-key","accounts-key","quotas-key","issuer-key","access-key","on-key","off-key","remove-key","move-key","copy-key"]
 AGENT_ACTIONS = ["reapply","keep","connect","disconnect"]
+# a sessions.Session as /api/sessions and /api/sessions/manage list it (internal/sessions/sessions.go)
+SESSION_ROW = lambda p: [p+x for x in ["agent","id","cwd","title","nickname?","start","last","models","input","output","cache_read","cache_write","cost","unpriced","path","transcript?","subagents?","gateway?","model_effort?","via?"]]
+SESSION_TAGS = [{"file":"internal/sessions/sessions.go","tags":["read_only","gateway","agent","id","cwd","title","nickname","start","last","role","model_effort","models","cost","unpriced","resume","path","transcript","subagents","input","output","cache_read","cache_write","model","effort","priced"]},
+ {"file":"internal/sessions/subagents.go","tags":["id","title","kind","last"]},
+ {"file":"internal/usage/usage.go","tags":["provider","model","calls","tokens"]}]
 
 routes = [
  R("GET","/api/settings",G+"api.go", res=["version","gateway","lan?","port?","lanURLs?","lanPublic?","publicURL?","onNetwork?","addrEnv?","allowIPs?","lanKeyId?","disabledModels?","web?","gatewayOn?","dir"],
@@ -59,6 +64,23 @@ routes = [
  R("GET","/api/signin/{id}",G+"providers.go", res=["<SignInState>"]),
  R("POST","/api/backup/import",G+"backup.go", req=["data","pass","agents","library?"], note="WKWebView flow; listed for reference"),
  R("GET","/api/usage/quotas",G+"usage.go", note="duplicates gateway /v1/magpie/*; reference only"),
+ # ---- Agent 会话记录（管理 → Agent 会话记录）
+ R("GET","/api/sessions",G+"sessions.go", res=SESSION_ROW("sessions[].")+["sessions[].name","sessions[].icon","terminal","dirs"],
+   tags=SESSION_TAGS, note="every agent's sessions merged, newest first; reference only (the app lists per agent via /api/sessions/manage)"),
+ R("GET","/api/sessions/manage",G+"sessions_manage.go",
+   res=["agents[].agent","agents[].count","agents[].deletable","agents[].name","agents[].icon","agent"]+SESSION_ROW("sessions[].")+["sessions[].size","sessions[].messages","sessions[].files","sessions[].deletable","sessions[].pending?","trash","trashDir","recording","recorded","reads.asked","reads.all","reads.found[].agent","reads.found[].name","reads.found[].on"],
+   tags=SESSION_TAGS+[{"file":G+"sessions_manage.go","tags":["agents","agent","sessions","terminal","trash","trashDir","home","recording","recorded","reads"]},{"file":"internal/sessions/manage.go","tags":["agent","count","deletable","size","messages","files","pending","key","deleted"]},{"file":G+"sessions_reads.go","tags":["asked","all","found","agent","name","on"]}],
+   note="?agent= picks the agent listed (else the one with the most sessions); fresh installs read no agent until POST /api/sessions/reads"),
+ R("GET","/api/sessions/transcript",G+"sessions.go", req=["?agent","?id","?sub"], res=["parts[].role","parts[].kind","parts[].text","parts[].name?","parts[].cut?","parts[].model?","cut?"],
+   tags=[{"file":"internal/sessions/transcript.go","tags":["parts","cut"]},{"file":"internal/sessions/content.go","tags":["role","kind","name","text","cut","model"]}], note="400 {error} for an unknown session or an agent whose conversations can't be read"),
+ R("GET","/api/sessions/search",G+"sessions_manage.go", req=["?agent","?q (>=2 runes)"], res=["hits[].id","hits[].role","hits[].kind","hits[].before","hits[].match","hits[].after","searched","total","cut?","unread?"],
+   tags=[{"file":G+"sessions_manage.go","tags":["hits","searched","total","cut","unread","id"]},{"file":"internal/sessions/search.go","tags":["role","kind","before","match","after"]}]),
+ R("GET","/api/sessions/markdown",G+"sessions.go", req=["?agent","?id"], res=["<text/markdown body; Content-Disposition attachment filename>"], note="the app shares this file through the iOS share sheet"),
+ R("POST","/api/sessions/export",G+"sessions.go", req=["?agent","?id"], res=["path"], note="saves the same Markdown into the host's Downloads folder; untagged map {path}"),
+ R("POST","/api/sessions/delete",G+"sessions_manage.go", req=["agent","ids"], res=["deleted","refused[].id","refused[].error","refused[].active"],
+   tags=[{"file":G+"sessions_manage.go","tags":["agent","ids","deleted","refused","id","error","active"]}], note="moves into magpie's trash; a session written to in the last minute is refused with active=true"),
+ R("POST","/api/sessions/reads",G+"sessions_reads.go", req=["all?","agents"], res=["asked","all","found[].agent","found[].name","found[].on"],
+   tags=[{"file":G+"sessions_reads.go","tags":["all","agents","asked","found","on"]}]),
 ]
 contract = {
  "magpieCommit": "80af3b86",

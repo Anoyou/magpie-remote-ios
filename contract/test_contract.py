@@ -443,6 +443,100 @@ def t_web(errs):
     expect(r.status == 400, f"web 未知 agent 应得 400，实际 {r.status}", errs)
 
 
+# Agent 会话记录：在隔离的 HOME 里放两个 Claude Code 会话文件（形状同 ~/.claude/projects/<目录>/<id>.jsonl）
+SESSION_IDS = ("aaaaaaaa-1111-4222-8333-000000000001", "aaaaaaaa-1111-4222-8333-000000000002")
+
+
+def _seed_claude_sessions() -> None:
+    home = os.path.join(ENV.get("MAGPIE_FIXTURE_DIR") or "/tmp/magpie-fixture", "home")
+    folder = os.path.join(home, ".claude", "projects", "-Users-example-demo")
+    os.makedirs(folder, exist_ok=True)
+    old = time.time() - 3 * 3600  # 最近一分钟写过的会话 magpie 拒绝删除
+    for n, sid in enumerate(SESSION_IDS):
+        lines = [
+            {"type": "user", "message": {"role": "user", "content": f"Contract demo {n + 1}: fix the login button"},
+             "uuid": f"u{n}", "parentUuid": None, "timestamp": f"2026-10-30T10:0{n}:00.000Z", "cwd": "/Users/example/demo", "sessionId": sid},
+            {"type": "assistant", "message": {"model": "claude-sonnet-4-5", "id": f"msg_{n}", "type": "message", "role": "assistant",
+             "content": [{"type": "text", "text": "Done: the button now uses the accent color."}],
+             "usage": {"input_tokens": 120, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "output_tokens": 30}},
+             "uuid": f"a{n}", "parentUuid": f"u{n}", "timestamp": f"2026-10-30T10:0{n}:05.000Z", "cwd": "/Users/example/demo", "sessionId": sid},
+        ]
+        path = os.path.join(folder, sid + ".jsonl")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(json.dumps(l) for l in lines) + "\n")
+        os.utime(path, (old, old))
+
+
+def t_sessions(errs):
+    """web Agent 会话记录：列表、对话、搜索、Markdown、导出、删除"""
+    _seed_claude_sessions()
+    q = lambda sid: f"agent=claude&id={sid}"
+    r = call("web-sessions-reads", "POST", WEB + "/api/sessions/reads", remote=False, cookie=COOKIE, body={"all": True})
+    status_is(r, 200, "application/json", errs, "web POST /api/sessions/reads")
+    errs += check_web_fields(("POST", "/api/sessions/reads"), r.json or {}, "web POST /api/sessions/reads")
+    expect((r.json or {}).get("asked") is True, "web /api/sessions/reads: 选过之后 asked 应为 true", errs)
+
+    ids: list = []
+    for _ in range(30):  # 第一次读会话文件可能要一会儿
+        r = call("web-sessions-manage", "GET", WEB + "/api/sessions/manage?agent=claude", remote=False, cookie=COOKIE)
+        ids = [s.get("id") for s in (r.json or {}).get("sessions") or []]
+        pending = any(s.get("pending") for s in (r.json or {}).get("sessions") or [])
+        if all(i in ids for i in SESSION_IDS) and not pending:
+            break
+        time.sleep(0.5)
+    status_is(r, 200, "application/json", errs, "web GET /api/sessions/manage")
+    errs += check_web_fields(("GET", "/api/sessions/manage"), r.json or {}, "web GET /api/sessions/manage")
+    expect(all(i in ids for i in SESSION_IDS), f"web /api/sessions/manage: 应列出放进去的两个 Claude Code 会话，实际 {ids}", errs)
+    expect((r.json or {}).get("agent") == "claude", f"web /api/sessions/manage: agent 应为 claude，实际 {(r.json or {}).get('agent')!r}", errs)
+    claude = next((a for a in (r.json or {}).get("agents") or [] if a.get("agent") == "claude"), {})
+    expect(claude.get("deletable") is True and (claude.get("count") or 0) >= 2, f"web /api/sessions/manage: claude 应可删除且至少 2 个会话，实际 {claude}", errs)
+    for s in (r.json or {}).get("sessions") or []:
+        for k in ("start", "last"):
+            v = s.get(k)
+            if isinstance(v, str) and not RFC3339.match(v):
+                errs.append(f"web /api/sessions/manage: sessions[].{k} 不是 RFC3339：{v!r}")
+
+    r = call("web-sessions", "GET", WEB + "/api/sessions", remote=False, cookie=COOKIE)
+    status_is(r, 200, "application/json", errs, "web GET /api/sessions")
+    errs += check_web_fields(("GET", "/api/sessions"), r.json or {}, "web GET /api/sessions")
+
+    r = call("web-sessions-transcript", "GET", WEB + "/api/sessions/transcript?" + q(SESSION_IDS[0]), remote=False, cookie=COOKIE)
+    status_is(r, 200, "application/json", errs, "web GET /api/sessions/transcript")
+    errs += check_web_fields(("GET", "/api/sessions/transcript"), r.json or {}, "web GET /api/sessions/transcript")
+    texts = [p.get("text", "") for p in (r.json or {}).get("parts") or []]
+    expect(any("Contract demo 1" in t for t in texts), f"web /api/sessions/transcript: 应含用户的第一句话，实际 {texts[:3]}", errs)
+    r = call("err-web-sessions-transcript-unknown", "GET", WEB + "/api/sessions/transcript?agent=claude&id=nosuchsession", remote=False, cookie=COOKIE)
+    status_is(r, 400, "application/json", errs, "web GET /api/sessions/transcript 未知会话")
+    expect(bool((r.json or {}).get("error")), "web /api/sessions/transcript 未知会话: 应有 error", errs)
+
+    r = call("web-sessions-search", "GET", WEB + "/api/sessions/search?agent=claude&q=login%20button", remote=False, cookie=COOKIE)
+    status_is(r, 200, "application/json", errs, "web GET /api/sessions/search")
+    errs += check_web_fields(("GET", "/api/sessions/search"), r.json or {}, "web GET /api/sessions/search")
+    hits = [h.get("id") for h in (r.json or {}).get("hits") or []]
+    expect(SESSION_IDS[0] in hits, f"web /api/sessions/search: 应命中 {SESSION_IDS[0]}，实际 {hits}", errs)
+
+    r = call("web-sessions-markdown", "GET", WEB + "/api/sessions/markdown?" + q(SESSION_IDS[0]), remote=False, cookie=COOKIE)
+    status_is(r, 200, "text/markdown", errs, "web GET /api/sessions/markdown")
+    expect("filename=" in (r.headers.get("Content-Disposition") or ""), f"web /api/sessions/markdown: 应有 Content-Disposition 文件名，实际 {r.headers.get('Content-Disposition')!r}", errs)
+    expect("Contract demo 1" in r.text, "web /api/sessions/markdown: 正文应含对话", errs)
+
+    r = call("web-sessions-export", "POST", WEB + "/api/sessions/export?" + q(SESSION_IDS[0]), remote=False, cookie=COOKIE)
+    status_is(r, 200, "application/json", errs, "web POST /api/sessions/export")
+    expect(str((r.json or {}).get("path", "")).endswith(".md"), f"web /api/sessions/export: path 应为 .md 文件，实际 {(r.json or {}).get('path')!r}", errs)
+
+    r = call("web-sessions-delete", "POST", WEB + "/api/sessions/delete", remote=False, cookie=COOKIE, body={"agent": "claude", "ids": [SESSION_IDS[1]]})
+    status_is(r, 200, "application/json", errs, "web POST /api/sessions/delete")
+    errs += check_web_fields(("POST", "/api/sessions/delete"), r.json or {}, "web POST /api/sessions/delete")
+    expect(SESSION_IDS[1] in ((r.json or {}).get("deleted") or []), f"web /api/sessions/delete: 应删除 {SESSION_IDS[1]}，实际 {r.json}", errs)
+    r = call("web-sessions-delete-unknown", "POST", WEB + "/api/sessions/delete", remote=False, cookie=COOKIE, body={"agent": "claude", "ids": ["nosuchsession"]})
+    status_is(r, 200, "application/json", errs, "web POST /api/sessions/delete 未知会话")
+    expect(len((r.json or {}).get("refused") or []) == 1, f"web /api/sessions/delete 未知会话: 应在 refused 里，实际 {r.json}", errs)
+    r = call("web-sessions-manage-after-delete", "GET", WEB + "/api/sessions/manage?agent=claude", remote=False, cookie=COOKIE)
+    ids = [s.get("id") for s in (r.json or {}).get("sessions") or []]
+    expect(SESSION_IDS[1] not in ids and SESSION_IDS[0] in ids, f"web /api/sessions/manage 删除后: 应只剩 {SESSION_IDS[0]}，实际 {ids}", errs)
+    expect(any(t.get("id") == SESSION_IDS[1] for t in (r.json or {}).get("trash") or []), "web /api/sessions/manage 删除后: 回收站里应有删掉的会话", errs)
+
+
 def t_sharing_off(errs):
     """最后执行：通过 web API 关掉共享，确认远程请求得到纯文本 403，再打开。"""
     r = call("web-lan-off", "POST", WEB + "/api/settings/lan", remote=False, cookie=COOKIE, body={"On": False})
@@ -458,7 +552,7 @@ def t_sharing_off(errs):
     status_is(r, 200, "application/json", errs, "重新共享后 GET /v1")
 
 
-TESTS = [t_info, t_auth, t_models, t_chat, t_responses, t_usage, t_quotas_limit, t_keys, t_web, t_sharing_off]
+TESTS = [t_info, t_auth, t_models, t_chat, t_responses, t_usage, t_quotas_limit, t_keys, t_web, t_sessions, t_sharing_off]
 
 
 def main() -> int:

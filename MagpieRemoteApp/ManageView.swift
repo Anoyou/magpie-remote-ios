@@ -49,6 +49,14 @@ struct ManageView: View {
                         row("Agent", symbol: "terminal", detail: store.phase == .ready ? "\(store.agents.count) 个" : nil)
                     }
                     .accessibilityIdentifier("manage.agents")
+                    if let sessions = AgentSessionsServices.make(from: store.service) {
+                        NavigationLink {
+                            AgentSessionsView(service: sessions)
+                        } label: {
+                            row("Agent 会话记录", symbol: "bubble.left.and.text.bubble.right", detail: nil)
+                        }
+                        .accessibilityIdentifier("manage.sessions")
+                    }
                     NavigationLink {
                         ManageKeysView(store: store)
                     } label: {
