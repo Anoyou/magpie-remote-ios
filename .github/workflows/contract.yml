@@ -10,8 +10,60 @@ name: magpie 契约测试
 on:
   pull_request:
     branches: [main]
+    paths:
+      # 只改 App / Swift / 工程 / 文档时不跑契约测试（这些改动碰不到 magpie 接口契约）；
+      # 列表按顺序生效：先全选，再排除，最后把 contract 导出的 live fixture 加回来。
+      - "**"
+      - "!**/*.swift"
+      - "!MagpieRemoteApp/**"
+      - "!MagpieRemoteUITests/**"
+      - "!MagpieRemote.xcodeproj/**"
+      - "!MagpieRemoteCore/**"
+      - "MagpieRemoteCore/Tests/MagpieRemoteCoreTests/Fixtures/live/**"
+      - "!project.yml"
+      - "!CHANGELOG.md"
+      - "!README.md"
+      - "!DESIGN.md"
+      - "!LICENSE"
+      - "!docs/**"
+      - "!.github/workflows/ios.yml"
+      - "!.github/workflows/ios-ipa.yml"
+      - "!scripts/build-unsigned.sh"
+      - "!scripts/reuse-unsigned-ipa.py"
+      - "!scripts/check-ios-version.py"
+      - "!scripts/check-xcodeproj-sources.py"
+      - "!scripts/sync-xcodeproj.py"
+      - "!scripts/ci-select-simulator.py"
+      - "!scripts/ci-changes.py"
+      - "!scripts/print-xcresult-failures.py"
+      - "!scripts/ui-test-shards.py"
   push:
     branches: [main]
+    paths:
+      - "**"
+      - "!**/*.swift"
+      - "!MagpieRemoteApp/**"
+      - "!MagpieRemoteUITests/**"
+      - "!MagpieRemote.xcodeproj/**"
+      - "!MagpieRemoteCore/**"
+      - "MagpieRemoteCore/Tests/MagpieRemoteCoreTests/Fixtures/live/**"
+      - "!project.yml"
+      - "!CHANGELOG.md"
+      - "!README.md"
+      - "!DESIGN.md"
+      - "!LICENSE"
+      - "!docs/**"
+      - "!.github/workflows/ios.yml"
+      - "!.github/workflows/ios-ipa.yml"
+      - "!scripts/build-unsigned.sh"
+      - "!scripts/reuse-unsigned-ipa.py"
+      - "!scripts/check-ios-version.py"
+      - "!scripts/check-xcodeproj-sources.py"
+      - "!scripts/sync-xcodeproj.py"
+      - "!scripts/ci-select-simulator.py"
+      - "!scripts/ci-changes.py"
+      - "!scripts/print-xcresult-failures.py"
+      - "!scripts/ui-test-shards.py"
   workflow_dispatch:
     inputs:
       magpie_ref:
@@ -41,7 +93,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: contract-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # workflow_call 时 github.workflow 是调用方（magpie 兼容性），加前缀避免与调用方自己的并发组冲突。
+  group: contract-${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:

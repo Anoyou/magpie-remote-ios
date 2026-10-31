@@ -15,6 +15,9 @@ on:
       - "DESIGN.md"
       - "LICENSE"
       - "docs/**"
+      # 契约与 Core 单元测试不进 App 包
+      - "contract/**"
+      - "MagpieRemoteCore/Tests/**"
       - ".github/workflows/ios.yml"
       - ".github/workflows/contract.yml"
       - ".github/workflows/magpie-compat.yml"
@@ -32,8 +35,9 @@ permissions:
   actions: read
 
 concurrency:
-  group: ios-ipa-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  # PR 上新 push 取消旧 run；main push 不互相取消，每次合并都产出自己的 IPA。
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # build 号（CFBundleVersion）用本工作流的 run_number：每次打包严格递增，不依赖 Git 历史；

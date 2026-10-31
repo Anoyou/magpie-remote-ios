@@ -1,12 +1,16 @@
 name: iOS
 
-# 结构（公开仓库 macOS 分钟不限，但这里用例少，单台 macOS 机器最快也最省事）：
-#   判定（Ubuntu：隐私 / 工程 / 版本校验 + 同树已全绿则跳过）
-#     → 编译与测试（macOS ×1：后台启动模拟器 → Core 单元测试 → build-for-testing → 预热 → UI 测试（失败重跑一次）
-#                   → 打未签名 IPA 并按文件树命名上传，供 main push 时「未签名 IPA」直接复用）
-#     → 汇总「iOS 构建与测试」（Ubuntu：记录已全绿的文件树）
+# 结构（目标：PR 反馈 ≤ 8 分钟）：
+#   判定（Ubuntu：隐私 / 工程 / 版本校验 + 改动判定 + 同树已全绿则跳过）
+#     ├─ Core 单元测试（Ubuntu，swift 官方容器，缓存 .build）—— 与 macOS 并行
+#     └─ 编译与 UI 测试（macOS ×2 分片并行）：后台启动模拟器 → build-for-testing → 预热（顺带跑完本片最短的用例）
+#          → UI 测试（本片其余用例，失败的才重跑一次）；第 1 片额外打未签名 IPA 并按文件树命名上传，
+#          供 main push 时「未签名 IPA」直接复用（scripts/ui-test-shards.py 按预计耗时给第 1 片少分一些用例）
+#   → 汇总「iOS 构建与测试」（Ubuntu：记录已全绿的文件树）
+# - 改动判定（scripts/ci-changes.py）：只改文档 / 契约 → 都跳过；只改 Core 测试 → 只跑 Core；
+#   CHANGELOG.md 随 App 打包、UI 测试会检查，仍跑 macOS。
 # - push main：若该提交的文件树与某个已全绿 run 的被测树完全相同（PR 在最新 main 上合并即如此），跳过重复测试。
-# - UI 用例变多、单机超过 ~15 分钟时，可参照 TelePilot 的 ui-test-shards.py 拆成并行分片。
+# - UI 用例按 scripts/ui-test-shards.py 自动分片：新增用例不用改配置；分片数改 UI_SHARDS 与 matrix 即可。
 on:
   pull_request:
     branches: [main]
@@ -15,6 +19,7 @@ on:
       - "DESIGN.md"
       - "LICENSE"
       - "docs/**"
+      - "contract/**"
       - ".github/workflows/contract.yml"
       - ".github/workflows/magpie-compat.yml"
       - ".github/workflows/ios-ipa.yml"
@@ -25,6 +30,7 @@ on:
       - "DESIGN.md"
       - "LICENSE"
       - "docs/**"
+      - "contract/**"
       - ".github/workflows/contract.yml"
       - ".github/workflows/magpie-compat.yml"
       - ".github/workflows/ios-ipa.yml"
@@ -33,9 +39,10 @@ on:
 permissions:
   contents: read
   actions: read
+  pull-requests: read
 
 concurrency:
-  group: ios-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   # PR 上新 push 取消旧 run；main push 不互相取消，保证每次合并都有结果。
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
@@ -45,6 +52,9 @@ env:
   DERIVED_DATA: ${{ github.workspace }}/build/DerivedData
   RESULTS_DIR: ${{ github.workspace }}/build/results
   GREEN_TREE_PREFIX: ios-green-tree-
+  # UI 测试分片数（与 build-test 的 matrix.shard 保持一致）；第 1 片还要打 IPA（约 60 秒），少分一些用例。
+  UI_SHARDS: "2"
+  UI_SHARD_EXTRA: "0=60"
 
 jobs:
   plan:
@@ -55,6 +65,8 @@ jobs:
       skip: ${{ steps.decide.outputs.skip }}
       tree: ${{ steps.decide.outputs.tree }}
       reason: ${{ steps.decide.outputs.reason }}
+      ios: ${{ steps.changes.outputs.ios }}
+      core: ${{ steps.changes.outputs.core }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -64,6 +76,20 @@ jobs:
           python3 scripts/check-privacy.py
           python3 scripts/check-xcodeproj-sources.py
           python3 scripts/check-ios-version.py
+
+      - name: 改动判定
+        id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          python3 scripts/ci-changes.py
+          echo "UI 测试分片："
+          python3 scripts/ui-test-shards.py --shards "$UI_SHARDS" --extra "$UI_SHARD_EXTRA" --summary
 
       - name: 对比已全绿的被测文件树
         id: decide
@@ -98,12 +124,44 @@ jobs:
           echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
           echo "reason=$REASON" >> "$GITHUB_OUTPUT"
 
-  build-test:
-    name: 编译与测试
+  core:
+    name: Core 单元测试（Linux）
     needs: plan
-    if: needs.plan.outputs.skip != 'true'
+    if: needs.plan.outputs.skip != 'true' && needs.plan.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    # 官方 Swift 镜像（最新 6.x）；MagpieRemoteCore 只依赖 Foundation，Apple 专属代码在 #if canImport 之后。
+    container: swift:6.4-noble
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: 缓存 .build
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: MagpieRemoteCore/.build
+          key: core-linux-swift6.4-${{ hashFiles('MagpieRemoteCore/Package.swift', 'MagpieRemoteCore/Package.resolved', 'MagpieRemoteCore/Sources/**', 'MagpieRemoteCore/Tests/**') }}
+          restore-keys: core-linux-swift6.4-
+
+      - name: 编译
+        run: |
+          swift --version
+          swift build --package-path MagpieRemoteCore --build-tests
+
+      - name: MagpieRemoteCore 单元测试
+        run: swift test --package-path MagpieRemoteCore --skip-build --parallel
+
+  build-test:
+    name: 编译与 UI 测试（${{ matrix.shard }}/2）
+    needs: plan
+    if: needs.plan.outputs.skip != 'true' && needs.plan.outputs.ios == 'true'
     runs-on: xcode-27
-    timeout-minutes: 45
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    env:
+      SHARD: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -119,8 +177,12 @@ jobs:
           nohup sh -c "xcrun simctl boot '$UDID'; xcrun simctl bootstatus '$UDID' -b; xcrun simctl launch '$UDID' com.apple.Preferences; sleep 5; xcrun simctl terminate '$UDID' com.apple.Preferences; touch '$RUNNER_TEMP/sim-ready'" > "$RUNNER_TEMP/boot.log" 2>&1 &
           if command -v xcbeautify >/dev/null; then echo "beautify=xcbeautify --renderer github-actions" >> "$GITHUB_OUTPUT"; else echo "beautify=cat" >> "$GITHUB_OUTPUT"; fi
 
-      - name: MagpieRemoteCore 单元测试
-        run: swift test --package-path MagpieRemoteCore
+      - name: 本片用例
+        run: |
+          python3 scripts/ui-test-shards.py --shards "$UI_SHARDS" --extra "$UI_SHARD_EXTRA" --index $((SHARD - 1)) --list > "$RUNNER_TEMP/shard-tests.txt"
+          python3 scripts/ui-test-shards.py --shards "$UI_SHARDS" --extra "$UI_SHARD_EXTRA" --index $((SHARD - 1)) --warmup > "$RUNNER_TEMP/warmup-test.txt"
+          echo "第 $SHARD/$UI_SHARDS 片，$(wc -l < "$RUNNER_TEMP/shard-tests.txt" | tr -d ' ') 个用例（预热用 $(cat "$RUNNER_TEMP/warmup-test.txt")）："
+          cat "$RUNNER_TEMP/shard-tests.txt"
 
       - name: 编译（build-for-testing）
         run: |
@@ -136,8 +198,9 @@ jobs:
             2>&1 | tee "$RESULTS_DIR/build.log" | ${{ steps.simulator.outputs.beautify }}
 
       - name: 等待模拟器并预热
-        # 刚启动的模拟器前几次冷启动 App 很慢。跑一个最短的 UI 用例直到通过（首屏等待放宽到 240 秒），
-        # 同时完成 App 与测试运行器的安装；预热结果不计入结论，最多 2 次。
+        # 刚启动的模拟器前几次冷启动 App 很慢：用本片预计最短的用例预热（首屏等待放宽到 240 秒），
+        # 同时完成 App 与测试运行器的安装。预热通过 = 该用例已通过，后面不再重复跑；最多 2 次，
+        # 都没通过就把它留在正式测试里（以正式测试结果为准）。
         env:
           TEST_RUNNER_MAGPIE_REMOTE_WARMUP_TIMEOUT: "240"
         run: |
@@ -146,6 +209,9 @@ jobs:
           cat "$RUNNER_TEMP/boot.log" || true
           XCTESTRUN=$(ls "$DERIVED_DATA"/Build/Products/*.xctestrun | head -n 1)
           echo "XCTESTRUN=$XCTESTRUN" >> "$GITHUB_ENV"
+          WARMUP=$(cat "$RUNNER_TEMP/warmup-test.txt")
+          echo "WARMUP_PASSED=" >> "$GITHUB_ENV"
+          [ -n "$WARMUP" ] || exit 0
           for i in 1 2; do
             START=$(date +%s)
             if xcodebuild test-without-building \
@@ -154,19 +220,29 @@ jobs:
                 -resultBundlePath "$RUNNER_TEMP/warmup-$i.xcresult" \
                 -parallel-testing-enabled NO \
                 -collect-test-diagnostics never \
-                -only-testing:MagpieRemoteUITests/MagpieRemoteUITests/testFourTabsExist > "$RUNNER_TEMP/warmup-$i.log" 2>&1; then
-              echo "第 $i 次预热通过（$(( $(date +%s) - START )) 秒）"
+                "-only-testing:MagpieRemoteUITests/$WARMUP" > "$RUNNER_TEMP/warmup-$i.log" 2>&1; then
+              echo "第 $i 次预热通过（$(( $(date +%s) - START )) 秒）：$WARMUP 已通过，正式测试不再重复"
+              mv "$RUNNER_TEMP/warmup-$i.xcresult" "$RESULTS_DIR/Warmup.xcresult"
+              echo "WARMUP_PASSED=$WARMUP" >> "$GITHUB_ENV"
               exit 0
             fi
             echo "第 $i 次预热未通过（$(( $(date +%s) - START )) 秒），继续预热"
             grep -E "error:|failed" "$RUNNER_TEMP/warmup-$i.log" | head -n 5 || true
           done
-          echo "::warning::预热 2 次仍未通过，继续执行测试（以测试结果为准）"
+          echo "::warning::预热 2 次仍未通过，$WARMUP 留在正式测试里（以测试结果为准）"
 
       - name: UI 测试（fixture 模式）
-        # 失败的用例自动重跑一次（只重跑失败的那个），两次都失败才判失败。
+        # 失败的用例自动重跑一次（-retry-tests-on-failure 只重跑失败的那个，通过的不会再跑），两次都失败才判失败。
         run: |
           set -o pipefail
+          ARGS=()
+          while IFS= read -r t; do
+            [ -n "$t" ] || continue
+            [ "$t" = "$WARMUP_PASSED" ] && continue
+            ARGS+=("-only-testing:MagpieRemoteUITests/$t")
+          done < "$RUNNER_TEMP/shard-tests.txt"
+          if [ ${#ARGS[@]} -eq 0 ]; then echo "本片没有剩余用例"; exit 0; fi
+          echo "正式测试 ${#ARGS[@]} 个用例"
           xcodebuild test-without-building \
             -xctestrun "$XCTESTRUN" \
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
@@ -175,10 +251,12 @@ jobs:
             -collect-test-diagnostics never \
             -retry-tests-on-failure \
             -test-iterations 2 \
+            "${ARGS[@]}" \
             2>&1 | tee "$RESULTS_DIR/test.log" | ${{ steps.simulator.outputs.beautify }}
 
       - name: 打包未签名 IPA（供 main push 同树复用）
-        # 与「未签名 IPA」同一脚本、同一 Release 配置；build 号用工程默认值，复用时由 ios-ipa.yml 改写为它的 run_number。
+        # 只在第 1 片打包。与「未签名 IPA」同一脚本、同一 Release 配置；build 号用工程默认值，复用时由 ios-ipa.yml 改写为它的 run_number。
+        if: matrix.shard == 1
         run: |
           set -o pipefail
           bash scripts/build-unsigned.sh "$GITHUB_WORKSPACE/build/ipa" 2>&1 | tee "$RESULTS_DIR/build-unsigned.log" | ${{ steps.simulator.outputs.beautify }}
@@ -188,6 +266,7 @@ jobs:
           ls -lh ipa-reuse
 
       - name: 上传未签名 IPA（按文件树命名）
+        if: matrix.shard == 1
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ios-unsigned-ipa-${{ needs.plan.outputs.tree }}
@@ -207,14 +286,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ios-results-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ios-results-${{ github.run_id }}-${{ github.run_attempt }}-shard${{ matrix.shard }}
           path: build/results
           retention-days: 7
           if-no-files-found: ignore
 
   result:
     name: iOS 构建与测试
-    needs: [plan, build-test]
+    needs: [plan, core, build-test]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -223,25 +302,31 @@ jobs:
         env:
           SKIP: ${{ needs.plan.outputs.skip }}
           REASON: ${{ needs.plan.outputs.reason }}
+          NEED_IOS: ${{ needs.plan.outputs.ios }}
+          NEED_CORE: ${{ needs.plan.outputs.core }}
           PLAN: ${{ needs.plan.result }}
+          CORE: ${{ needs.core.result }}
           BUILD: ${{ needs.build-test.result }}
         run: |
-          echo "判定=$PLAN 编译与测试=$BUILD"
+          echo "判定=$PLAN Core 单元测试=$CORE（需要：$NEED_CORE） 编译与 UI 测试=$BUILD（需要：$NEED_IOS）"
           if [ "$PLAN" = "success" ] && [ "$SKIP" = "true" ]; then
             echo "### 跳过重复测试" >> "$GITHUB_STEP_SUMMARY"
             echo "$REASON" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          if [ "$PLAN" != "success" ] || [ "$BUILD" != "success" ]; then
+          ok() { [ "$1" = "success" ] || { [ "$1" = "skipped" ] && [ "$2" != "true" ]; }; }
+          if [ "$PLAN" != "success" ] || ! ok "$CORE" "$NEED_CORE" || ! ok "$BUILD" "$NEED_IOS"; then
             echo "::error::iOS 构建与测试未全部通过"
             exit 1
           fi
+          [ "$NEED_IOS" = "true" ] || echo "没有 App 相关改动，跳过 macOS" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$NEED_CORE" = "true" ] || echo "没有 Core 相关改动，跳过 Core 单元测试" | tee -a "$GITHUB_STEP_SUMMARY"
           echo "全部通过"
           mkdir -p green && echo "${{ github.sha }}" > green/sha.txt
 
       - name: 记录已全绿的被测文件树
-        # 供之后合并到 main 的 push 判定：文件树完全相同则不重复测试。
-        if: needs.plan.outputs.skip != 'true' && needs.plan.outputs.tree != '' && needs.build-test.result == 'success'
+        # 供之后合并到 main 的 push 判定：文件树完全相同则不重复测试（IPA 也由同一 run 产出，所以要求 macOS 跑过）。
+        if: needs.plan.outputs.skip != 'true' && needs.plan.outputs.tree != '' && needs.build-test.result == 'success' && (needs.core.result == 'success' || needs.plan.outputs.core != 'true')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ env.GREEN_TREE_PREFIX }}${{ needs.plan.outputs.tree }}
