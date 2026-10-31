@@ -42,6 +42,8 @@ struct NoHostView: View {
                 .buttonStyle(.glass)
                 .accessibilityIdentifier("guide.open")
         }
+        // 必须先 .contain：否则容器上的 identifier 会覆盖内部按钮的 identifier（state.addHost / guide.open）。
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("state.noHost")
     }
 }
@@ -76,6 +78,8 @@ struct ErrorStateView: View {
                     .accessibilityIdentifier("guide.open")
             }
         }
+        // 同上：保留内部「重试」「配置引导」按钮自己的 identifier。
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("state.error")
     }
 }

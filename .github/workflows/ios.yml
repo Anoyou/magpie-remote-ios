@@ -197,8 +197,14 @@ jobs:
           overwrite: true
           if-no-files-found: error
 
+      - name: 打印失败的断言
+        # 把 .xcresult 里每条失败用例的断言信息打成 ::error:: 注解并写入摘要，不用下载结果包也能看清原因。
+        if: always()
+        run: python3 scripts/print-xcresult-failures.py "$RESULTS_DIR/UITests.xcresult" "$RESULTS_DIR/Build.xcresult"
+
       - name: 上传结果包与日志
-        if: failure()
+        # 无论成败都上传 .xcresult（含截图与无障碍树），失败时便于排查。
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ios-results-${{ github.run_id }}-${{ github.run_attempt }}
