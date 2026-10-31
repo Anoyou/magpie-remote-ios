@@ -85,4 +85,98 @@ final class MagpieRemoteUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["更新日志"].waitForExistence(timeout: 10))
         XCTAssertTrue(element(containing: "0.1.0", in: app).waitForExistence(timeout: 5))
     }
+
+    // MARK: 用量
+
+    /// 分段控件里的一段（先按控件 id 找，避免点到别的页面上同名的段）。
+    private func segment(_ title: String, of identifier: String, in app: XCUIApplication) -> XCUIElement {
+        let control = element(id: identifier, in: app)
+        XCTAssertTrue(control.waitForExistence(timeout: 10), "没有分段控件 \(identifier)")
+        return control.buttons[title].firstMatch
+    }
+
+    private func waitUntil(_ timeout: TimeInterval, _ condition: () -> Bool) -> Bool {
+        let end = Date().addingTimeInterval(timeout)
+        while Date() < end {
+            if condition() { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+        }
+        return condition()
+    }
+
+    private func openUsage(_ app: XCUIApplication) {
+        app.tabBars.buttons["用量"].tap()
+        XCTAssertTrue(element(id: "usage.totalCost", in: app).waitForExistence(timeout: 15), "用量页没有出现总花费（usage.totalCost）")
+    }
+
+    private func openRequests(_ app: XCUIApplication) {
+        let open = element(id: "usage.requests.open", in: app)
+        XCTAssertTrue(open.waitForExistence(timeout: 10), "没有「请求记录」入口（usage.requests.open）")
+        open.tap()
+        XCTAssertTrue(app.navigationBars["请求记录"].waitForExistence(timeout: 10), "没有打开「请求记录」")
+        // 「今天」在刚过零点时可能还没有示例请求，固定看 30 天。
+        segment("30 天", of: "usage.requests.period", in: app).tap()
+        XCTAssertTrue(element(id: "usage.requests.total", in: app).waitForExistence(timeout: 10), "请求记录没有显示总条数")
+    }
+
+    func testUsagePeriodSwitch() {
+        let app = launch()
+        openUsage(app)
+        XCTAssertTrue(element(containing: "总花费", in: app).exists)
+        let before = element(id: "usage.counts", in: app).label
+        segment("7 天", of: "usage.period", in: app).tap()
+        XCTAssertTrue(element(containing: "近 7 天", in: app).waitForExistence(timeout: 10), "切换到 7 天后标题没有变成「近 7 天」")
+        segment("30 天", of: "usage.period", in: app).tap()
+        XCTAssertTrue(element(containing: "近 30 天", in: app).waitForExistence(timeout: 10), "切换到 30 天后标题没有变成「近 30 天」")
+        let counts = element(id: "usage.counts", in: app)
+        XCTAssertTrue(waitUntil(10) { counts.exists && counts.label != before }, "切换时间段后请求数没有变化：\(before)")
+        XCTAssertTrue(element(id: "usage.concurrency", in: app).exists || app.swipeUpAndFind(id: "usage.concurrency"), "没有显示当前并发")
+    }
+
+    func testUsageFilterToFailed() {
+        let app = launch()
+        openUsage(app)
+        openRequests(app)
+        let total = element(id: "usage.requests.total", in: app)
+        let before = total.label
+        element(id: "usage.filter.failed", in: app).tap()
+        XCTAssertTrue(waitUntil(10) { total.exists && total.label != before }, "只看失败后总条数没有变化：\(before)")
+        let first = element(id: "usage.request.0", in: app)
+        XCTAssertTrue(first.waitForExistence(timeout: 10), "筛选后没有请求")
+        XCTAssertTrue(first.label.contains("失败"), "只看失败后第一条不是失败的请求：\(first.label)")
+    }
+
+    func testUsageOpenRequestDetail() {
+        let app = launch()
+        openUsage(app)
+        openRequests(app)
+        let first = element(id: "usage.request.0", in: app)
+        XCTAssertTrue(first.waitForExistence(timeout: 10), "请求记录是空的")
+        first.tap()
+        XCTAssertTrue(app.navigationBars["请求详情"].waitForExistence(timeout: 10), "没有打开「请求详情」")
+        XCTAssertTrue(element(containing: "耗时", in: app).exists)
+        XCTAssertTrue(element(containing: "实际模型", in: app).exists)
+        element(id: "usage.detail.done", in: app).tap()
+        XCTAssertTrue(app.navigationBars["请求记录"].waitForExistence(timeout: 10))
+    }
+
+    func testUsageHeldKeyShowsOwnRequestsOnly() {
+        let app = launch(["--fixture-held-key"])
+        app.tabBars.buttons["用量"].tap()
+        XCTAssertTrue(element(id: "usage.heldNote", in: app).waitForExistence(timeout: 15), "受限密钥没有显示说明")
+        XCTAssertFalse(element(id: "usage.totalCost", in: app).exists, "受限密钥不应显示总花费")
+        openRequests(app)
+        XCTAssertTrue(element(id: "usage.request.0", in: app).waitForExistence(timeout: 10), "受限密钥看不到自己的请求记录")
+    }
+}
+
+private extension XCUIApplication {
+    /// 向上滑几次直到找到元素（列表里靠下的内容）。
+    func swipeUpAndFind(id: String) -> Bool {
+        for _ in 0..<4 {
+            if descendants(matching: .any).matching(identifier: id).firstMatch.exists { return true }
+            swipeUp()
+        }
+        return descendants(matching: .any).matching(identifier: id).firstMatch.exists
+    }
 }

@@ -132,9 +132,19 @@ final class AppModel {
         return try await service.quota(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id))
     }
 
-    func loadUsage() async throws -> [UsageRow] {
-        guard let host = activeHost else { return [] }
-        return try await service.usage(host: host, webKey: store.secret(.webKey, host: host.id))
+    func loadUsageSummary(_ period: UsagePeriod) async throws -> UsageAccess<UsageSummary> {
+        guard let host = activeHost else { throw MagpieError.invalidURL }
+        return try await service.usageSummary(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id), period: period)
+    }
+
+    func loadUsageRequests(_ query: UsageRequestQuery) async throws -> UsageRequestPage {
+        guard let host = activeHost else { throw MagpieError.invalidURL }
+        return try await service.usageRequests(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id), query: query)
+    }
+
+    func loadConcurrency() async throws -> UsageAccess<ConcurrencySnapshot> {
+        guard let host = activeHost else { throw MagpieError.invalidURL }
+        return try await service.concurrency(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id))
     }
 
     func loadGatewayKeys() async throws -> [GatewayKeySummary] {

@@ -2,10 +2,9 @@ import Foundation
 import MagpieRemoteCore
 
 /// 页面通过它访问主机；真实实现走 `GatewayClient`，fixture 实现返回固定的示例数据。
-protocol RemoteServing: Sendable {
+protocol RemoteServing: UsageServing, Sendable {
     func testConnection(host: HostProfile, gatewayKey: String?) async throws -> ConnectionReport
     func quota(host: HostProfile, gatewayKey: String?) async throws -> [QuotaItem]
-    func usage(host: HostProfile, webKey: String?) async throws -> [UsageRow]
     func gatewayKeys(host: HostProfile, issuerKey: String?) async throws -> [GatewayKeySummary]
     func reply(host: HostProfile, gatewayKey: String?, to messages: [ChatMessage]) async throws -> String
 }
@@ -17,7 +16,6 @@ struct LiveRemoteService: RemoteServing {
 
     // TODO(spec): 以下接口的路径与 JSON 形状等 spec/ 契约确定后接入；在此之前页面显示「接入中」的空状态。
     func quota(host: HostProfile, gatewayKey: String?) async throws -> [QuotaItem] { [] }
-    func usage(host: HostProfile, webKey: String?) async throws -> [UsageRow] { [] }
     func gatewayKeys(host: HostProfile, issuerKey: String?) async throws -> [GatewayKeySummary] { [] }
 
     func reply(host: HostProfile, gatewayKey: String?, to messages: [ChatMessage]) async throws -> String {
@@ -40,11 +38,6 @@ struct FixtureRemoteService: RemoteServing {
     func quota(host: HostProfile, gatewayKey: String?) async throws -> [QuotaItem] {
         [QuotaItem(id: "fixture-1", provider: "示例供应商 A", account: "account-EXAMPLE-1", usedFraction: 0.35, remainingText: "剩余 65%"),
          QuotaItem(id: "fixture-2", provider: "示例供应商 B", account: "account-EXAMPLE-2", usedFraction: 0.9, remainingText: "剩余 10%")]
-    }
-
-    func usage(host: HostProfile, webKey: String?) async throws -> [UsageRow] {
-        [UsageRow(id: "today", label: "今天", requests: 128, inputTokens: 210_000, outputTokens: 36_000),
-         UsageRow(id: "yesterday", label: "昨天", requests: 96, inputTokens: 150_000, outputTokens: 24_500)]
     }
 
     func gatewayKeys(host: HostProfile, issuerKey: String?) async throws -> [GatewayKeySummary] {
