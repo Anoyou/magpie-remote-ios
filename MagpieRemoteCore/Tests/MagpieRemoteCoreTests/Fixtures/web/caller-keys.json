@@ -1,0 +1,39 @@
+{
+ "accountNames": {
+  "relay-one/5e670202bf": "relay-one/sk-r…1111"
+ },
+ "keys": [
+  {
+   "id": "cf3c09afe0af2b540ad82416",
+   "name": "iPhone",
+   "masked": "sk-magpie-key-…6a5d45",
+   "limit": {
+    "period": "month",
+    "cost": 20
+   },
+   "models": [
+    "group/smart",
+    "relay-one/gpt-4.1"
+   ],
+   "used": {
+    "period": "month",
+    "start": "Thu 2026-10-01 8:00 AM CST (UTC+08:00)",
+    "reset": "Sun 2026-11-01 8:00 AM CST (UTC+08:00)",
+    "calls": 0,
+    "tokens": 0,
+    "cost": 0,
+    "costLimit": 20,
+    "tokensLeft": 0,
+    "costLeft": 20,
+    "spent": false
+   }
+  },
+  {
+   "id": "c4e35fb1b08505a1820641c6",
+   "name": "Magpie",
+   "lan": true,
+   "masked": "sk-magpie-key-…660e0b"
+  }
+ ],
+ "secret": ""
+}

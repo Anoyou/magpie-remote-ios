@@ -1,0 +1,301 @@
+{
+ "providers": [
+  {
+   "id": "mock",
+   "name": "Mock",
+   "icon": "",
+   "preset": "",
+   "host": "100.64.0.1:18080",
+   "chat": "http://100.64.0.1:18080/v1",
+   "responses": "",
+   "anthropic": "",
+   "catalog": "",
+   "website": "",
+   "keysUrl": "",
+   "searches": false,
+   "pinUpstream": false,
+   "unredacted": false,
+   "insecureTLS": false,
+   "takesInsecureTLS": true,
+   "limitRestOff": false,
+   "nativeCompaction": false,
+   "passUserAgent": false,
+   "authHeader": "",
+   "proxy": "",
+   "balanceToken": {
+    "takes": false,
+    "set": false
+   },
+   "testsAs": {
+    "codex": ""
+   },
+   "marksKinds": true,
+   "key": {
+    "set": true,
+    "masked": "sk-m…MPLE",
+    "optional": false
+   },
+   "ready": true,
+   "chosen": [],
+   "speaks": [
+    "chat"
+   ],
+   "fallback": [],
+   "routing": "",
+   "affinity": "",
+   "maxConcurrency": null,
+   "models": [
+    {
+     "id": "mock-gpt-1",
+     "name": "mock-gpt-1",
+     "efforts": [
+      "none",
+      "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max"
+     ],
+     "given": true,
+     "images": false,
+     "on": true,
+     "best": true,
+     "merge": "mock-gpt-1",
+     "ids": true
+    },
+    {
+     "id": "mock-gpt-mini",
+     "name": "mock-gpt-mini",
+     "efforts": [
+      "none",
+      "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max"
+     ],
+     "given": true,
+     "images": false,
+     "on": true,
+     "best": true,
+     "merge": "mock-gpt-mini",
+     "ids": true
+    }
+   ],
+   "exposed": 2,
+   "unlisted": false,
+   "noModels": false,
+   "bestInFamily": false,
+   "groups": {
+    "mock-gpt-1": [
+     "group/fast"
+    ],
+    "mock-gpt-mini": [
+     "group/fast"
+    ]
+   },
+   "off": false,
+   "fetched": "2026-10-31T19:02:59.475998755Z",
+   "agents": [
+    {
+     "id": "claude",
+     "name": "Claude Code",
+     "icon": "claudecode-color",
+     "current": false
+    },
+    {
+     "id": "codex",
+     "name": "Codex",
+     "icon": "codex-color",
+     "current": false
+    }
+   ],
+   "sponsored": false,
+   "keyList": [
+    {
+     "id": "46a5fe3f53",
+     "masked": "sk-m…MPLE",
+     "active": true,
+     "on": true
+    }
+   ]
+  }
+ ],
+ "presets": [
+  {
+   "id": "kimi",
+   "name": "Kimi Code",
+   "icon": "file:1acced0492a72369.png",
+   "kind": "partner",
+   "chat": "https://api.kimi.ai/coding/v1",
+   "anthropic": "https://api.kimi.ai/coding",
+   "catalog": "kimi-code-plan-global",
+   "website": "https://usemagpie.ai/go/kimi/site/global",
+   "siteHost": "www.kimi.ai",
+   "keysUrl": "https://usemagpie.ai/go/kimi/keys/global",
+   "sponsored": true,
+   "note": "One subscription, one K3 quota shared by every agent",
+   "regions": [
+    {
+     "id": "cn",
+     "name": "China",
+     "chat": "https://api.kimi.com/coding/v1",
+     "anthropic": "https://api.kimi.com/coding",
+     "keysUrl": "https://usemagpie.ai/go/kimi/keys/cn",
+     "website": "https://usemagpie.ai/go/kimi/site/cn",
+     "siteHost": "www.kimi.com",
+     "catalog": "kimi-code-plan-cn"
+    },
+    {
+     "id": "global",
+     "name": "Global",
+     "chat": "https://api.kimi.ai/coding/v1",
+     "anthropic": "https://api.kimi.ai/coding",
+     "keysUrl": "https://usemagpie.ai/go/kimi/keys/global",
+     "website": "https://usemagpie.ai/go/kimi/site/global",
+     "siteHost": "www.kimi.ai",
+     "catalog": "kimi-code-plan-global"
+    },
+    {
+     "id": "api-cn",
+     "name": "Pay as you go · China",
+     "chat": "https://api.moonshot.cn/v1",
+     "anthropic": "https://api.moonshot.cn/anthropic",
+     "keysUrl": "https://usemagpie.ai/go/kimi/keys/api-cn",
+     "website": "https://usemagpie.ai/go/kimi/site/api-cn",
+     "siteHost": "platform.kimi.com",
+     "catalog": "moonshotai"
+    },
+    {
+     "id": "api",
+     "name": "Pay as you go · Global",
+     "chat": "https://api.moonshot.ai/v1",
+     "anthropic": "https://api.moonshot.ai/anthropic",
+     "keysUrl": "https://usemagpie.ai/go/kimi/keys/api",
+     "website": "https://usemagpie.ai/go/kimi/site/api",
+     "siteHost": "platform.kimi.ai",
+     "catalog": "moonshotai"
+    }
+   ],
+   "regionLabel": "Plan",
+   "splitAccounts": true,
+   "added": false,
+   "notes": {
+    "de": "Ein Abo, ein K3-Kontingent für alle Agents",
+    "en": "One subscription, one K3 quota shared by every agent",
+    "ja": "1つのサブスクリプションで、すべての agent が K3 の枠を共有",
+    "zh": "一份订阅，所有 agent 共享 K3 额度",
+    "zh-TW": "一份訂閱，所有 agent 共享 K3 額度"
+   },
+   "new": true
+  },
+  {
+   "id": "apikeyfan",
+   "name": "APIKEY.FAN",
+   "icon": "file:28c584ac57d02f7e.png",
+   "kind": "partner",
+   "chat": "https://api.apikey.fan/v1",
+   "responses": "https://api.apikey.fan/v1",
+   "anthropic": "https://api.apikey.fan",
+   "website": "https://usemagpie.ai/go/apikeyfan/site",
+   "siteHost": "apikey.fan",
+   "keysUrl": "https://usemagpie.ai/go/apikeyfan/keys",
+   "sponsored": true,
+   "note": "Enterprise-grade AI API gateway to the world's leading models",
+   "regions": [
+    {
+     "id": "main",
+     "name": "Default",
+     "chat": "https://api.apikey.fan/v1",
+     "responses": "https://api.apikey.fan/v1",
+     "anthropic": "https://api.apikey.fan"
+    },
+    {
+     "id": "slb",
+     "name": "Direct",
+     "chat": "https://slb.apikey.fan/v1",
+     "responses": "https://slb.apikey.fan/v1",
+     "anthropic": "https://slb.apikey.fan"
+    }
+   ],
+   "added": false,
+   "notes": {
+    "en": "Enterprise-grade AI API gateway to the world's leading models",
+    "zh": "企业级 AI 中转站，连接全球主流大模型",
+    "zh-TW": "企業級 AI 中轉站，連接全球主流大模型"
+   },
+   "langs": [
+    "zh",
+    "en"
+   ],
+   "new": true
+  }
+ ],
+ "excluded": [],
+ "gateway": {
+  "url": "http://100.64.0.1:3425",
+  "lan": true,
+  "lanURLs": [
+   "http://100.64.0.1:3425"
+  ],
+  "running": true,
+  "mine": true,
+  "window": true,
+  "models": 3,
+  "calls": [],
+  "groups": [
+   {
+    "id": "group/fast",
+    "name": "fast",
+    "icons": [
+     ""
+    ],
+    "providers": [
+     "Mock"
+    ],
+    "members": [
+     "mock/mock-gpt-1",
+     "mock/mock-gpt-mini"
+    ]
+   }
+  ],
+  "archive": {
+   "on": false,
+   "folder": "~/.config/magpie/request-archive",
+   "cap": 1073741824
+  }
+ },
+ "plugins": [],
+ "movable": [
+  "commandcode-plan",
+  "cursor",
+  "devin",
+  "factory",
+  "grok",
+  "kiro",
+  "mimo-app",
+  "qoder",
+  "qoder-cn",
+  "workbuddy",
+  "workbuddy-ai",
+  "zcode",
+  "zed"
+ ],
+ "movesTo": {
+  "commandcode-plan": "@magpie-community/opencode-commandcode-auth",
+  "cursor": "@magpie-community/opencode-cursor-auth",
+  "devin": "@magpie-community/opencode-devin-auth",
+  "factory": "@magpie-community/opencode-factory-auth",
+  "grok": "@magpie-community/opencode-grok-auth",
+  "kiro": "@magpie-community/opencode-kiro-auth",
+  "mimo-app": "@magpie-community/opencode-mimo-auth",
+  "qoder": "@magpie-community/opencode-qoder-auth",
+  "qoder-cn": "@magpie-community/opencode-qoder-auth",
+  "workbuddy": "@magpie-community/opencode-workbuddy-auth",
+  "workbuddy-ai": "@magpie-community/opencode-workbuddy-auth",
+  "zcode": "@magpie-community/opencode-zcode-auth",
+  "zed": "@magpie-community/opencode-zed-auth"
+ }
+}

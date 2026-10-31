@@ -1,0 +1,11 @@
+{
+ "accountNames": {},
+ "keys": [
+  {
+   "id": "cf3c09afe0af2b540ad82416",
+   "name": "iPhone",
+   "masked": "sk-magpie-key-…f5ad0d"
+  }
+ ],
+ "secret": "sk-magpie-key-EXAMPLE-0123456789abcdef"
+}
