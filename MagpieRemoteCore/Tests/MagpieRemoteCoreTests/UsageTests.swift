@@ -196,6 +196,31 @@ final class UsageDecodingTests: XCTestCase {
     }
 }
 
+/// 直接解码 Fixtures/live 里的抓包（重新抓包后自动覆盖到）。
+final class UsageLiveResourceTests: XCTestCase {
+    func testDecodesLiveUsageResources() throws {
+        for name in ["gw-usage-today.json", "gw-usage-7d.json", "gw-usage-30d.json", "gw-usage-all.json", "gw-usage-week.json", "gw-usage-readonly.json"] {
+            let summary = try JSONDecoder().decode(UsageSummary.self, from: LiveFixture.data(name))
+            XCTAssertFalse(summary.period.isEmpty, name)
+            XCTAssertNotNil(summary.since?.date, "\(name) 的 since 解析不了：\(summary.since?.raw ?? "")")
+            XCTAssertEqual(summary.breakdown(.model).reduce(0) { $0 + $1.totals.calls }, summary.totals.calls, name)
+        }
+        for name in ["gw-usage-requests.json", "gw-usage-requests-limit1.json", "gw-usage-requests-agent.json", "held-usage-requests.json"] {
+            let page = try JSONDecoder().decode(UsageRequestPage.self, from: LiveFixture.data(name))
+            XCTAssertLessThanOrEqual(page.rows.count, page.total, name)
+            XCTAssertTrue(page.rows.allSatisfy { $0.time.date != nil }, "\(name) 有解析不了的时间")
+        }
+        XCTAssertTrue(try JSONDecoder().decode(ConcurrencySnapshot.self, from: LiveFixture.data("gw-concurrency.json")).isIdle)
+        XCTAssertTrue(UsageEndpoint.isKeyHeld(status: 403, body: try LiveFixture.data("err-held-usage.json")))
+        XCTAssertTrue(UsageEndpoint.isKeyHeld(status: 403, body: try LiveFixture.data("err-held-concurrency.json")))
+    }
+
+    func testParsesShortFractionRFC3339() throws {
+        let date = try XCTUnwrap(UsageTimestamp.parse("2026-10-31T19:40:57.96+08:00"))
+        XCTAssertEqual(date.timeIntervalSince(try XCTUnwrap(UsageTimestamp.parse("2026-10-31T11:40:57Z"))), 0.96, accuracy: 0.001)
+    }
+}
+
 final class UsageQueryTests: XCTestCase {
     private func dict(_ q: UsageRequestQuery) -> [String: String] {
         Dictionary(uniqueKeysWithValues: q.queryItems.map { ($0.name, $0.value ?? "") })
