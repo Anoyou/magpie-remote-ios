@@ -150,7 +150,7 @@ public struct WebClient: Sendable {
     // MARK: 网页兜底
 
     /// 在 WKWebView 里打开的网页地址。`withKey` 为 true 时带一次 `?k=`，主机 303 跳回不带 k 的地址并写入 Cookie。
-    public func pageURL(_ page: WebPage, withKey: Bool) -> URL? {
+    public func pageURL(_ page: MagpieWebPage, withKey: Bool) -> URL? {
         guard var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else { return nil }
         components.path = (components.path.hasSuffix("/") ? String(components.path.dropLast()) : components.path) + "/"
         var items = page.query
@@ -162,7 +162,7 @@ public struct WebClient: Sendable {
 }
 
 /// 只能在网页里完成的功能。
-public enum WebPage: String, CaseIterable, Identifiable, Sendable {
+public enum MagpieWebPage: String, CaseIterable, Identifiable, Sendable {
     case accounts, backup, masking
 
     public var id: String { rawValue }

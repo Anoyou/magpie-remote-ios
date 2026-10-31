@@ -8,7 +8,7 @@ import MagpieRemoteCore
 /// 供应商的登录页等外部链接交给系统浏览器打开。
 struct ManageWebPageView: View {
     let store: ManageStore
-    let page: WebPage
+    let page: MagpieWebPage
 
     var body: some View {
         Group {

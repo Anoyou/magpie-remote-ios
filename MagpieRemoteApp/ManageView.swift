@@ -62,7 +62,7 @@ struct ManageView: View {
                 }
 
                 Section {
-                    ForEach(WebPage.allCases) { page in
+                    ForEach(MagpieWebPage.allCases) { page in
                         NavigationLink {
                             ManageWebPageView(store: store, page: page)
                         } label: {

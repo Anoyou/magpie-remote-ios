@@ -19,7 +19,7 @@ protocol ManageServing: Sendable {
     func issueKey(name: String, ttl: String) async throws -> IssuedKey
     func revokeIssuedKey(_ id: String) async throws
     /// 网页兜底：地址（带一次 ?k=）与要注入 WKWebView 的 Cookie；fixture 下为 nil。
-    func page(_ page: WebPage) -> (url: URL, cookieName: String, key: String)?
+    func page(_ page: MagpieWebPage) -> (url: URL, cookieName: String, key: String)?
 }
 
 struct LiveManageService: ManageServing {
@@ -58,7 +58,7 @@ struct LiveManageService: ManageServing {
         try await gateway.revokeIssuedKey(id)
     }
 
-    func page(_ page: WebPage) -> (url: URL, cookieName: String, key: String)? {
+    func page(_ page: MagpieWebPage) -> (url: URL, cookieName: String, key: String)? {
         web.pageURL(page, withKey: true).map { ($0, web.cookieName, web.key) }
     }
 }
@@ -266,5 +266,5 @@ actor FixtureManageService: ManageServing {
 
     func revokeIssuedKey(_ id: String) async throws { issued.removeAll { $0["id"]?.string == id } }
 
-    nonisolated func page(_ page: WebPage) -> (url: URL, cookieName: String, key: String)? { nil }
+    nonisolated func page(_ page: MagpieWebPage) -> (url: URL, cookieName: String, key: String)? { nil }
 }
