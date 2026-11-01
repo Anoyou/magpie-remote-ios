@@ -67,6 +67,7 @@
 		D7C5EBC022010B9B427677A5 /* ChatFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920C3FE60DF8536524B583C5 /* ChatFixture.swift */; };
 		D8E6995FA7D89D319E92A6D5 /* UsageLedgerViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A368A41C1D950B939843EED /* UsageLedgerViews.swift */; };
 		D9FD6CCBC2A131D4E2930432 /* HostToolsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2186BECFDE7592BD0DB2621C /* HostToolsSection.swift */; };
+		DB9DBC95492B16C0DF5F25D8 /* AgentsParityUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04394898097C9CCAFBFB1A7 /* AgentsParityUITests.swift */; };
 		DD521DD87C92F1A377CCCDE9 /* CHANGELOG.md in Resources */ = {isa = PBXBuildFile; fileRef = 788E39132F8D99761903C1B9 /* CHANGELOG.md */; };
 		E0DE28411F1D0527282CEBE1 /* HomeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE62C8F309D9EBA62A434C4E /* HomeUITests.swift */; };
 		E1520A79C1F021F0116D828E /* RoutesUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E67EC9FC2AEF26D72DE745B5 /* RoutesUITests.swift */; };
@@ -146,6 +147,7 @@
 		A671F154A4F44DCB5F605A5B /* HostPrivacyModelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostPrivacyModelView.swift; sourceTree = "<group>"; };
 		A9D47C7DA414F1BE4697C6DA /* ManageProvidersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageProvidersView.swift; sourceTree = "<group>"; };
 		AA94709041B2267F5A16D011 /* MagpieRemoteCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MagpieRemoteCore; path = MagpieRemoteCore; sourceTree = SOURCE_ROOT; };
+		B04394898097C9CCAFBFB1A7 /* AgentsParityUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsParityUITests.swift; sourceTree = "<group>"; };
 		B7CCE5AB6E8CB53877120CC9 /* MagpieRemoteUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MagpieRemoteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModelPicker.swift; sourceTree = "<group>"; };
 		C30475E3A14C3C501962A461 /* AgentSessionsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionsService.swift; sourceTree = "<group>"; };
@@ -220,6 +222,7 @@
 			isa = PBXGroup;
 			children = (
 				5CDF3F3ED69DBC6AF4B0861E /* AgentSessionsUITests.swift */,
+				B04394898097C9CCAFBFB1A7 /* AgentsParityUITests.swift */,
 				539E56C3200203FA4B1DE6B0 /* DockNavigation.swift */,
 				A3FC619A941C0D64DF0F8A56 /* DockUITests.swift */,
 				FE62C8F309D9EBA62A434C4E /* HomeUITests.swift */,
@@ -405,6 +408,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				48C06B76D88866821E061143 /* AgentSessionsUITests.swift in Sources */,
+				DB9DBC95492B16C0DF5F25D8 /* AgentsParityUITests.swift in Sources */,
 				10CBE185B772E40CBFC3322B /* DockNavigation.swift in Sources */,
 				40D92CDAFCDD28C4919D472B /* DockUITests.swift in Sources */,
 				E0DE28411F1D0527282CEBE1 /* HomeUITests.swift in Sources */,

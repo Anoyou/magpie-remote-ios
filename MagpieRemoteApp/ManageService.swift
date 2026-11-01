@@ -18,6 +18,13 @@ protocol ManageServing: Sendable {
     func trace(after seq: Int64, wait: Bool) async throws -> TraceSnapshot
     func state() async throws -> WebState
     func setAgent(_ agent: String, field: String, value: String) async throws -> WebState
+    /// Agent 页（对齐官方网页）：命令行程序的版本与更新、重新查找、接入 / 断开 / 重新应用、断开预览、方案。
+    func agentCLIs() async throws -> AgentCLIs
+    func updateAgentCLI(_ id: String) async throws -> AgentCLI
+    func rescanAgents() async throws -> WebState
+    func agentAction(_ action: AgentAction, _ id: String) async throws -> WebState
+    func agentDisconnectPreview(_ id: String) async throws -> AgentDisconnectPreview
+    func profile(_ action: ProfileAction, name: String) async throws -> WebState
     func callerKeys() async throws -> WebCallerKeys
     func callerKey(_ action: CallerKeyAction, _ body: WebJSON) async throws -> WebCallerKeys
     /// 填了签发密钥才能签发临时密钥。
@@ -52,6 +59,12 @@ struct LiveManageService: ManageServing {
     func setAgent(_ agent: String, field: String, value: String) async throws -> WebState {
         try await web.setAgent(agent, field: field, value: value)
     }
+    func agentCLIs() async throws -> AgentCLIs { try await web.agentCLIs() }
+    func updateAgentCLI(_ id: String) async throws -> AgentCLI { try await web.updateAgentCLI(id) }
+    func rescanAgents() async throws -> WebState { try await web.rescanAgents() }
+    func agentAction(_ action: AgentAction, _ id: String) async throws -> WebState { try await web.agentAction(action, id) }
+    func agentDisconnectPreview(_ id: String) async throws -> AgentDisconnectPreview { try await web.agentDisconnectPreview(id) }
+    func profile(_ action: ProfileAction, name: String) async throws -> WebState { try await web.profile(action, name: name) }
     func callerKeys() async throws -> WebCallerKeys { try await web.callerKeys() }
     func callerKey(_ action: CallerKeyAction, _ body: WebJSON) async throws -> WebCallerKeys { try await web.callerKey(action, body) }
 
@@ -83,6 +96,18 @@ actor FixtureManageService: ManageServing {
     private var agentList: [WebJSON]
     private var keyList: [WebJSON]
     private var issued: [WebJSON] = []
+    /// Agent 命令行程序的示例版本（Codex、Claude Code 有新版本，可以试「全部更新」）。
+    private var clis: [String: WebJSON] = [
+        "codex": ["version": "0.163.0", "latest": "0.164.2", "via": "npm", "command": "npm install -g @openai/codex", "update": true],
+        "claude": ["version": "2.1.40", "latest": "2.1.42", "via": "self", "command": "claude update", "update": true],
+        "gemini": ["version": "0.21.0", "latest": "0.21.0", "via": "brew", "command": "brew upgrade gemini-cli"],
+    ]
+    /// 示例方案。
+    private var profileList: [WebJSON] = [
+        ["name": "工作", "summary": "Codex：GPT 4.1", "inUse": true,
+         "agents": [["id": "codex", "name": "Codex", "icon": "codex-color",
+                     "fields": [["key": "model", "label": "model", "value": "relay-example/gpt-4.1"], ["key": "effort", "label": "effort", "value": "high"]]]]],
+    ]
     private var fixturePools: [WebJSON] = RoutesFixture.pools
     private var foundGroups = true
     /// fixture 里各 Key 的「明文」（全是假值），按 Key 的 id。
@@ -116,13 +141,15 @@ actor FixtureManageService: ManageServing {
         providerList = [provider1, provider2, provider3]
         groupList = RoutesFixture.groups
         func option(_ value: String, _ label: String, _ group: String) -> WebJSON {
-            ["value": .string(value), "label": .string(label), "note": .string(group + " · via magpie"), "group": .string(group)]
+            ["value": .string(value), "label": .string(label), "note": .string(group + " · via magpie"), "group": .string(group), "ref": .string(value)]
         }
         let options: WebJSON = [option("group/smart", "聪明组", "路由组"), option("relay-example/gpt-4.1", "GPT 4.1", "示例中转"),
                                 option("relay-example/o3", "OpenAI o3", "示例中转"), option("deepseek/deepseek-chat", "DeepSeek Chat", "示例 DeepSeek")]
         agentList = [
             ["id": "codex", "name": "Codex", "path": "~/.codex/config.toml", "wired": true,
-             "fields": [["key": "model", "label": "model", "value": "relay-example/gpt-4.1", "options": options]]],
+             "fields": [["key": "model", "label": "model", "value": "relay-example/gpt-4.1", "options": options],
+                        ["key": "effort", "label": "effort", "value": "high",
+                         "options": [["value": "low"], ["value": "medium"], ["value": "high"], ["value": "xhigh"]]]]],
             ["id": "claude", "name": "Claude Code", "path": "~/.claude/settings.json", "wired": nil,
              "fields": [["key": "model", "label": "model", "value": "", "options": options]]],
             // 在网页版里手动隐藏的（见 settings 的 agentsHidden）：和未设置的 Claude Code 一起默认折叠。
@@ -349,7 +376,70 @@ actor FixtureManageService: ManageServing {
         return TraceSnapshot(json: RoutesFixture.trace(elapsed: Date().timeIntervalSince(traceStart), now: Date()))
     }
 
-    func state() async throws -> WebState { try await pause(); return WebState(json: ["agents": .array(agentList)]) }
+    func state() async throws -> WebState { try await pause(); return stateJSON() }
+
+    private func stateJSON(_ extra: [String: WebJSON] = [:]) -> WebState {
+        var json: [String: WebJSON] = ["agents": .array(agentList), "profiles": .array(profileList)]
+        json.merge(extra) { $1 }
+        return WebState(json: .object(json))
+    }
+
+    func agentCLIs() async throws -> AgentCLIs { AgentCLIs(json: ["agents": .object(clis)]) }
+
+    func updateAgentCLI(_ id: String) async throws -> AgentCLI {
+        guard var cli = clis[id] else { throw MagpieError.webRejected(message: "magpie can't find \(id)'s CLI", code: nil) }
+        try await Task.sleep(for: .milliseconds(600))
+        cli["version"] = cli["latest"] ?? cli["version"] ?? ""
+        cli["update"] = nil
+        clis[id] = cli
+        return AgentCLI(json: cli)
+    }
+
+    func rescanAgents() async throws -> WebState { try await pause(); return stateJSON() }
+
+    func agentAction(_ action: AgentAction, _ id: String) async throws -> WebState {
+        try await pause()
+        guard let index = agentList.firstIndex(where: { $0["id"]?.string == id }) else {
+            throw MagpieError.webRejected(message: "no agent \(id)", code: nil)
+        }
+        switch action {
+        case .connect:
+            agentList[index]["wired"] = true
+            return stateJSON(["connected": ["how": "again"]])
+        case .disconnect:
+            agentList[index]["wired"] = nil
+        case .reapply, .keep:
+            agentList[index]["drift"] = nil
+        }
+        return stateJSON()
+    }
+
+    func agentDisconnectPreview(_ id: String) async throws -> AgentDisconnectPreview {
+        let path = agentList.first { $0["id"]?.string == id }?["path"]?.string ?? "~/.config"
+        return AgentDisconnectPreview(json: ["changes": [["path": .string(path), "lines": [["op": "-", "text": "model_provider = \"magpie\""]]]]])
+    }
+
+    func profile(_ action: ProfileAction, name: String) async throws -> WebState {
+        try await pause()
+        switch action {
+        case .save:
+            let current: WebJSON = ["name": .string(name), "summary": "", "agents": .array(agentList.map { agent in
+                ["id": agent["id"] ?? "", "name": agent["name"] ?? "", "fields": .array((agent["fields"]?.array ?? []).map { field in
+                    ["key": field["key"] ?? "", "label": field["label"] ?? "", "value": field["value"] ?? ""]
+                })]
+            })]
+            profileList.removeAll { $0["name"]?.string == name }
+            profileList.append(current)
+            profileList.sort { ($0["name"]?.string ?? "") < ($1["name"]?.string ?? "") }
+            for i in profileList.indices { profileList[i]["inUse"] = .bool(profileList[i]["name"]?.string == name) }
+        case .use:
+            for i in profileList.indices { profileList[i]["inUse"] = .bool(profileList[i]["name"]?.string == name) }
+            return stateJSON(["changed": 1])
+        case .delete:
+            profileList.removeAll { $0["name"]?.string == name }
+        }
+        return stateJSON(["changed": 0])
+    }
 
     func setAgent(_ agent: String, field: String, value: String) async throws -> WebState {
         try await pause()
