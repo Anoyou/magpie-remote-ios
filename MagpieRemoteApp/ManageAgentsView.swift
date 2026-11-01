@@ -148,7 +148,8 @@ struct ManageStatusLine: View {
                 .transition(.opacity)
                 .accessibilityIdentifier("agents.status")
                 .task(id: status) {
-                    try? await Task.sleep(for: .seconds(4))
+                    // 被取消（这一行暂时不在屏幕上，例如上面盖着弹窗）时不要清掉：下次出现时重新计 4 秒。
+                    do { try await Task.sleep(for: .seconds(4)) } catch { return }
                     if store.status == status { withAnimation { store.status = nil } }
                 }
         }

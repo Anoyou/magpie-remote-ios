@@ -75,8 +75,8 @@ struct KeyLimitSheet: View {
             let ok = await store.callerKey(.limit, draft.body(key: key.id)).ok
             saving = false
             if ok {
-                store.status = draft.savedSaid(name: key.name)
                 dismiss()
+                store.sayAfterSheet(draft.savedSaid(name: key.name))
             }
         }
     }
@@ -296,8 +296,8 @@ struct KeyModelsSheet: View {
             }
             saving = false
             if ok {
-                store.status = CallerKeyModels.savedSaid(name: key.name, models: split.models, accounts: split.accounts ?? key.accounts)
                 dismiss()
+                store.sayAfterSheet(CallerKeyModels.savedSaid(name: key.name, models: split.models, accounts: split.accounts ?? key.accounts))
             }
         }
     }

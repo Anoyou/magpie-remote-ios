@@ -103,11 +103,26 @@ final class RoutesUITests: XCTestCase {
         let app = launchRoutes()
         XCTAssertTrue(element(id: "routes.stage", in: app).waitForExistence(timeout: 10), "没有出现实时路由舞台")
         // 先等最近一个请求结束（「重放」出现），再滑到能点；不要先滑：还没出现时连滑几下会把舞台滑出屏幕（懒加载）。
+        // 「重放」只在最近一个请求已结束时出现；fixture 每 6 秒来一个新请求，按钮会一隐一现。
+        // 所以看到它就按坐标点（元素刚好消失也不会让点击本身失败），没进重放就等下一次再点。
         let replay = element(id: "routes.replay.one", in: app)
+        let bar = element(id: "routes.replay", in: app)
         XCTAssertTrue(replay.appears(timeout: 20), "最近一个请求结束后应当有「重放」")
         app.swipeUp(until: replay, max: 2)
-        replay.tap()
-        XCTAssertTrue(element(id: "routes.replay", in: app).appears(timeout: 5), "没有出现重放条")
+        var started = false
+        let window = app.windows.firstMatch.frame
+        for _ in 0..<6 where !started {
+            // snapshot() 在元素刚好消失时只是抛错（不算测试失败）；拿到框后按整个 App 的坐标点，不再去找元素。
+            guard replay.appears(timeout: 15), let snap = try? replay.snapshot() else { continue }
+            let f = snap.frame
+            guard !f.isEmpty, window.contains(CGPoint(x: f.midX, y: f.midY)) else {
+                if f.midY > window.midY { app.swipeUp() } else { app.swipeDown() }
+                continue
+            }
+            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
+            started = bar.appears(timeout: 2)
+        }
+        XCTAssertTrue(started, "没有出现重放条")
         // 只重放一个请求一两秒就放完了；换速度、停止用「全部重放」（十几个请求，够长）。
         let all = element(id: "routes.replay.all", in: app)
         XCTAssertTrue(all.appears(timeout: 15), "没有「全部重放」")

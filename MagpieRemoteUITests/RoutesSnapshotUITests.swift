@@ -37,13 +37,16 @@ final class RoutesSnapshotUITests: XCTestCase {
         let directory = outputDirectory.appendingPathComponent(scene, isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
+        // 快照模式下舞台不动：框只量一次（每帧都查一次元素框要多花近 1 秒）。
+        let bounds = app.windows.firstMatch.frame
+        let rect = stage.frame.intersection(bounds)
         var ms = Int((start * 1000).rounded())
         let last = Int((end * 1000).rounded())
         var index = 0
         while ms <= last {
             wait(for: clock, toShow: ms)
             if index % every == 0 {
-                let shot = visibleShot(of: stage, in: app)
+                let shot = visibleShot(rect, in: bounds)
                 let name = String(format: "ios-%06d", ms)
                 let attachment = XCTAttachment(image: shot)
                 attachment.name = "\(scene)/\(name)"
@@ -59,10 +62,8 @@ final class RoutesSnapshotUITests: XCTestCase {
 
     /// 舞台卡片在屏幕上看得见的那一块。卡片下面加了「是怎么路由的」之后比屏幕还高，
     /// `XCUIElement.screenshot()` 对超出屏幕的元素会失败（Rendering screen failed），所以截整屏再裁。
-    private func visibleShot(of element: XCUIElement, in app: XCUIApplication) -> UIImage {
+    private func visibleShot(_ rect: CGRect, in bounds: CGRect) -> UIImage {
         let screen = XCUIScreen.main.screenshot().image
-        let bounds = app.windows.firstMatch.frame
-        let rect = element.frame.intersection(bounds)
         guard let cg = screen.cgImage, !rect.isNull, rect.width > 0, rect.height > 0 else { return screen }
         let scale = CGFloat(cg.width) / bounds.width
         let pixels = CGRect(x: (rect.minX - bounds.minX) * scale, y: (rect.minY - bounds.minY) * scale,

@@ -139,8 +139,8 @@ private struct DisabledModelPicker: View {
         let id = pattern.trimmingCharacters(in: .whitespacesAndNewlines)
         Task {
             if await store.setDisabledModels(next) {
-                store.status = "已停用 \(id)"
                 dismiss()
+                store.sayAfterSheet("已停用 \(id)")
             }
         }
     }

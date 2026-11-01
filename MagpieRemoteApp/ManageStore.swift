@@ -43,6 +43,14 @@ final class ManageStore {
     private(set) var profiles: [WebProfile] = []
     /// 操作完成后的一句话（官方网页底部状态栏），几秒后自动消失。
     var status: String?
+
+    /// 弹窗里保存后的一句话：等弹窗收起（约 0.45 秒）再显示在页面底部，否则 4 秒里有一段被弹窗挡着。
+    func sayAfterSheet(_ text: String) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(450))
+            status = text
+        }
+    }
     private(set) var keys: [WebCallerKey] = []
     /// 网关密钥能限定的账号 id → 显示名。
     private(set) var keyAccountNames: [String: String] = [:]
