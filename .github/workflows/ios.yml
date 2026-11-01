@@ -3,7 +3,7 @@ name: iOS
 # 结构（目标：PR 反馈 ≤ 8 分钟）：
 #   判定（Ubuntu：隐私 / 工程 / 版本校验 + 改动判定 + 同树已全绿则跳过）
 #     ├─ Core 单元测试（Ubuntu，swift 官方容器，缓存 .build）—— 与 macOS 并行
-#     └─ 编译与 UI 测试（macOS ×2 分片并行）：恢复模拟器 dyld 缓存 → build-for-testing（有缓存时模拟器并行启动）
+#     └─ 编译与 UI 测试（macOS 单 job；runner 并发为 1，不分片）：恢复模拟器 dyld 缓存 → build-for-testing（有缓存时模拟器并行启动）
 #          → 预热（顺带跑完本片最短的用例）
 #          → UI 测试（本片其余用例，失败的才重跑一次）；第 1 片额外打未签名 IPA 并按文件树命名上传，
 #          供 main push 时「未签名 IPA」直接复用（scripts/ui-test-shards.py 按预计耗时给第 1 片少分一些用例）
@@ -53,8 +53,10 @@ env:
   DERIVED_DATA: ${{ github.workspace }}/build/DerivedData
   RESULTS_DIR: ${{ github.workspace }}/build/results
   GREEN_TREE_PREFIX: ios-green-tree-
-  # UI 测试分片数（与 build-test 的 matrix.shard 保持一致）；第 1 片还要打 IPA（约 60 秒），少分一些用例。
-  UI_SHARDS: "2"
+  # UI 测试分片数（与 build-test 的 matrix.shard 保持一致）。
+  # xcode-27 runner 实测同一时间只跑 1 个 job：分片只会让排队翻倍，所以默认 1 片。
+  # 只有 runner 并发 ≥2 时才改回 2（同时把 matrix.shard 改成 [1, 2]）。
+  UI_SHARDS: "1"
   UI_SHARD_EXTRA: "0=60"
 
 jobs:
@@ -152,7 +154,7 @@ jobs:
         run: swift test --package-path MagpieRemoteCore --skip-build --parallel
 
   build-test:
-    name: 编译与 UI 测试（${{ matrix.shard }}/2）
+    name: 编译与 UI 测试
     needs: plan
     if: needs.plan.outputs.skip != 'true' && needs.plan.outputs.ios == 'true'
     runs-on: xcode-27
@@ -160,7 +162,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1]
     env:
       SHARD: ${{ matrix.shard }}
     steps:
@@ -304,7 +306,7 @@ jobs:
       - name: 打包模拟器 dyld 缓存
         # 缓存未命中时由第 2 片保存（第 1 片还要打 IPA）；main 上的「模拟器缓存预热」每天也会保存一份供所有 PR 使用。
         id: dyld-pack
-        if: always() && matrix.shard == 2 && steps.dyld.outputs.cache-hit != 'true' && steps.xcode.outputs.dyld_key != ''
+        if: always() && matrix.shard == 1 && steps.dyld.outputs.cache-hit != 'true' && steps.xcode.outputs.dyld_key != ''
         run: bash scripts/ci-sim-dyld-cache.sh pack "$RUNNER_TEMP/sim-dyld"
 
       - name: 保存模拟器 dyld 缓存
