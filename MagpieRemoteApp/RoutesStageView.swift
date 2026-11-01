@@ -57,8 +57,10 @@ private struct StageBoundsKey: PreferenceKey {
 }
 
 private extension View {
+    /// 记下这块的位置。用 transform：外层（.agents）记自己时不能把里面各张 Agent 卡片记的位置盖掉
+    /// （anchorPreference 会用自己的值替换子视图的值——这样 Agent 的线、飞向 magpie 的路线全都没了）。
     func stageNode(_ node: StageNode) -> some View {
-        anchorPreference(key: StageBoundsKey.self, value: .bounds) { [node: $0] }
+        transformAnchorPreference(key: StageBoundsKey.self, value: .bounds) { $0[node] = $1 }
     }
 }
 
@@ -159,7 +161,7 @@ struct RoutesStageView: View {
                         VStack(alignment: .leading, spacing: 0) {
                             if let route = model.current {
                                 let mask = model.mask(agentName: agentName)
-                                stage(RouteStageBuilder.build(current: route, staged: model.staged(now: date), now: date, agentName: agentName),
+                                stage(RouteStageBuilder.build(current: route, staged: model.staged(now: date), now: date, order: model.agentOrder, agentName: agentName),
                                       route: route, mask: mask)
                             }
                         }
@@ -265,6 +267,8 @@ private struct SkyItem {
     var kind: Kind
     var point: CGPoint
     var hue: Color
+    /// UI 测试用：喜鹊此刻在哪段路上（toHub＝Agent → magpie、out、home、bounce；停着时为 rest）。
+    var leg = ""
 
     var isBird: Bool { if case .bird = kind { return true }; return false }
 }
@@ -299,7 +303,7 @@ private struct StageCanvas: View {
                 VStack(spacing: 10) {
                     ForEach(stage.agents) { agent in
                         StageMotion(paused: !moving) { t in
-                            AgentNode(agent: agent).scaleEffect(moving ? MagpieMotion.tickScale(agentTicks[agent.id] ?? [], at: t) : 1)
+                            AgentNode(agent: agent, many: stage.agents.count > 1).scaleEffect(moving ? MagpieMotion.tickScale(agentTicks[agent.id] ?? [], at: t) : 1)
                         }
                         .stageNode(.agent(agent.id))
                     }
@@ -355,14 +359,40 @@ private struct StageCanvas: View {
                                     .contentShape(.rect)
                                     .accessibilityElement(children: .ignore)
                                     .accessibilityLabel("喜鹊")
+                                    .accessibilityValue(item.leg)
                                     .accessibilityIdentifier("routes.flier")
                                     .position(item.point)
                             }
+                            // 量到了几张 Agent 卡片、几行（Agent → magpie 的线要靠这些位置才画得出来）
+                            Color.clear.frame(width: 6, height: 6)
+                                .contentShape(.rect)
+                                .accessibilityElement(children: .ignore)
+                                .accessibilityLabel("线")
+                                .accessibilityValue(Text(verbatim: Self.measured(layout, stage)))
+                                .accessibilityIdentifier("routes.wires")
                         }
                     }
                 }
             }
             .allowsHitTesting(false)
+        }
+    }
+
+    /// 「agents=all rows=3」：每张 Agent 卡片都量到了位置时是 all，否则「量到的/应有的」。
+    private static func measured(_ layout: SkyLayout?, _ stage: RouteStage) -> String {
+        let got = layout?.agentCount ?? 0
+        let agents = got > 0 && got >= stage.agents.count ? "all" : "\(got)/\(stage.agents.count)"
+        return "agents=\(agents) rows=\(layout?.rowCount ?? 0)"
+    }
+
+    /// 喜鹊所在那段路的名字（只给 UI 测试看）。from agent 的去程也是从 Agent 的线起飞。
+    private static func legName(_ segment: FlightSegment) -> String {
+        guard case .fly(let leg, _) = segment.kind else { return "rest" }
+        switch leg {
+        case .toHub: return "toHub"
+        case .out(_, let from): return from == .agent ? "toHub" : "out"
+        case .home: return "home"
+        case .bounce: return "bounce"
         }
     }
 
@@ -384,11 +414,14 @@ private struct StageCanvas: View {
         // 网页 render()：点在线上飞的 Agent 也算在发
         var onWire = Set<String>()
         for play in plays { if let segment = play.segment(at: time), case .fly = segment.kind { onWire.insert(play.agent) } }
+        // 网页：流动的线是 .rt-flows 里的副本，那一层在所有 .rt-wires 之上（原来的那条 .flown 藏起来）；
+        // 其余的线按先后画在 .rt-wires 里。所以先画不动的，再画流动的——车道是几条线共用的，后画的灰线不能盖住流动的那条。
+        var live: [(Path, Color)] = []
         for agent in stage.agents {
             guard let rect = layout.agent(agent.id) else { continue }
             let path = Wires.agent(rect, hub: layout.hub)
             if agent.busy || onWire.contains(agent.id) {
-                gc.stroke(path, with: .color(RT.hue(agent.id)), style: StrokeStyle(lineWidth: 1.5, dash: [3, 5], dashPhase: phase))
+                live.append((path, RT.hue(agent.id)))
             } else {
                 gc.stroke(path, with: .color(RT.line), lineWidth: 1.5)
             }
@@ -399,7 +432,7 @@ private struct StageCanvas: View {
             let hue = row.agent.map(RT.hue) ?? RT.muted
             switch row.state {
             case .answering:
-                gc.stroke(path, with: .color(hue), style: StrokeStyle(lineWidth: 1.5, dash: [3, 5], dashPhase: phase))
+                live.append((path, hue))
             case .answered:
                 gc.stroke(path, with: .color(hue), lineWidth: 1.5)
             case .resting, .passedOver:
@@ -407,6 +440,9 @@ private struct StageCanvas: View {
             case .idle:
                 gc.stroke(path, with: .color(RT.line), lineWidth: 1.5)
             }
+        }
+        for (path, color) in live {
+            gc.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 1.5, dash: [3, 5], dashPhase: phase))
         }
     }
 
@@ -433,7 +469,8 @@ private struct StageCanvas: View {
                 guard let place = play.place(of: bird, at: time),
                       let lift = MagpieMotion.lift(elapsed: time - bird.come, landed: (bird.away ?? .infinity) - bird.come),
                       let pose = birdPose(place.segment, play: play, layout: layout, at: place.time) else { continue }
-                items.append(SkyItem(kind: .bird(pose, lift, flap: time - bird.come), point: pose.point, hue: hue))
+                items.append(SkyItem(kind: .bird(pose, lift, flap: time - bird.come), point: pose.point, hue: hue,
+                                     leg: Self.legName(place.segment)))
             }
         }
         return items
@@ -555,6 +592,8 @@ private struct SkyLayout {
     }
 
     func agent(_ id: String) -> CGRect? { agents[id] }
+    var agentCount: Int { agents.count }
+    var rowCount: Int { rows.count }
     func row(_ id: String) -> CGRect? { rows[id] }
 
     func agentLine(_ id: String) -> FlightLine? { agents[id].map { FlightLine(Wires.agent($0, hub: hub)) } }
@@ -599,32 +638,45 @@ private struct SkyLayout {
 
 private struct AgentNode: View {
     let agent: StageAgent
+    /// 台上不止一个 Agent（网页 .rt-srcs.many）：卡片紧一点（padding 8 8 7）、标志 20。
+    var many = false
 
     var body: some View {
+        let icon: CGFloat = many ? 20 : 26
+        // routing.css .rt-node：flex 列、gap 2；字是 line-height 1.4（13px → 18.2、11px → 15.4）。
+        // 标志在一行 14px 的字里（.rt-ic 是行内的 inline-flex，margin-bottom 3）：那一块高 = 标志 + 3 + 3.6。
         VStack(spacing: 2) {
             Group {
                 // 网页 .rt-src 的 .rt-ic：Agent 的官方图标；认不出的 Agent 用首字母方块。
                 if BrandIcon.isBrand(OfficialIcon.agent(agent.id)) {
-                    BrandIcon(OfficialIcon.agent(agent.id), size: 22).foregroundStyle(RT.fg).frame(width: 26, height: 26)
+                    BrandIcon(OfficialIcon.agent(agent.id), size: icon).foregroundStyle(RT.fg).frame(width: icon, height: icon)
                 } else {
                     Text(String(agent.name.prefix(1)).uppercased())
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: many ? 11 : 13, weight: .bold))
                         .foregroundStyle(.white)
-                        .frame(width: 26, height: 26)
+                        .frame(width: icon, height: icon)
                         .background(RT.hue(agent.id), in: .rect(cornerRadius: 7, style: .continuous))
                 }
             }
-            .padding(.bottom, 3)
-            Text(agent.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(RT.fg).lineLimit(1)
-            Text(agent.busy ? "正在发送" : "Agent").font(.system(size: 11)).foregroundStyle(RT.muted).lineLimit(1)
+            .frame(height: icon + 6.6, alignment: .top)
+            // .rt-src b::before：名字前 7px 的 Agent 色圆点，右边留 6px
+            HStack(spacing: 6) {
+                Circle().fill(RT.hue(agent.id)).frame(width: 7, height: 7).padding(.top, 1)
+                Text(agent.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(RT.fg).lineLimit(1)
+            }
+            .frame(height: 18.2)
+            Text(agent.sub.isEmpty ? "Agent" : agent.sub).font(.system(size: 11)).foregroundStyle(RT.muted).lineLimit(1)
+                .truncationMode(.tail)
+                .frame(height: 15.4)
         }
         .padding(.horizontal, 8)
-        .padding(.top, 12)
-        .padding(.bottom, 10)
+        .padding(.top, many ? 8 : 12)
+        .padding(.bottom, many ? 7 : 10)
         .frame(maxWidth: .infinity)
         .background(RT.card, in: .rect(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(RT.line))
         .accessibilityElement(children: .combine)
+        .accessibilityValue(agent.busy ? "正在发送" : "")
     }
 }
 
@@ -636,13 +688,15 @@ private struct HubNode: View {
 
     var body: some View {
         VStack(spacing: 2) {
+            // routing.css：svg.rt-bird 26×26 + margin-bottom 3；b 13px、small 11px、胶囊 10.5px，都是 line-height 1.4
             MagpieLogo().fill(RT.fg, style: FillStyle(eoFill: true)).frame(width: 26, height: 26).padding(.bottom, 3)
-            Text("magpie").font(.system(size: 13, weight: .semibold)).foregroundStyle(RT.fg)
-            Text("网关").font(.system(size: 11)).foregroundStyle(RT.muted)
+            Text("magpie").font(.system(size: 13, weight: .semibold)).foregroundStyle(RT.fg).frame(height: 18.2)
+            Text("网关").font(.system(size: 11)).foregroundStyle(RT.muted).frame(height: 15.4)
             if !chipHidden {
                 Button(action: action) {
                     Text(chip)
                         .font(.system(size: 10.5, weight: .medium))
+                        .frame(height: 14.7)
                         .padding(.horizontal, 8).padding(.vertical, 1)
                         .foregroundStyle(RT.card)
                         .background(RT.fg, in: .capsule)
@@ -681,15 +735,19 @@ private struct SeatRow: View {
     }
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            dot
+        // routing.css .rt-accts li：grid 10px | 1fr，column-gap 10、row-gap 6，padding 9 12；
+        // 第一行（b）高 20.5（16px 的标志 vertical-align -3px 撑高了 13px/1.4 的行），第二行 em 12px/1.4 = 16.8；
+        // 圆点在第一行里垂直居中。
+        HStack(alignment: .top, spacing: 10) {
+            dot.frame(height: 20.5)
             VStack(alignment: .leading, spacing: 6) {
-                title
+                title.frame(height: 20.5)
                 PII.text(row.status, mask)
                     .font(.system(size: 12)).monospacedDigit()
                     .foregroundStyle(statusColor)
                     .opacity(row.state == .resting ? 0.85 / dimmed : 1)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
+                    .frame(minHeight: 16.8)
                 if let bar = row.bar {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
@@ -777,24 +835,31 @@ private struct SeatRow: View {
 
     private var title: some View {
         let seat = row.seat
-        return HStack(spacing: 6) {
-            if BrandIcon.isBrand(seat.officialIcon) {
-                // 网页 .rt-accts b .ic：供应商标志
-                BrandIcon(seat.officialIcon, size: 14).foregroundStyle(RT.fg)
-            } else {
-                Image(systemName: seat.kind == "account" ? "person.crop.circle" : seat.kind == "provider" ? "shippingbox" : "key")
-                    .font(.system(size: 12)).foregroundStyle(RT.fg2)
+        // 网页 makeRow()：标志（16×16，右边 7px）、名字（560）、空格、灰色补充、模型（margin-left 7、11px 等宽、卡片 2 色底）
+        return HStack(spacing: 0) {
+            Group {
+                if BrandIcon.isBrand(seat.officialIcon) {
+                    // 网页 .rt-accts b .ic：供应商标志
+                    BrandIcon(seat.officialIcon, size: 16).foregroundStyle(RT.fg)
+                } else {
+                    // 网页认不出的供应商用 generic（一个盒子）
+                    Image(systemName: "shippingbox").font(.system(size: 12)).foregroundStyle(RT.fg2)
+                        .frame(width: 16, height: 16)
+                }
             }
+            .padding(.trailing, 7)
             PII.text(seat.title, mask).font(.system(size: 13, weight: .medium)).foregroundStyle(RT.fg).lineLimit(1)
+                .layoutPriority(1)
             if !seat.detail.isEmpty {
-                PII.text(seat.detail, mask).font(.system(size: 13)).foregroundStyle(RT.muted).lineLimit(1)
+                PII.text(" " + seat.detail, mask).font(.system(size: 13)).foregroundStyle(RT.muted).lineLimit(1)
             }
             Text(seat.modelLabel)
                 .font(.system(size: 11, design: .monospaced)).foregroundStyle(RT.fg2)
                 .padding(.horizontal, 5).background(RT.card2, in: .rect(cornerRadius: 5))
                 .lineLimit(1)
-            if seat.fast { badge("快速") }
-            if seat.fallback { badge("备用") }
+                .padding(.leading, seat.detail.isEmpty ? 7 + 3.6 : 7)
+            if seat.fast { badge("快速").padding(.leading, 6) }
+            if seat.fallback { badge("备用").padding(.leading, 6) }
         }
     }
 

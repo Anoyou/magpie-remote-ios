@@ -93,10 +93,10 @@ public struct TraceSeat: Hashable, Sendable {
     public var title: String { kind == "provider" || who.isEmpty ? name : who }
     /// 行上灰色的补充：备用时是供应商名，账号时是套餐。
     public var detail: String {
+        // 网页 makeRow()：`w.fallback ? w.name : w.kind === "provider" ? "" : w.plan || ""`
         if fallback { return name }
         if kind == "provider" { return "" }
-        if !plan.isEmpty { return plan }
-        return title == name ? "" : name
+        return plan
     }
     public var modelLabel: String { fixed.isEmpty ? model : "\(model):\(fixed)" }
 }
@@ -453,6 +453,8 @@ public struct StageAgent: Hashable, Sendable, Identifiable {
     /// 有请求在路上：它到 magpie 的线在流动。
     public var busy: Bool
     public var hue: String
+    /// 卡片上的小字（网页 a.sub）：它最近一个请求的模型；同时在几个文件夹里干活时是这些文件夹的最后一级。
+    public var sub: String = ""
 }
 
 /// 一次舞台画面：左边的 Agent、中间的 magpie、下面的账号行、上方的标题和说明、底部的计数。
@@ -530,15 +532,34 @@ public enum RouteStageBuilder {
 
     static func percent(_ value: Double) -> String { "\(Int(value.rounded()))%" }
 
+    /// 网页 rebuild() 里 Agent 卡片的先后：已经在台上的保持原来的位置，新来的按请求先后排在后面
+    /// （`[...keep, ...ags.filter((a) => !keep.includes(a))]`，ags 按请求 id 排）。
+    public static func agentOrder(previous: [String], routes: [TraceRoute]) -> [String] {
+        var present: [String] = []
+        for route in routes.sorted(by: { $0.id < $1.id }) where !present.contains(route.agent) { present.append(route.agent) }
+        let keep = previous.filter(present.contains)
+        return keep + present.filter { !keep.contains($0) }
+    }
+
     /// 把要显示的请求（第一个是选中的）画成舞台。`agentName` 把 Agent id 换成名字。
-    public static func build(current: TraceRoute, staged: [TraceRoute], now: Date = Date(),
+    /// `order`：Agent 卡片的先后（见 agentOrder）；nil 时选中的请求的 Agent 在最前。
+    public static func build(current: TraceRoute, staged: [TraceRoute], now: Date = Date(), order: [String]? = nil,
                              agentName: (String) -> String = { $0 }) -> RouteStage {
         let routes = [current] + staged.filter { $0.id != current.id }
         // 左边的 Agent：按出现顺序
         var agentIDs: [String] = []
         for route in routes where !agentIDs.contains(route.agent) { agentIDs.append(route.agent) }
+        if let order { agentIDs = agentOrder(previous: order, routes: routes) }
         let busy = Set(routes.filter { $0.tries.contains { !$0.done } }.map(\.agent))
-        let agents = agentIDs.map { StageAgent(id: $0, name: agentName($0), busy: busy.contains($0), hue: hue($0)) }
+        let byID = routes.sorted { $0.id < $1.id }
+        let agents = agentIDs.map { id -> StageAgent in
+            let mine = byID.filter { $0.agent == id }
+            var folders: [String] = []
+            for route in mine where !route.folder.isEmpty && !folders.contains(route.folder) { folders.append(route.folder) }
+            let sub = folders.count > 1 ? folders.map { $0.split(separator: "/").last.map(String.init) ?? $0 }.joined(separator: ", ")
+                : mine.last?.model ?? ""
+            return StageAgent(id: id, name: agentName(id), busy: busy.contains(id), hue: hue(id), sub: sub)
+        }
 
         // 每个座位：最近一个排到它的请求说了算（选中的请求优先）
         var seats: [(TraceSeat, TraceRoute)] = []

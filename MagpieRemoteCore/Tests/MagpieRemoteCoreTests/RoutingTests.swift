@@ -306,6 +306,20 @@ final class RouteTraceTests: XCTestCase {
         XCTAssertTrue(stage.caption.contains("改道 1 次"))
     }
 
+    /// 网页 rebuild()：已在台上的 Agent 不挪位置，新来的排后面；卡片小字是它最近一个请求的模型。
+    func testStageAgentOrderIsStable() throws {
+        let trace = try snapshot("trace.json")
+        let routes = [trace.routes[0], trace.routes[1]]
+        XCTAssertEqual(RouteStageBuilder.agentOrder(previous: [], routes: routes), ["codex", "claude"])
+        XCTAssertEqual(RouteStageBuilder.agentOrder(previous: ["claude", "gone"], routes: routes), ["claude", "codex"])
+        // 选中 claude 的请求时，卡片仍按台上的先后排，不把选中的挪到最前
+        let stage = RouteStageBuilder.build(current: trace.routes[1], staged: [trace.routes[0]], now: now, order: ["codex", "claude"])
+        XCTAssertEqual(stage.agents.map(\.id), ["codex", "claude"])
+        XCTAssertEqual(stage.agents.map(\.sub), [trace.routes[0].model, trace.routes[1].model])
+        // 不给先后时照旧：选中的请求的 Agent 在最前
+        XCTAssertEqual(RouteStageBuilder.build(current: trace.routes[1], staged: [trace.routes[0]], now: now).agents.first?.id, "claude")
+    }
+
     func testStageForSingleKeyAndFailure() throws {
         var book = TraceBook()
         book.apply(try snapshot("trace.json"))

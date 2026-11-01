@@ -28,12 +28,15 @@ final class RoutesLiveModel {
             // 网页 pick()：选了一个就只画它，飞着的结束（stopPlays）；回到实时时接着飞还在路上的
             plays = [:]
             if pinned == nil { replayUnderWay() }
+            syncAgentOrder()
         }
     }
     /// 「账号打码」（网页 #rtMask，与「用量」共用 magpie.maskEmails）。
     var masked: Bool {
         didSet { if Self.persists { UserDefaults.standard.set(masked ? "1" : "0", forKey: Self.maskKey) } }
     }
+    /// 台上 Agent 卡片的先后（网页 rebuild()：已在台上的不挪，新来的排后面）。每次读完、演完一个时更新。
+    private(set) var agentOrder: [String] = []
     /// 卡片讲的请求（网页 `told()`）。
     private var toldID: Int64?
     private var task: Task<Void, Never>?
@@ -135,6 +138,14 @@ final class RoutesLiveModel {
         }
         resuming = false
         advance(at: t)
+        syncAgentOrder()
+    }
+
+    /// 按此刻台上的请求更新 Agent 卡片的先后。
+    func syncAgentOrder() {
+        guard let current else { return }
+        let next = RouteStageBuilder.agentOrder(previous: agentOrder, routes: [current] + staged())
+        if next != agentOrder { agentOrder = next }
     }
 
     private func replayUnderWay() {
@@ -164,6 +175,7 @@ final class RoutesLiveModel {
             guard !Task.isCancelled, let self else { return }
             let t = self.now
             self.plays = self.plays.filter { ($0.value.over ?? .infinity) > t }
+            self.syncAgentOrder()
             self.schedulePrune()
         }
     }
