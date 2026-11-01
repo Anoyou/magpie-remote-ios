@@ -47,9 +47,10 @@ final class ManageUITests: XCTestCase {
         let row = element(id: "provider.row.relay-example", in: app)
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
+        // 详情页多了 Base URL 与 API Key 区，「删除」在列表最下面，懒加载：先滑下去再找
         let delete = element(id: "provider.delete", in: app)
-        XCTAssertTrue(delete.waitForExistence(timeout: 10))
         scrollTo(delete, in: app)
+        XCTAssertTrue(delete.waitForExistence(timeout: 10), "详情页最下面没有「删除这个供应商」")
         delete.tap()
         let confirm = app.buttons["删除供应商"].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 5), "删除前应当先弹出确认")

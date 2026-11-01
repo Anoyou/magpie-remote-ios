@@ -219,11 +219,11 @@ struct ManagePluginsView: View {
         Section {
             ForEach(cards, id: \.package) { card($0) }
         } header: {
-            Text(title)
+            // identifier 放在标题上：挂在 Section 上会被分到每一行，盖掉卡片自己的 plugins.card.…
+            Text(title).accessibilityIdentifier(id)
         } footer: {
             if !hint.isEmpty { Text(hint) }
         }
-        .accessibilityIdentifier(id)
     }
 
     private func card(_ listing: WebPluginListing) -> some View {
@@ -265,11 +265,10 @@ struct ManagePluginsView: View {
                 ForEach(shown, id: \.package) { card($0) }
             }
         } header: {
-            Text("非官方插件 · GitHub")
+            Text("非官方插件 · GitHub").accessibilityIdentifier("plugins.section.github")
         } footer: {
             Text("作者自己打了 \(info?.topic ?? "magpie-plugin") 标签的仓库，未经审阅，安装前请先看代码")
         }
-        .accessibilityIdentifier("plugins.section.github")
     }
 
     private func githubFilterBar(_ all: [WebPluginListing]) -> some View {
@@ -319,11 +318,10 @@ struct ManagePluginsView: View {
                 ForEach(list, id: \.package) { card($0) }
             }
         } header: {
-            Text("npm 上的插件")
+            Text("npm 上的插件").accessibilityIdentifier("plugins.section.npm")
         } footer: {
             Text("任何人都可发布的 OpenCode 插件和 pi 包，安装前请先了解它做什么")
         }
-        .accessibilityIdentifier("plugins.section.npm")
     }
 
     /// 「已有想装的？」（官方 manual）。
@@ -561,26 +559,26 @@ struct InstalledPluginRow: View {
 
     private var chips: some View {
         let check = store.versionCheck(for: plugin.spec)
-        return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 5) {
-                if plugin.gitBehind {
-                    PluginChip(text: "有新提交", tone: .accent)
-                } else if plugin.npmUpdate {
-                    PluginChip(text: "v\(plugin.latest) 可用", tone: .accent)
-                } else if check?.status == .unknown {
-                    PluginChip(text: "无法检查", symbol: "exclamationmark.circle", tone: .warn)
-                } else if let auto = plugin.autoUpdated, auto.to == plugin.version {
-                    PluginChip(text: "已自动更新", tone: .soft)
-                } else if (check?.status == .current || check?.status == .update), !plugin.version.isEmpty {
-                    PluginChip(text: "已是最新", tone: .soft)
-                }
-                let moved = plugin.moved
-                if !(moved + plugin.serves).isEmpty, !plugin.off {
-                    PluginChip(text: "承载 \((moved + plugin.serves).joined(separator: "、"))", tone: .good)
-                }
-                ForEach(Array(plugin.kindChips.enumerated()), id: \.offset) { _, chip in
-                    PluginKindChip(kind: chip.kind, title: chip.title)
-                }
+        // 自动换行而不是横向滚动：这一行是 NavigationLink，里面再套横向 ScrollView 会吃掉点按（点行打不开详情），
+        // 合并后的朗读文字里也会少了这些标签（「v1.3.0 可用」等）。
+        return TagFlow(spacing: 5) {
+            if plugin.gitBehind {
+                PluginChip(text: "有新提交", tone: .accent)
+            } else if plugin.npmUpdate {
+                PluginChip(text: "v\(plugin.latest) 可用", tone: .accent)
+            } else if check?.status == .unknown {
+                PluginChip(text: "无法检查", symbol: "exclamationmark.circle", tone: .warn)
+            } else if let auto = plugin.autoUpdated, auto.to == plugin.version {
+                PluginChip(text: "已自动更新", tone: .soft)
+            } else if (check?.status == .current || check?.status == .update), !plugin.version.isEmpty {
+                PluginChip(text: "已是最新", tone: .soft)
+            }
+            let moved = plugin.moved
+            if !(moved + plugin.serves).isEmpty, !plugin.off {
+                PluginChip(text: "承载 \((moved + plugin.serves).joined(separator: "、"))", tone: .good)
+            }
+            ForEach(Array(plugin.kindChips.enumerated()), id: \.offset) { _, chip in
+                PluginKindChip(kind: chip.kind, title: chip.title)
             }
         }
     }

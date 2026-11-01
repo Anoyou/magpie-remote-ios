@@ -73,6 +73,13 @@ struct UsageRequestsView: View {
                 UsagePeriodPicker(period: $period)
                     .accessibilityIdentifier("usage.requests.period")
                 filterBar
+                // 合计条数紧跟在筛选下面：改了筛选马上看得到结果有多少条（下面还有合计、趋势和热力图，列表在最后）。
+                if pager.loadedOnce {
+                    Text(totalText)
+                        .font(.footnote).foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                        .accessibilityIdentifier("usage.requests.total")
+                }
             }
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
@@ -112,8 +119,7 @@ struct UsageRequestsView: View {
                     }
                 } header: {
                     if pager.loadedOnce {
-                        Text(totalText)
-                            .accessibilityIdentifier("usage.requests.total")
+                        Text("请求列表")
                     }
                 } footer: {
                     if loading {

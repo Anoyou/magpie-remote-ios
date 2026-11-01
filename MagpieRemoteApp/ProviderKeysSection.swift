@@ -11,17 +11,15 @@ import MagpieRemoteCore
 struct ProviderKeysSection: View {
     let store: ManageStore
     let provider: WebProvider
-
+    /// 明文与弹窗状态放在详情页持有的对象里：这个区是 List 里的一个 Section，挂在它上面的
+    /// sheet / alert / onDisappear 会被 SwiftUI 分到每一行上（同一个弹窗挂了好几份、点「添加另一个 Key」不弹出，
+    /// 滚走一行就把明文清掉），所以弹窗统一由 `providerKeyPresentations(_:store:provider:)` 挂在整个表单上。
+    @Bindable var ui: ProviderKeysUI
     @Environment(\.scenePhase) private var scenePhase
-    /// 已显示明文的 Key（Key 的 id → 明文）。
-    @State private var revealed: [String: String] = [:]
     @State private var loading: Set<String> = []
-    @State private var adding = false
-    @State private var renaming: WebProviderKey?
-    @State private var newName = ""
-    @State private var replacing: WebProviderKey?
-    @State private var pendingRemove: WebProviderKey?
     @State private var copiedID: String?
+
+    private var revealed: [String: String] { ui.revealed }
 
     var body: some View {
         Section {
@@ -29,7 +27,7 @@ struct ProviderKeysSection: View {
                 row(key)
             }
             Button {
-                adding = true
+                ui.adding = true
             } label: {
                 Label("添加另一个 Key", systemImage: "plus.circle")
             }
@@ -39,35 +37,6 @@ struct ProviderKeysSection: View {
             Text("API Key（\(provider.keyList.count)）")
         } footer: {
             Text(footer)
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase != .active { revealed = [:] }
-        }
-        .onChange(of: provider.keyList.map(\.id)) { _, ids in
-            // 删掉或换了值的 Key：丢掉已显示的明文
-            revealed = revealed.filter { ids.contains($0.key) }
-        }
-        .onDisappear { revealed = [:] }
-        .sheet(isPresented: $adding) { AddProviderKeySheet(store: store, provider: provider) }
-        .sheet(item: $replacing) { key in ReplaceProviderKeySheet(store: store, provider: provider, key: key) }
-        .alert("重命名 Key", isPresented: present($renaming), presenting: renaming) { key in
-            TextField("名称，例如 个人 或 团队", text: $newName)
-                .accessibilityIdentifier("provider.key.rename.field")
-            Button("取消", role: .cancel) {}
-            Button("保存") {
-                Task { await store.providerKeys(.rename, WebRequests.providerKeyRename(provider.id, ref: key.id, name: newName)) }
-            }
-        } message: { _ in
-            Text("名字只用来区分几把 Key；留空就显示脱敏的 Key。")
-        }
-        .confirmationDialog("删除 Key「\(pendingRemove?.label ?? "")」？", isPresented: present($pendingRemove),
-                            titleVisibility: .visible, presenting: pendingRemove) { key in
-            Button("删除 Key", role: .destructive) {
-                Task { await store.providerKeys(.remove, WebRequests.providerKeyRef(provider.id, ref: key.id)) }
-            }
-            .accessibilityIdentifier("provider.key.remove.confirm")
-        } message: { _ in
-            Text("这把 Key 会从 Mac 上的 magpie 里删除，无法恢复。")
         }
     }
 
@@ -107,7 +76,7 @@ struct ProviderKeysSection: View {
         .contextMenu { actions(key, can: can) }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             if can.canRemove {
-                Button("删除", role: .destructive) { pendingRemove = key }
+                Button("删除", role: .destructive) { ui.pendingRemove = key }
             }
             if can.canSwitch {
                 Button(key.on ? "停用" : "启用") {
@@ -172,13 +141,13 @@ struct ProviderKeysSection: View {
             Label(copiedID == key.id ? "已复制" : "复制 Key", systemImage: "doc.on.doc")
         }
         Button {
-            newName = key.name
-            renaming = key
+            ui.newName = key.name
+            ui.renaming = key
         } label: {
             Label("重命名", systemImage: "pencil")
         }
         Button {
-            replacing = key
+            ui.replacing = key
         } label: {
             Label("更换 Key 的值", systemImage: "arrow.triangle.2.circlepath")
         }
@@ -198,7 +167,7 @@ struct ProviderKeysSection: View {
         }
         if can.canRemove {
             Button(role: .destructive) {
-                pendingRemove = key
+                ui.pendingRemove = key
             } label: {
                 Label("删除", systemImage: "trash")
             }
@@ -207,14 +176,14 @@ struct ProviderKeysSection: View {
 
     private func toggle(_ key: WebProviderKey) {
         if revealed[key.id] != nil {
-            revealed[key.id] = nil
+            ui.revealed[key.id] = nil
             return
         }
         loading.insert(key.id)
         Task {
             let secret = await store.providerKeySecret(provider.id, key: key.id)
             loading.remove(key.id)
-            if let secret, !secret.isEmpty, scenePhase == .active { revealed[key.id] = secret }
+            if let secret, !secret.isEmpty, scenePhase == .active { ui.revealed[key.id] = secret }
         }
     }
 
@@ -263,6 +232,67 @@ struct ProviderKeysSection: View {
         case "gemini": return "Gemini"
         default: return value
         }
+    }
+}
+
+/// 「API Key」区的明文与弹窗状态，由供应商详情页持有（见 `ProviderKeysSection` 的说明）。
+@MainActor
+@Observable
+final class ProviderKeysUI {
+    /// 已显示明文的 Key（Key 的 id → 明文）。
+    var revealed: [String: String] = [:]
+    var adding = false
+    var renaming: WebProviderKey?
+    var newName = ""
+    var replacing: WebProviderKey?
+    var pendingRemove: WebProviderKey?
+}
+
+extension View {
+    /// 「API Key」区的弹窗（添加、更换值、重命名、删除确认）和明文的清除：挂在整个供应商表单上，只挂一份。
+    func providerKeyPresentations(_ ui: ProviderKeysUI, store: ManageStore, provider: WebProvider) -> some View {
+        modifier(ProviderKeyPresentations(ui: ui, store: store, provider: provider))
+    }
+}
+
+private struct ProviderKeyPresentations: ViewModifier {
+    @Bindable var ui: ProviderKeysUI
+    let store: ManageStore
+    let provider: WebProvider
+    @Environment(\.scenePhase) private var scenePhase
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: scenePhase) { _, phase in
+                if phase != .active { ui.revealed = [:] }
+            }
+            .onChange(of: provider.keyList.map(\.id)) { _, ids in
+                // 删掉或换了值的 Key：丢掉已显示的明文
+                ui.revealed = ui.revealed.filter { ids.contains($0.key) }
+            }
+            .onDisappear { ui.revealed = [:] }
+            .sheet(isPresented: $ui.adding) { AddProviderKeySheet(store: store, provider: provider) }
+            .sheet(item: $ui.replacing) { key in ReplaceProviderKeySheet(store: store, provider: provider, key: key) }
+            .alert("重命名 Key", isPresented: present($ui.renaming), presenting: ui.renaming) { key in
+                TextField("名称，例如 个人 或 团队", text: $ui.newName)
+                    .accessibilityIdentifier("provider.key.rename.field")
+                Button("取消", role: .cancel) {}
+                Button("保存") {
+                    let name = ui.newName
+                    Task { await store.providerKeys(.rename, WebRequests.providerKeyRename(provider.id, ref: key.id, name: name)) }
+                }
+            } message: { _ in
+                Text("名字只用来区分几把 Key；留空就显示脱敏的 Key。")
+            }
+            .confirmationDialog("删除 Key「\(ui.pendingRemove?.label ?? "")」？", isPresented: present($ui.pendingRemove),
+                                titleVisibility: .visible, presenting: ui.pendingRemove) { key in
+                Button("删除 Key", role: .destructive) {
+                    Task { await store.providerKeys(.remove, WebRequests.providerKeyRef(provider.id, ref: key.id)) }
+                }
+                .accessibilityIdentifier("provider.key.remove.confirm")
+            } message: { _ in
+                Text("这把 Key 会从 Mac 上的 magpie 里删除，无法恢复。")
+            }
     }
 }
 

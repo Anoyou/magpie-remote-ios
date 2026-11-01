@@ -94,11 +94,11 @@ final class MagpieRemoteUITests: XCTestCase {
         app.openFromMore("manage.about", title: "关于")
         app.buttons["about.changelog"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["更新日志"].waitForExistence(timeout: 10))
-        // 「未发布」条目变多后 0.1.0 段落可能在屏幕下方（List 懒加载），需要往下滚。
+        // 0.1.0 是最早的段落，在最下面（0.3.0、0.4.0 的条目很长，List 懒加载），需要往下滚很多屏。
         let release = element(containing: "0.1.0", in: app)
         var found = release.waitForExistence(timeout: 5)
-        for _ in 0..<6 where !found {
-            app.swipeUp()
+        for _ in 0..<30 where !found {
+            app.swipeUp(velocity: .fast)
             found = release.waitForExistence(timeout: 1)
         }
         XCTAssertTrue(found, "更新日志里没有 0.1.0")
@@ -128,7 +128,10 @@ final class MagpieRemoteUITests: XCTestCase {
     }
 
     private func openRequests(_ app: XCUIApplication) {
+        // 概览里合计、图表变多了，「请求记录」入口在下面（列表懒加载）：滑到它出现
         let open = element(id: "usage.requests.open", in: app)
+        _ = open.waitForExistence(timeout: 5)
+        app.swipeUpUntilHittable(open)
         XCTAssertTrue(open.waitForExistence(timeout: 10), "没有「请求记录」入口（usage.requests.open）")
         open.tap()
         XCTAssertTrue(app.navigationBars["请求记录"].waitForExistence(timeout: 10), "没有打开「请求记录」")
@@ -160,6 +163,8 @@ final class MagpieRemoteUITests: XCTestCase {
         element(id: "usage.filter.failed", in: app).tap()
         XCTAssertTrue(waitUntil(10) { total.exists && total.label != before }, "只看失败后总条数没有变化：\(before)")
         let first = element(id: "usage.request.0", in: app)
+        _ = first.waitForExistence(timeout: 3)
+        app.swipeUpUntilHittable(first)
         XCTAssertTrue(first.waitForExistence(timeout: 10), "筛选后没有请求")
         XCTAssertTrue(first.label.contains("失败"), "只看失败后第一条不是失败的请求：\(first.label)")
     }
@@ -169,6 +174,8 @@ final class MagpieRemoteUITests: XCTestCase {
         openUsage(app)
         openRequests(app)
         let first = element(id: "usage.request.0", in: app)
+        _ = first.waitForExistence(timeout: 3)
+        app.swipeUpUntilHittable(first)
         XCTAssertTrue(first.waitForExistence(timeout: 10), "请求记录是空的")
         first.tap()
         XCTAssertTrue(app.navigationBars["请求详情"].waitForExistence(timeout: 10), "没有打开「请求详情」")
@@ -184,7 +191,10 @@ final class MagpieRemoteUITests: XCTestCase {
         XCTAssertTrue(element(id: "usage.heldNote", in: app).waitForExistence(timeout: 15), "受限密钥没有显示说明")
         XCTAssertFalse(element(id: "usage.totalCost", in: app).exists, "受限密钥不应显示总花费")
         openRequests(app)
-        XCTAssertTrue(element(id: "usage.request.0", in: app).waitForExistence(timeout: 10), "受限密钥看不到自己的请求记录")
+        let first = element(id: "usage.request.0", in: app)
+        _ = first.waitForExistence(timeout: 3)
+        app.swipeUpUntilHittable(first)
+        XCTAssertTrue(first.waitForExistence(timeout: 10), "受限密钥看不到自己的请求记录")
     }
 
     // MARK: 对话（fixture：假模型目录 + 假的流式回答）
@@ -237,6 +247,11 @@ final class MagpieRemoteUITests: XCTestCase {
 }
 
 private extension XCUIApplication {
+    /// 向上滑直到元素出现并可点（合计、图表下面的列表行，懒加载）。
+    func swipeUpUntilHittable(_ element: XCUIElement, max: Int = 10) {
+        for _ in 0..<max where !(element.exists && element.isHittable) { swipeUp() }
+    }
+
     /// 向上滑几次直到找到元素（列表里靠下的内容）。
     func swipeUpAndFind(id: String) -> Bool {
         for _ in 0..<4 {

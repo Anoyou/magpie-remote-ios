@@ -96,6 +96,8 @@ struct ProviderDetailView: View {
     @State private var key = ""
     @State private var loadedFrom: WebProvider?
     @State private var confirmDelete = false
+    /// 「API Key」区的明文与弹窗（见 ProviderKeysSection）。
+    @State private var keysUI = ProviderKeysUI()
 
     private var provider: WebProvider? { store.provider(id) }
 
@@ -191,7 +193,7 @@ struct ProviderDetailView: View {
                 }
 
                 if !provider.keyList.isEmpty {
-                    ProviderKeysSection(store: store, provider: provider)
+                    ProviderKeysSection(store: store, provider: provider, ui: keysUI)
                 }
             }
 
@@ -236,6 +238,7 @@ struct ProviderDetailView: View {
                     .accessibilityIdentifier("provider.delete")
             }
         }
+        .providerKeyPresentations(keysUI, store: store, provider: provider)
         .confirmationDialog("删除供应商「\(provider.name)」？", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("删除供应商", role: .destructive) {
                 Task { if await store.deleteProvider(provider.id) { dismiss() } }
