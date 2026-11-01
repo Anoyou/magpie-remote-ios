@@ -1,0 +1,121 @@
+{
+ "from": "2026-10-26",
+ "to": "2026-11-01",
+ "days": [
+  {
+   "date": "2026-10-26",
+   "usage": [
+    {
+     "agent": "claude",
+     "cwd": "~/code/demo-app",
+     "model": "claude-sonnet-4-6",
+     "input": 12000,
+     "output": 3400,
+     "cache_read": 88000,
+     "cache_write": 4000,
+     "cost": 0.31,
+     "priced": true
+    }
+   ],
+   "active": [
+    {
+     "agent": "claude",
+     "cwd": "~/code/demo-app",
+     "seconds": 3600,
+     "hours": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1200,
+      1800,
+      0,
+      0,
+      0,
+      600,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "date": "2026-10-31",
+   "usage": [
+    {
+     "agent": "codex",
+     "cwd": "~/code/server",
+     "model": "gpt-5",
+     "input": 8000,
+     "output": 2100,
+     "cache_read": 20000,
+     "cache_write": 0,
+     "cost": 0.12,
+     "priced": true
+    },
+    {
+     "agent": "claude",
+     "cwd": "~/code/demo-app",
+     "model": "local-model",
+     "input": 500,
+     "output": 200,
+     "cache_read": 0,
+     "cache_write": 0,
+     "cost": 0,
+     "priced": false
+    }
+   ],
+   "active": [
+    {
+     "agent": "codex",
+     "cwd": "~/code/server",
+     "seconds": 900
+    }
+   ]
+  },
+  {
+   "date": "2026-11-01",
+   "usage": [
+    {
+     "agent": "claude",
+     "cwd": "~/code/notes",
+     "model": "claude-sonnet-4-6",
+     "input": 3000,
+     "output": 900,
+     "cache_read": 1000,
+     "cache_write": 0,
+     "cost": 0.02,
+     "priced": true
+    }
+   ],
+   "active": [
+    {
+     "agent": "claude",
+     "cwd": "~/code/notes",
+     "seconds": 420
+    }
+   ]
+  }
+ ],
+ "keys": [
+  "claude:fixture-claude-1",
+  "codex:fixture-codex-1",
+  "claude:fixture-claude-2"
+ ],
+ "agents": {
+  "claude": "Claude Code",
+  "codex": "Codex"
+ }
+}
