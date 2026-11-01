@@ -98,6 +98,8 @@ struct ProviderDetailView: View {
     @State private var confirmDelete = false
     /// 「API Key」区的明文与弹窗（见 ProviderKeysSection）。
     @State private var keysUI = ProviderKeysUI()
+    /// 「测试模型」的结果（只在这次打开期间记住，同官方）。
+    @State private var modelTests = ProviderModelTests()
 
     private var provider: WebProvider? { store.provider(id) }
 
@@ -217,11 +219,15 @@ struct ProviderDetailView: View {
                     Toggle(isOn: Binding(get: { model.on }, set: { on in
                         Task { await store.setModel(model.id, on: on, in: provider) }
                     })) {
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(model.displayName)
-                            if model.displayName != model.id {
-                                Text(model.id).font(.caption.monospaced()).foregroundStyle(.secondary)
+                        HStack(spacing: 6) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(model.displayName)
+                                if model.displayName != model.id {
+                                    Text(model.id).font(.caption.monospaced()).foregroundStyle(.secondary)
+                                }
+                                ProviderModelTestDetail(tests: modelTests, model: model.id)
                             }
+                            ProviderModelTestMark(tests: modelTests, model: model.id)
                         }
                     }
                     .disabled(store.busy)
@@ -229,6 +235,9 @@ struct ProviderDetailView: View {
                 }
                 Button("从供应商重新读取模型列表") { Task { await store.refetchModels(provider.id) } }
                     .disabled(store.busy)
+                if !provider.models.isEmpty {
+                    ProviderModelTestRows(store: store, provider: provider, tests: modelTests)
+                }
             } header: {
                 Text("模型（开放 \(provider.models.filter(\.on).count)/\(provider.models.count)）")
             } footer: {

@@ -26,10 +26,20 @@ struct HostToolsSection: View {
                     Label("隐私模型", systemImage: "eye.slash.circle")
                 }
                 .accessibilityIdentifier("manage.privacyModel")
+                NavigationLink {
+                    DisabledModelsView(store: store)
+                } label: {
+                    LabeledContent {
+                        if let count = store.settings?.disabledModels.count, count > 0 { Text("\(count) 条") }
+                    } label: {
+                        Label("已停用的模型", systemImage: "nosign")
+                    }
+                }
+                .accessibilityIdentifier("manage.disabledModels")
             } header: {
                 Text("主机工具")
             } footer: {
-                Text("更新 Mac 上的 magpie、按你的真实用法调 Agent 设置、选择本地脱敏用的模型。")
+                Text("更新 Mac 上的 magpie、按你的真实用法调 Agent 设置、选择本地脱敏用的模型、停用不想让请求用到的模型。")
             }
         }
     }

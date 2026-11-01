@@ -44,6 +44,8 @@ final class ManageStore {
     /// 操作完成后的一句话（官方网页底部状态栏），几秒后自动消失。
     var status: String?
     private(set) var keys: [WebCallerKey] = []
+    /// 网关密钥能限定的账号 id → 显示名。
+    private(set) var keyAccountNames: [String: String] = [:]
     private(set) var issued: [IssuedKey] = []
     /// 主机返回的提示（例如切换模型后需要重启 Agent）。
     var notice: String?
@@ -118,7 +120,9 @@ final class ManageStore {
             agents = agentState.agents
             profiles = agentState.profiles
             if updateRun?.running != true { updateRun = nil } // 官方：重新读取 Agent 后那一行只留还有的更新
-            self.keys = try await keys.keys
+            let keyList = try await keys
+            self.keys = keyList.keys
+            keyAccountNames = keyList.accountNames
             self.issued = (try? await issued) ?? []
             phase = .ready
             speeds = (try? await service.modelSpeeds()) ?? speeds
@@ -429,6 +433,103 @@ final class ManageStore {
         }
     }
 
+    // MARK: Agent 排序 / 隐藏、模型列表（对齐官方第二轮）
+
+    private var arrangement: AgentArrangement {
+        AgentArrangement(agents: agents, order: settings?.agentOrder ?? [], hidden: settings?.agentsHidden ?? [])
+    }
+
+    /// 先在本地改，再提交；失败时恢复（官方 saveArrangement）。
+    @discardableResult
+    private func saveArrangement(order: [String], hidden: [String]) async -> Bool {
+        let previous = settings
+        settings?.agentOrder = order
+        settings?.agentsHidden = hidden
+        let ok = await run { service in
+            self.settings = try await service.arrangeAgents(order: order, hidden: hidden, shown: [])
+        }
+        if !ok { settings = previous }
+        return ok
+    }
+
+    /// 上移 / 下移：在上面那组里挪到第 `to` 个（官方 moveAgent）。
+    func moveAgent(_ id: String, to: Int) async {
+        guard let order = arrangement.moving(id, to: to) else { return }
+        await saveArrangement(order: order, hidden: settings?.agentsHidden ?? [])
+    }
+
+    /// 隐藏 / 显示（官方 setAgentHidden）。
+    func setAgentHidden(_ agent: WebAgent, hide: Bool) async {
+        let next = AgentArrange.hiding(agent, hide: hide, all: agents, order: settings?.agentOrder ?? [], hidden: settings?.agentsHidden ?? [])
+        guard await saveArrangement(order: next.order, hidden: next.hidden) else { return }
+        let stillFolded = !hide && !arrangement.shown.contains { $0.id == agent.id }
+        status = AgentArrange.said(agent, hide: hide, stillFolded: stillFolded)
+    }
+
+    /// 读一个 Agent 的模型列表。失败弹出错误并返回 nil。
+    func agentModels(_ id: String) async -> AgentModelList? {
+        guard let service else { return nil }
+        do {
+            return try await service.agentModels(id)
+        } catch {
+            let error = MagpieError.from(error)
+            if error != .cancelled { actionError = error }
+            return nil
+        }
+    }
+
+    /// 改一个 Agent 的模型列表（不经过 busy，一个接一个地发）；成功后重读 Agent（数量、选择器里的模型会变）。
+    @discardableResult
+    func setAgentModels(_ id: String, _ body: WebJSON) async -> WebJSON? {
+        guard let service else { return nil }
+        do {
+            let answer = try await service.setAgentModels(id, body)
+            if let state = try? await service.state() { apply(state) }
+            return answer
+        } catch {
+            let error = MagpieError.from(error)
+            if error != .cancelled { actionError = error }
+            return nil
+        }
+    }
+
+    // MARK: 停用的模型
+
+    @discardableResult
+    func setDisabledModels(_ models: [String]) async -> Bool {
+        await run { service in self.settings = try await service.setDisabledModels(models) }
+    }
+
+    // MARK: 测试模型
+
+    /// 「测试模型」：不经过 busy；失败（含「停止」）返回 nil，停止不弹错误。
+    func testProviderModels(_ id: String, models: [String], run: String) async -> [ProviderTestResult]? {
+        guard let service else { return nil }
+        do {
+            return try await service.testProviderModels(id, models: models, run: run)
+        } catch {
+            let error = MagpieError.from(error)
+            if error != .cancelled { actionError = error }
+            return nil
+        }
+    }
+
+    func stopProviderTest(run: String) async {
+        try? await service?.stopProviderTest(run: run)
+    }
+
+    /// 网关密钥能限定的模型与账号。失败弹出错误并返回 nil。
+    func callerKeyModels() async -> CallerKeyModels? {
+        guard let service else { return nil }
+        do {
+            return try await service.callerKeyModels()
+        } catch {
+            let error = MagpieError.from(error)
+            if error != .cancelled { actionError = error }
+            return nil
+        }
+    }
+
     // MARK: 网关密钥
 
     /// 网关密钥操作。`reveal` 为 false 时不弹出明文，而是作为返回值交给调用方（新建密钥的表单自己显示）。
@@ -438,6 +539,7 @@ final class ManageStore {
         let ok = await run { service in
             let result = try await service.callerKey(action, body)
             self.keys = result.keys
+            if !result.accountNames.isEmpty { self.keyAccountNames = result.accountNames }
             if let secret = result.secret { revealed = RevealedSecret(title: title, secret: secret) }
         }
         if reveal, let revealed { self.revealed = revealed }

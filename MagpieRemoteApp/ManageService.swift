@@ -27,6 +27,14 @@ protocol ManageServing: Sendable {
     func profile(_ action: ProfileAction, name: String) async throws -> WebState
     /// 供应商「测试」：每个端点一个最小请求。
     func testProvider(_ id: String) async throws -> [ProviderTestResult]
+    /// 对齐官方第二轮：Agent 排序 / 隐藏、每个 Agent 的模型列表、停用的模型、逐个模型测试、密钥可限定的模型与账号。
+    func arrangeAgents(order: [String], hidden: [String], shown: [String]) async throws -> WebSettings
+    func agentModels(_ id: String) async throws -> AgentModelList
+    func setAgentModels(_ id: String, _ body: WebJSON) async throws -> WebJSON
+    func setDisabledModels(_ models: [String]) async throws -> WebSettings
+    func testProviderModels(_ id: String, models: [String], run: String) async throws -> [ProviderTestResult]
+    func stopProviderTest(run: String) async throws
+    func callerKeyModels() async throws -> CallerKeyModels
     func callerKeys() async throws -> WebCallerKeys
     func callerKey(_ action: CallerKeyAction, _ body: WebJSON) async throws -> WebCallerKeys
     /// 填了签发密钥才能签发临时密钥。
@@ -68,6 +76,17 @@ struct LiveManageService: ManageServing {
     func agentDisconnectPreview(_ id: String) async throws -> AgentDisconnectPreview { try await web.agentDisconnectPreview(id) }
     func profile(_ action: ProfileAction, name: String) async throws -> WebState { try await web.profile(action, name: name) }
     func testProvider(_ id: String) async throws -> [ProviderTestResult] { try await web.testProvider(id) }
+    func arrangeAgents(order: [String], hidden: [String], shown: [String]) async throws -> WebSettings {
+        try await web.arrangeAgents(order: order, hidden: hidden, shown: shown)
+    }
+    func agentModels(_ id: String) async throws -> AgentModelList { try await web.agentModels(id) }
+    func setAgentModels(_ id: String, _ body: WebJSON) async throws -> WebJSON { try await web.setAgentModels(id, body) }
+    func setDisabledModels(_ models: [String]) async throws -> WebSettings { try await web.setDisabledModels(models) }
+    func testProviderModels(_ id: String, models: [String], run: String) async throws -> [ProviderTestResult] {
+        try await web.testProviderModels(id, models: models, run: run)
+    }
+    func stopProviderTest(run: String) async throws { try await web.stopProviderTest(run: run) }
+    func callerKeyModels() async throws -> CallerKeyModels { try await web.callerKeyModels() }
     func callerKeys() async throws -> WebCallerKeys { try await web.callerKeys() }
     func callerKey(_ action: CallerKeyAction, _ body: WebJSON) async throws -> WebCallerKeys { try await web.callerKey(action, body) }
 
@@ -112,6 +131,17 @@ actor FixtureManageService: ManageServing {
                      "fields": [["key": "model", "label": "model", "value": "relay-example/gpt-4.1"], ["key": "effort", "label": "effort", "value": "high"]]]]],
     ]
     private var fixturePools: [WebJSON] = RoutesFixture.pools
+    /// Agent 页的顺序与隐藏、停用的模型（magpie 自己的设置）。
+    private var agentOrder: [String] = []
+    private var agentsHidden: [String] = ["gemini"]
+    private var disabledModels: [String] = ["*preview*"]
+    /// 每个 Agent 的模型列表：隐藏了哪些、只显示勾选的、拖过的顺序。
+    private var agentHiddenModels: [String: [String]] = ["codex": ["relay-example/o3"]]
+    private var agentOnlyPicked: [String: [String]] = [:]
+    private var agentModelOrder: [String: [String]] = [:]
+    /// 每把网关密钥的限额，以及每条已用的（Token、费用）。
+    private var keyLimits: [String: [WebJSON]] = ["key-iphone": [["period": "month", "cost": 20]]]
+    private var keyUsed: [String: [(tokens: Int, cost: Double)]] = ["key-iphone": [(184_000, 3.5)]]
     private var foundGroups = true
     /// fixture 里各 Key 的「明文」（全是假值），按 Key 的 id。
     private var keySecrets: [String: String] = ["fx-key-1": "sk-relay-EXAMPLE-MAIN1", "fx-key-2": "sk-relay-EXAMPLE-BACK2",
@@ -160,8 +190,7 @@ actor FixtureManageService: ManageServing {
              "fields": [["key": "model", "label": "model", "value": "", "options": options]]],
         ]
         keyList = [
-            ["id": "key-iphone", "name": "iPhone", "masked": "sk-magpie-key-…EXMP01", "limit": ["period": "month", "cost": 20],
-             "used": ["cost": .double(3.5)]],
+            ["id": "key-iphone", "name": "iPhone", "masked": "sk-magpie-key-…EXMP01"],
             ["id": "key-old", "name": "旧电脑", "masked": "sk-magpie-key-…EXMP02", "off": true],
             ["id": "key-lan", "name": "Magpie", "masked": "sk-magpie-key-…EXMP03", "lan": true],
         ]
@@ -173,15 +202,217 @@ actor FixtureManageService: ManageServing {
         RoutesFixture.groupsJSON(groups: groupList, providers: providerList, pools: fixturePools, found: foundGroups)
     }
     private func keys(secret: String? = nil) -> WebCallerKeys {
-        WebCallerKeys(json: ["keys": .array(keyList), "secret": .string(secret ?? "")])
+        let rows = keyList.map { key -> WebJSON in
+            var key = key
+            let id = key["id"]?.string ?? ""
+            let limits = keyLimits[id] ?? []
+            key["limit"] = limits.first
+            key["moreLimits"] = limits.count > 1 ? .array(Array(limits.dropFirst())) : nil
+            let used = limits.enumerated().map { i, limit in Self.usage(limit, used: keyUsed[id].flatMap { i < $0.count ? $0[i] : nil } ?? (0, 0)) }
+            key["usedAll"] = used.isEmpty ? nil : .array(used)
+            key["used"] = used.first
+            return key
+        }
+        var names: [String: WebJSON] = [:]
+        for provider in providerList {
+            for k in provider["keyList"]?.array ?? [] {
+                names[(provider["id"]?.string ?? "") + "/" + (k["id"]?.string ?? "")] = .string((provider["id"]?.string ?? "") + "/" + (k["masked"]?.string ?? ""))
+            }
+        }
+        return WebCallerKeys(json: ["keys": .array(rows), "accountNames": .object(names), "secret": .string(secret ?? "")])
+    }
+
+    /// 一条限额现在的用量（magpie budget.Status 的形状）：周期从现在算起。
+    private static func usage(_ limit: WebJSON, used: (tokens: Int, cost: Double)) -> WebJSON {
+        let period = limit["period"]?.string ?? "day"
+        let calendar = Calendar.current
+        let now = Date()
+        let start: Date
+        let reset: Date
+        switch period {
+        case "week":
+            start = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+            reset = calendar.date(byAdding: .day, value: 7, to: start) ?? now
+        case "month":
+            start = calendar.dateInterval(of: .month, for: now)?.start ?? now
+            reset = calendar.date(byAdding: .month, value: 1, to: start) ?? now
+        case "days":
+            start = now.addingTimeInterval(-3600)
+            reset = start.addingTimeInterval(Double(limit["days"]?.int ?? 1) * 86_400)
+        case "hours":
+            start = now.addingTimeInterval(-600)
+            reset = start.addingTimeInterval(Double(limit["hours"]?.int ?? 1) * 3600)
+        default:
+            start = calendar.startOfDay(for: now)
+            reset = calendar.date(byAdding: .day, value: 1, to: start) ?? now
+        }
+        let iso = ISO8601DateFormatter()
+        let tokenLimit = limit["tokens"]?.int ?? 0, costLimit = limit["cost"]?.double ?? 0
+        let spent = (tokenLimit > 0 && used.tokens >= tokenLimit) || (costLimit > 0 && used.cost >= costLimit)
+        var out: [String: WebJSON] = ["period": .string(period), "start": .string(iso.string(from: start)), "reset": .string(iso.string(from: reset)),
+                                      "calls": 12, "tokens": .int(Int64(used.tokens)), "cost": .double(used.cost),
+                                      "tokensLeft": .int(Int64(max(0, tokenLimit - used.tokens))), "costLeft": .double(max(0, costLimit - used.cost)),
+                                      "spent": .bool(spent)]
+        if tokenLimit > 0 { out["tokenLimit"] = .int(Int64(tokenLimit)) }
+        if costLimit > 0 { out["costLimit"] = .double(costLimit) }
+        if let days = limit["days"] { out["days"] = days }
+        if let hours = limit["hours"] { out["hours"] = hours }
+        return .object(out)
     }
     private func newSecret() -> String {
         counter += 1
         return "sk-magpie-key-EXAMPLE-NEW\(counter)"
     }
 
-    func settings() async throws -> WebSettings {
-        WebSettings(json: ["version": "v0.1.2438", "lan": true, "agentOrder": nil, "agentsHidden": ["gemini"]])
+    func settings() async throws -> WebSettings { settingsJSON }
+
+    private var settingsJSON: WebSettings {
+        let hits: [String: WebJSON] = Dictionary(uniqueKeysWithValues: disabledModels.map { pattern in
+            (pattern, WebJSON.strings(allModelIDs.filter { Self.matches(pattern, $0) }))
+        })
+        var models: [WebJSON] = groupList.map { ["id": .string("group/" + ($0["id"]?.string ?? "")), "name": $0["name"] ?? "", "provider": "", "providerName": $0["name"] ?? ""] }
+        for provider in providerList {
+            for model in provider["models"]?.array ?? [] {
+                models.append(["id": .string((provider["id"]?.string ?? "") + "/" + (model["id"]?.string ?? "")), "name": model["name"] ?? "",
+                               "provider": provider["id"] ?? "", "providerName": provider["name"] ?? ""])
+            }
+        }
+        return WebSettings(json: ["version": "v0.1.2438", "lan": true, "agentOrder": .strings(agentOrder), "agentsHidden": .strings(agentsHidden),
+                                  "agentsShown": [], "disabledModels": .strings(disabledModels), "disabledHits": .object(hits), "titleModels": .array(models)])
+    }
+
+    /// 所有供应商的模型（provider/model）。
+    private var allModelIDs: [String] {
+        providerList.flatMap { p in (p["models"]?.array ?? []).map { (p["id"]?.string ?? "") + "/" + ($0["id"]?.string ?? "") } }
+    }
+
+    /// 停用规则：不分大小写，* 通配（magpie provider/disabled.go 的写法之一）。
+    private static func matches(_ pattern: String, _ id: String) -> Bool {
+        let p = pattern.lowercased(), v = id.lowercased()
+        guard p.contains("*") else { return p == v || v.hasSuffix("/" + p) }
+        let parts = p.split(separator: "*", omittingEmptySubsequences: false).map(String.init)
+        var rest = Substring(v)
+        for (i, part) in parts.enumerated() where !part.isEmpty {
+            guard let range = rest.range(of: part) else { return false }
+            if i == 0 && range.lowerBound != rest.startIndex { return false }
+            rest = rest[range.upperBound...]
+        }
+        return parts.last?.isEmpty != false || v.hasSuffix(parts.last ?? "")
+    }
+
+    func arrangeAgents(order: [String], hidden: [String], shown: [String]) async throws -> WebSettings {
+        try await pause()
+        agentOrder = order
+        agentsHidden = hidden
+        return settingsJSON
+    }
+
+    func setDisabledModels(_ models: [String]) async throws -> WebSettings {
+        try await pause()
+        disabledModels = models
+        return settingsJSON
+    }
+
+    // MARK: 每个 Agent 的模型列表（fixture）
+
+    /// 一个 Agent 列表里能放的：路由组，然后各供应商开着的模型。
+    private func agentModelRows(_ id: String) -> [WebJSON] {
+        let values = Set((agentList.first { $0["id"]?.string == id }?["fields"]?.array ?? []).compactMap { $0["value"]?.string })
+        let hidden = Set(agentHiddenModels[id] ?? [])
+        let only = agentOnlyPicked[id]
+        var rows: [WebJSON] = groupList.filter { $0["auto"]?.bool != true }.map { group in
+            let ref = "group/" + (group["id"]?.string ?? "")
+            return ["id": .string(ref), "name": group["name"] ?? "", "group": .string(AgentModelList.routingGroups), "icons": ["openai", "deepseek-color"]]
+        }
+        for provider in providerList where provider["off"]?.bool != true {
+            for model in provider["models"]?.array ?? [] where model["on"]?.bool == true {
+                let ref = (provider["id"]?.string ?? "") + "/" + (model["id"]?.string ?? "")
+                rows.append(["id": .string(ref), "name": model["name"] ?? "", "group": provider["name"] ?? "", "icon": "openai",
+                             "context": ref.contains("deepseek") ? 128_000 : 1_047_576])
+            }
+        }
+        rows = rows.filter { row in !disabledModels.contains { Self.matches($0, row["id"]?.string ?? "") } }
+        for i in rows.indices {
+            let ref = rows[i]["id"]?.string ?? ""
+            let inUse = values.contains(ref)
+            if inUse { rows[i]["inUse"] = true }
+            let off = only.map { !$0.contains(ref) } ?? hidden.contains(ref)
+            if off && !inUse { rows[i]["hidden"] = true }
+        }
+        if let order = agentModelOrder[id], !order.isEmpty {
+            rows.sort { (order.firstIndex(of: $0["id"]?.string ?? "") ?? .max) < (order.firstIndex(of: $1["id"]?.string ?? "") ?? .max) }
+        }
+        return rows
+    }
+
+    private func agentModelsJSON(_ id: String) -> WebJSON {
+        ["models": .array(agentModelRows(id)), "ordered": .bool(!(agentModelOrder[id] ?? []).isEmpty),
+         "only": .bool(agentOnlyPicked[id] != nil), "own": false, "ownHidden": false]
+    }
+
+    private func agentModelCount(_ id: String) -> WebJSON {
+        let rows = agentModelRows(id)
+        let shown = rows.filter { $0["hidden"]?.bool != true }
+        return ["shown": .int(Int64(shown.count)), "listed": .int(Int64(rows.count)), "names": .array(shown.prefix(3).map { $0["name"] ?? "" })]
+    }
+
+    func agentModels(_ id: String) async throws -> AgentModelList {
+        try await pause()
+        guard agentList.contains(where: { $0["id"]?.string == id }) else { throw MagpieError.webRejected(message: "no agent \(id)", code: nil) }
+        return AgentModelList(json: agentModelsJSON(id))
+    }
+
+    func setAgentModels(_ id: String, _ body: WebJSON) async throws -> WebJSON {
+        try await pause()
+        if let order = body["order"]?.array {
+            agentModelOrder[id] = order.compactMap(\.string)
+            return ["models": .array(agentModelRows(id)), "ordered": .bool(!order.isEmpty)]
+        }
+        if let only = body["only"]?.bool {
+            let shown = agentModelRows(id).filter { $0["hidden"]?.bool != true }.compactMap { $0["id"]?.string }
+            agentOnlyPicked[id] = only ? shown : nil
+            if !only { agentHiddenModels[id] = agentModelRows(id).filter { !shown.contains($0["id"]?.string ?? "") }.compactMap { $0["id"]?.string } }
+        } else if let shown = body["shown"]?.array {
+            let picks = shown.compactMap(\.string)
+            if agentOnlyPicked[id] != nil { agentOnlyPicked[id] = picks } else {
+                agentHiddenModels[id] = agentModelRows(id).compactMap { $0["id"]?.string }.filter { !picks.contains($0) }
+            }
+        } else if let hidden = body["hidden"]?.array {
+            agentHiddenModels[id] = hidden.compactMap(\.string)
+        }
+        return ["models": .array(agentModelRows(id)), "count": agentModelCount(id), "only": .bool(agentOnlyPicked[id] != nil)]
+    }
+
+    // MARK: 测试模型（fixture）
+
+    func testProviderModels(_ id: String, models: [String], run: String) async throws -> [ProviderTestResult] {
+        try await Task.sleep(for: .milliseconds(700))
+        return models.map { model in
+            let failing = model == "o3"
+            let json: WebJSON = failing
+                ? ["protocol": "chat", "ok": false, "status": 404, "ms": 210, "model": .string(model), "error": "model not found"]
+                : ["protocol": "chat", "ok": true, "status": 200, "ms": .int(Int64(300 + model.count * 37)), "model": .string(model)]
+            return ProviderTestResult(json: json)
+        }
+    }
+
+    func stopProviderTest(run: String) async throws {}
+
+    func callerKeyModels() async throws -> CallerKeyModels {
+        try await pause()
+        var models: [WebJSON] = groupList.filter { $0["auto"]?.bool != true }.map { ["id": .string("group/" + ($0["id"]?.string ?? "")), "name": $0["name"] ?? "", "group": true] }
+        var accounts: [WebJSON] = []
+        for provider in providerList where provider["off"]?.bool != true {
+            for model in provider["models"]?.array ?? [] where model["on"]?.bool == true {
+                models.append(["id": .string((provider["id"]?.string ?? "") + "/" + (model["id"]?.string ?? "")), "name": model["name"] ?? "",
+                               "provider": provider["id"] ?? "", "providerName": provider["name"] ?? ""])
+            }
+            for key in provider["keyList"]?.array ?? [] {
+                accounts.append(["id": .string((provider["id"]?.string ?? "") + "/" + (key["id"]?.string ?? "")),
+                                 "name": key["name"] ?? key["masked"] ?? "", "provider": provider["id"] ?? "", "providerName": provider["name"] ?? "", "key": true])
+            }
+        }
+        return CallerKeyModels(json: ["models": .array(models), "accounts": .array(accounts)])
     }
     func providers() async throws -> WebProviders { try await pause(); return providersJSON }
 
@@ -382,7 +613,12 @@ actor FixtureManageService: ManageServing {
     func state() async throws -> WebState { try await pause(); return stateJSON() }
 
     private func stateJSON(_ extra: [String: WebJSON] = [:]) -> WebState {
-        var json: [String: WebJSON] = ["agents": .array(agentList), "profiles": .array(profileList)]
+        let agents = agentList.map { agent -> WebJSON in
+            var agent = agent
+            if let id = agent["id"]?.string, id != "gemini" { agent["models"] = agentModelCount(id) }
+            return agent
+        }
+        var json: [String: WebJSON] = ["agents": .array(agents), "profiles": .array(profileList)]
         json.merge(extra) { $1 }
         return WebState(json: .object(json))
     }
@@ -499,8 +735,49 @@ actor FixtureManageService: ManageServing {
             guard let index else { throw MagpieError.webRejected(message: "Key not found", code: nil) }
             keyList[index]["name"] = body["name"] ?? keyList[index]["name"]
         case .resetLimit:
+            guard index != nil else { throw MagpieError.webRejected(message: "Key not found", code: nil) }
+            let count = keyLimits[id]?.count ?? 0
+            guard count > 0 else { throw MagpieError.webRejected(message: "This key has no limit to reset", code: nil) }
+            var used = keyUsed[id] ?? Array(repeating: (0, 0), count: count)
+            if let n = body["index"]?.int { if n < used.count { used[n] = (0, 0) } } else { used = Array(repeating: (0, 0), count: count) }
+            keyUsed[id] = used
+        case .limit:
+            guard index != nil else { throw MagpieError.webRejected(message: "Key not found", code: nil) }
+            var limits = keyLimits[id] ?? []
+            var used = keyUsed[id] ?? Array(repeating: (0, 0), count: limits.count)
+            while used.count < limits.count { used.append((0, 0)) }
+            let limit = body["limit"].flatMap { $0.object == nil ? nil : $0 }
+            if let n = body["index"]?.int {
+                guard n >= 0, n <= limits.count, n < limits.count || limit != nil else {
+                    throw MagpieError.webRejected(message: "This key has no such limit", code: nil)
+                }
+                if let limit {
+                    if n == limits.count {
+                        guard limits.count < CallerKeyLimit.maxLimits else { throw MagpieError.webRejected(message: "A key can have at most 5 limits", code: nil) }
+                        limits.append(limit); used.append((0, 0))
+                    } else { limits[n] = limit }
+                } else { limits.remove(at: n); used.remove(at: n) }
+            } else {
+                limits = limit.map { [$0] } ?? []
+                used = Array(used.prefix(limits.count))
+            }
+            let periods = limits.map { "\($0["period"]?.string ?? "")\($0["days"]?.int ?? 0)\($0["hours"]?.int ?? 0)" }
+            if Set(periods).count != periods.count {
+                throw MagpieError.webRejected(message: "This key already has a limit in that window: change that one instead", code: nil)
+            }
+            keyLimits[id] = limits
+            keyUsed[id] = used
+        case .models:
             guard let index else { throw MagpieError.webRejected(message: "Key not found", code: nil) }
-            keyList[index]["used"] = ["cost": .double(0)]
+            let models = body["models"]?.strings ?? []
+            keyList[index]["models"] = models.isEmpty ? nil : .strings(models)
+        case .accounts:
+            guard let index else { throw MagpieError.webRejected(message: "Key not found", code: nil) }
+            let accounts = body["accounts"]?.strings ?? []
+            keyList[index]["accounts"] = accounts.isEmpty ? nil : .strings(accounts)
+        case .quotas:
+            guard let index else { throw MagpieError.webRejected(message: "Key not found", code: nil) }
+            keyList[index]["quotas"] = body["quotas"]?.bool == true ? true : nil
         case .access:
             guard let index else { throw MagpieError.webRejected(message: "Key not found", code: nil) }
             if keyList[index]["lan"]?.bool == true { throw MagpieError.webRejected(message: "the sharing key can't be read-only", code: nil) }
