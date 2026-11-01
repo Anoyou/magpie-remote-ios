@@ -98,6 +98,10 @@ def main() -> int:
     args = ap.parse_args()
 
     tests = discover()
+    # TEMP（迭代用，合并前删掉）：只跑上次失败 / 没跑到的用例类。
+    _only = ("AgentSessionsUITests/testDeleteSessionAsksForConfirmation", "DockUITests/", "MagpieRemoteUITests/testUsage",
+             "QuotaUITests/", "RoutesUITests/")
+    tests = [t for t in tests if t.startswith(_only)]
     if not tests:
         print("没有在 MagpieRemoteUITests/*.swift 里找到任何 UI 用例", file=sys.stderr)
         return 1
