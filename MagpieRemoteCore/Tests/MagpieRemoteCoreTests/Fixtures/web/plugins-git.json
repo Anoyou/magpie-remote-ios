@@ -1,0 +1,6 @@
+{
+ "heads": {
+  "github:example-owner/magpie-dash": "def5678",
+  "github:example-owner/gone": ""
+ }
+}

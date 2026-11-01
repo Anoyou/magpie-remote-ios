@@ -90,8 +90,7 @@ public struct WebPlugin: Hashable, Identifiable, Sendable {
             let package = raw["package"]?.string ?? ""
             return package.isEmpty ? spec : package
         case .npm:
-            if let at = spec.lastIndex(of: "@"), at != spec.startIndex { return String(spec[..<at]) }
-            return spec
+            return PluginSpec.name(spec)
         }
     }
 
@@ -106,7 +105,7 @@ public struct WebPlugin: Hashable, Identifiable, Sendable {
     public var hasKnownUpdate: Bool {
         switch source {
         case .npm: return !latest.isEmpty && !version.isEmpty && PluginVersion.isNewer(latest, than: version)
-        case .git: return !commit.isEmpty && !head.isEmpty && commit != head
+        case .git: return !commit.isEmpty && !head.isEmpty && !PluginSpec.sameCommit(commit, head)
         case .folder: return false
         }
     }
@@ -175,11 +174,12 @@ public struct PluginVersionCheck: Hashable, Identifiable, Sendable {
     /// magpie 会不会自己更新它（社区官方插件）。
     public var auto: Bool { raw["auto"]?.bool ?? false }
 
-    /// 一行中文说明。
+    /// 一行中文说明（官方「已安装」行上的标签与提示）。
     public var summary: String {
         switch status {
         case .update:
-            return latest.isEmpty ? "有更新" : "有更新：v\(latest)"
+            if PluginSpec.isGit(spec) { return "有新提交" }
+            return latest.isEmpty ? "有更新" : "v\(latest) 可用"
         case .current:
             return "已是最新"
         case .folder:
@@ -187,13 +187,7 @@ public struct PluginVersionCheck: Hashable, Identifiable, Sendable {
         case .git:
             return "无法比较提交"
         case .unknown, .other:
-            switch why {
-            case "offline": return "检查失败：主机连不上 npm"
-            case "limited": return "检查失败：请求太频繁，稍后再试"
-            case "registry": return "检查失败：npm 返回错误"
-            case "missing": return "检查失败：npm 上没有这个包"
-            default: return error.isEmpty ? "无法检查" : "检查失败：\(error)"
-            }
+            return "无法检查：" + whyText
         }
     }
 }
@@ -211,15 +205,20 @@ public struct WebPluginCheck: Hashable, Sendable {
 
     public var updates: [PluginVersionCheck] { checks.filter { $0.status == .update && !$0.off } }
 
+    /// 检查完的一句话（官方 checkUpdates 的状态栏）。
     public var summary: String {
         let asked = checks.filter { [.update, .current, .unknown].contains($0.status) }
         let unknown = asked.filter { $0.status == .unknown }
         if asked.isEmpty { return checks.isEmpty ? "还没有安装插件" : "没有可以检查版本的插件" }
-        if unknown.count == asked.count { return unknown[0].summary }
-        var text = updates.isEmpty ? (unknown.isEmpty ? "所有插件都是最新的" : "检查到的插件都是最新的") : "\(updates.count) 个插件有更新"
-        if !unknown.isEmpty { text += "；\(unknown.count) 个无法检查" }
+        if unknown.count == asked.count { return "无法检查更新：\(unknown[0].whyText)" }
+        let ups = updates.count
+        var text = ups > 0 ? "\(ups) 个插件有更新" : (unknown.isEmpty ? "所有插件都是最新的" : "已检查的插件都没有更新")
+        if !unknown.isEmpty { text += " · \(unknown.count) 个无法检查：\(unknown[0].whyText)" }
         return text
     }
+
+    /// 有没问到的（官方用警告色显示）。
+    public var hasUnknown: Bool { checks.contains { $0.status == .unknown } }
 }
 
 // MARK: 内置插件（GET/POST /api/plugins/builtin）
@@ -517,19 +516,37 @@ public struct PluginProviderOption: Hashable, Identifiable, Sendable {
 // MARK: 版本比较
 
 public enum PluginVersion {
-    /// `a` 是否比 `b` 新（按数字段比较，忽略开头的 v 与预发布后缀）。
+    /// `a` 是否比 `b` 新，按 semver 的顺序（与 magpie 的 update.Newer、网页 plugins.js 的 newer 相同）：
+    /// 预发布版排在正式版前，预发布里的数字按数字比、数字排在单词前、短的在前；忽略 `+…`。
+    /// 不是 x.y.z 的版本永远不算新。
     public static func isNewer(_ a: String, than b: String) -> Bool {
-        func parts(_ s: String) -> [Int] {
-            var s = Substring(s.trimmingCharacters(in: .whitespaces))
-            if s.first == "v" || s.first == "V" { s = s.dropFirst() }
-            let core = s.split(whereSeparator: { $0 == "-" || $0 == "+" }).first ?? ""
-            return core.split(separator: ".").map { Int($0.prefix(while: \.isNumber)) ?? 0 }
+        struct Parsed { var n: [Int]; var pre: String }
+        func parse(_ v: String) -> Parsed? {
+            let pattern = #"^v?(\d+)\.(\d+)\.(\d+)(?:-([^+]*))?(?:\+.*)?$"#
+            let text = v.trimmingCharacters(in: .whitespaces)
+            guard let regex = try? NSRegularExpression(pattern: pattern),
+                  let m = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) else { return nil }
+            func group(_ i: Int) -> String? { Range(m.range(at: i), in: text).map { String(text[$0]) } }
+            guard let x = group(1).flatMap({ Int($0) }), let y = group(2).flatMap({ Int($0) }), let z = group(3).flatMap({ Int($0) }) else { return nil }
+            return Parsed(n: [x, y, z], pre: group(4) ?? "")
         }
-        let x = parts(a), y = parts(b)
-        for i in 0..<max(x.count, y.count) {
-            let l = i < x.count ? x[i] : 0, r = i < y.count ? y[i] : 0
-            if l != r { return l > r }
+        guard let x = parse(a), let y = parse(b) else { return false }
+        for i in 0..<3 where x.n[i] != y.n[i] { return x.n[i] > y.n[i] }
+        if x.pre == y.pre { return false }
+        if x.pre.isEmpty || y.pre.isEmpty { return x.pre.isEmpty }
+        let s = x.pre.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
+        let u = y.pre.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
+        func numeric(_ t: String) -> Bool { !t.isEmpty && t.unicodeScalars.allSatisfy { $0 >= "0" && $0 <= "9" } }
+        for i in 0..<min(s.count, u.count) {
+            let d = numeric(s[i]), e = numeric(u[i])
+            if d && e {
+                if let l = Int(s[i]), let r = Int(u[i]), l != r { return l > r }
+            } else if d != e {
+                return e
+            } else if s[i] != u[i] {
+                return s[i] > u[i]
+            }
         }
-        return false
+        return s.count > u.count
     }
 }

@@ -2282,7 +2282,52 @@
      "bun",
      "bunVersion",
      "error?",
-     "mirror"
+     "mirror",
+     "plugins[].page?.replaces?",
+     "plugins[].panels[]?.title?",
+     "plugins[].panelReads?",
+     "plugins[].actions[]?.menu",
+     "plugins[].actions[]?.title?",
+     "plugins[].tools[]?.description?",
+     "plugins[].tools[]?.mcp",
+     "plugins[].moved",
+     "plugins[].serves?",
+     "plugins[].named?",
+     "plugins[].autoUpdated?.from",
+     "plugins[].autoUpdated?.to",
+     "plugins[].autoUpdated?.at",
+     "plugins[].middleware?.hooks",
+     "plugins[].middleware?.calls",
+     "plugins[].middleware?.avgMicros",
+     "plugins[].middleware?.failures",
+     "plugins[].middleware?.error?",
+     "plugins[].middleware?.strategies?",
+     "plugins[].middleware?.usage?",
+     "plugins[].middleware?.rows?",
+     "plugins[].middleware?.dropped?",
+     "plugins[].gateway?.calls",
+     "plugins[].gateway?.failures",
+     "plugins[].gateway?.avgMillis",
+     "plugins[].gateway?.lastOutcome",
+     "plugins[].gateway?.lastBytes",
+     "plugins[].agent?.name?",
+     "plugins[].agent?.error?",
+     "plugins[].middlewareOnly?",
+     "plugins[].gatewayOnly?",
+     "plugins[].inMagpieOnly?",
+     "plugins[].clashes[]?.id",
+     "plugins[].clashes[]?.by",
+     "plugins[].clashes[]?.with",
+     "plugins[].clashes[]?.name",
+     "picker",
+     "movable[]?.id",
+     "movable[]?.name",
+     "movable[]?.package",
+     "movable[]?.accounts",
+     "registry.url",
+     "registry.from",
+     "registry.var?",
+     "registry.path?"
     ]
    },
    "goTags": [
@@ -2314,7 +2359,27 @@
       "slot",
       "name",
       "listings",
-      "npm"
+      "npm",
+      "replaces",
+      "panelReads",
+      "actions",
+      "menu",
+      "description",
+      "mcp",
+      "moved",
+      "serves",
+      "named",
+      "autoUpdated",
+      "middleware",
+      "gateway",
+      "agent",
+      "middlewareOnly",
+      "gatewayOnly",
+      "inMagpieOnly",
+      "clashes",
+      "picker",
+      "movable",
+      "registry"
      ]
     },
     {
@@ -2323,6 +2388,67 @@
       "spec",
       "off",
       "options"
+     ]
+    },
+    {
+     "file": "internal/plugin/updates.go",
+     "tags": [
+      "from",
+      "to",
+      "at"
+     ]
+    },
+    {
+     "file": "internal/middleware/middleware.go",
+     "tags": [
+      "hooks",
+      "events",
+      "error",
+      "calls",
+      "avgMicros",
+      "failures",
+      "lastError",
+      "strategies",
+      "orders",
+      "usage",
+      "rows",
+      "dropped"
+     ]
+    },
+    {
+     "file": "internal/plugin/gateway.go",
+     "tags": [
+      "calls",
+      "failures",
+      "avgMillis",
+      "lastOutcome",
+      "lastBytes"
+     ]
+    },
+    {
+     "file": "internal/plugin/host.go",
+     "tags": [
+      "id",
+      "by",
+      "with"
+     ]
+    },
+    {
+     "file": "internal/provider/migrate.go",
+     "tags": [
+      "id",
+      "name",
+      "package",
+      "accounts"
+     ]
+    },
+    {
+     "file": "internal/plugin/registry.go",
+     "tags": [
+      "url",
+      "from",
+      "var",
+      "path"
      ]
     }
    ]
@@ -2371,6 +2497,9 @@
      "plugins[].latest?",
      "plugins[].why?",
      "plugins[].error?",
+     "plugins[].head?",
+     "plugins[].limited?.until?",
+     "plugins[].limited?.token?",
      "state"
     ]
    },
@@ -2390,11 +2519,259 @@
       "why",
       "error",
       "limited",
-      "auto"
+      "auto",
+      "until",
+      "token"
      ]
     }
    ],
    "note": "asks npm now; installs nothing"
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/github",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/github\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?again"
+    ],
+    "response": [
+     "repos[].spec",
+     "repos[].repo",
+     "repos[].url",
+     "repos[].owner",
+     "repos[].description?",
+     "repos[].stars",
+     "repos[].license?",
+     "repos[].pkgLicense?",
+     "repos[].pushed",
+     "repos[].package?",
+     "repos[].version?",
+     "repos[].kind?",
+     "repos[].icon?",
+     "topic",
+     "error?",
+     "missing?",
+     "why?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/plugin/github.go",
+     "tags": [
+      "spec",
+      "repo",
+      "url",
+      "owner",
+      "description",
+      "stars",
+      "license",
+      "pkgLicense",
+      "pushed",
+      "package",
+      "version",
+      "kind",
+      "icon"
+     ]
+    }
+   ],
+   "note": "repositories tagged magpie-plugin (unreviewed); error/why/missing say why the list isn't GitHub's whole answer (why: slow|limited)",
+   "contains": [
+    "r.URL.Query().Get(\"again\")",
+    "out := map[string]any{\"repos\": repos, \"topic\": plugin.Topic}",
+    "out[\"error\"], out[\"missing\"] = m.Why.Error(), m.Missing",
+    "out[\"why\"] = w"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/npm",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/npm\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?names"
+    ],
+    "response": [
+     "npm.<package>.version?",
+     "npm.<package>.description?",
+     "npm.<package>.publisher?",
+     "npm.<package>.license?",
+     "npm.<package>.homepage?",
+     "npm.<package>.repository?",
+     "npm.<package>.weekly",
+     "npm.<package>.icon?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/plugin/market.go",
+     "tags": [
+      "version",
+      "description",
+      "publisher",
+      "license",
+      "homepage",
+      "repository",
+      "weekly",
+      "icon"
+     ]
+    }
+   ],
+   "note": "names comma-separated, at most 100; a package npm said nothing of is left out",
+   "contains": [
+    "r.URL.Query().Get(\"names\")",
+    "len(names) < 100",
+    "writeJSON(rw, map[string]any{\"npm\": info})"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/git",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/git\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "heads.<spec>"
+    ]
+   },
+   "note": "the commit each installed git plugin's repository is at now (short sha)",
+   "contains": [
+    "writeJSON(rw, map[string]any{\"heads\": plugin.GitHeads(ctx)})"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/search",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/search\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?q"
+    ],
+    "response": [
+     "hits[].package",
+     "hits[].version?",
+     "hits[].description?",
+     "hits[].publisher?",
+     "hits[].weekly"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/plugin/market.go",
+     "tags": [
+      "package"
+     ]
+    },
+    {
+     "file": "internal/plugin/market.go",
+     "tags": [
+      "version",
+      "description",
+      "publisher",
+      "license",
+      "homepage",
+      "repository",
+      "weekly",
+      "icon"
+     ]
+    }
+   ],
+   "contains": [
+    "plugin.Search(r.Context(), r.URL.Query().Get(\"q\"))",
+    "writeJSON(rw, map[string]any{\"hits\": hits})"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/page",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/page\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?name"
+    ],
+    "response": [
+     "readme",
+     "updated"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/plugin/market.go",
+     "tags": [
+      "readme",
+      "updated"
+     ]
+    }
+   ],
+   "note": "README as markdown; updated is RFC3339 (0001-... = unknown)",
+   "contains": [
+    "plugin.Readme(r.Context(), r.URL.Query().Get(\"name\"))"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/plugins/mirror",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"POST /api/plugins/mirror\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "on"
+    ],
+    "response": [
+     "mirror"
+    ]
+   },
+   "note": "China mirrors switch",
+   "contains": [
+    "var in struct{ On bool }",
+    "writeJSON(rw, map[string]bool{\"mirror\": in.On})"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/plugins/registry",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"POST /api/plugins/registry\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "url"
+    ],
+    "response": [
+     "registry.url",
+     "registry.from",
+     "registry.var?",
+     "registry.path?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/plugin/registry.go",
+     "tags": [
+      "url",
+      "from",
+      "var",
+      "path"
+     ]
+    }
+   ],
+   "note": "untagged struct{ URL string }; empty = none of magpie's own; from: magpie|env|shell|bunfig|npmrc|china|default",
+   "contains": [
+    "var in struct{ URL string }",
+    "plugin.SetRegistry(in.URL)",
+    "writeJSON(rw, map[string]any{\"registry\": registryJSON()})"
+   ]
   },
   {
    "method": "GET",

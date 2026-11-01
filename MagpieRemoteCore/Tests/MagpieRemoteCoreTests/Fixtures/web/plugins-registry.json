@@ -1,0 +1,6 @@
+{
+ "registry": {
+  "url": "https://registry.npmmirror.example",
+  "from": "magpie"
+ }
+}
