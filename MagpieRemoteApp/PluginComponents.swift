@@ -213,12 +213,8 @@ struct PluginCard: View {
                             .accessibilityLabel("上周在 npm 下载 \(weekly) 次")
                     }
                     if let version = listing.npm?.version, !version.isEmpty {
-                        let up: Bool = {
-                            if case .update = action, let entry, entry.npmUpdate { return true }
-                            return false
-                        }()
-                        PluginChip(text: "v" + (entry?.version.isEmpty == false ? entry!.version : version) + (up ? " → v\(entry!.latest)" : ""),
-                                   tone: up ? .accent : .soft)
+                        let up = Self.updating(action, entry)
+                        PluginChip(text: Self.versionText(version, entry: entry, up: up), tone: up ? .accent : .soft)
                     }
                     if let entry, entry.error != nil, !entry.off { PluginChip(text: "加载失败", tone: .bad) }
                     else if let entry, entry.off { PluginChip(text: "关闭") }
@@ -235,6 +231,21 @@ struct PluginCard: View {
         .accessibilityElement(children: .contain)
         .accessibilityAction(named: "详情") { open(listing) }
         .accessibilityIdentifier("plugins.card.\(listing.package)")
+    }
+}
+
+extension PluginCard {
+    /// 卡片的按钮是「更新」且 npm 有新版本（官方 pm-up）。
+    static func updating(_ action: PluginCardAction, _ entry: WebPlugin?) -> Bool {
+        guard case .update = action, let entry else { return false }
+        return entry.npmUpdate
+    }
+
+    /// 版本：装了的写装了的版本，有更新时加上「→ 新版本」（官方 pm-ver）。
+    static func versionText(_ version: String, entry: WebPlugin?, up: Bool) -> String {
+        let have = entry.map(\.version).flatMap { $0.isEmpty ? nil : $0 } ?? version
+        guard up, let entry else { return "v" + have }
+        return "v\(have) → v\(entry.latest)"
     }
 }
 
