@@ -131,6 +131,8 @@ routes = [
    tags=[{"file":G+"usage.go","tags":["found","why","model"]},{"file":"internal/sessions/content.go","tags":["input","output","cut","role","kind","name","text","model"]}],
    contains=['out.Why = "session"', 'out.Why = "agent"', 'out.Why = "missing"', 'out.Why = "read"', 'agent != "claude" && agent != "claude-desktop" && agent != "codex"'],
    note="what was said in one request, read from the agent's session file; 400 when from/to aren't times"),
+ R("GET","/api/usage/requests.csv",G+"usage.go", req=["?the request log's period and filters"], res=["<text/csv body; Content-Disposition attachment filename>"],
+   contains=['usage.WriteCSV(rw, rows)', 'csvStamp(p, q.Get("day"), now)'], note="every row the filters keep, all pages; the app shares the file through the iOS share sheet (POST /api/usage/requests/export saves it in the Mac's Downloads instead)"),
  R("GET","/api/sessions/stats",G+"sessions.go", req=["?days (0 = all)"], res=["from","to","days[].date","days[].usage[].agent","days[].usage[].cwd","days[].usage[].model","days[].usage[].input","days[].usage[].output","days[].usage[].cache_read","days[].usage[].cache_write","days[].usage[].cost","days[].usage[].priced","days[].active[].agent","days[].active[].cwd","days[].active[].seconds","days[].active[].hours?","keys","agents{id:name}"],
    tags=[{"file":"internal/sessions/stats.go","tags":["from","to","days","keys","date","usage","active","agent","cwd","model","cost","priced","seconds","hours"]},{"file":"internal/sessions/sessions.go","tags":["input","output","cache_read","cache_write"]}],
    contains=['text(`,"keys":`)', 'text(`,"agents":`)', 'r.Header.Get("X-Magpie-Had") == t.tag'],

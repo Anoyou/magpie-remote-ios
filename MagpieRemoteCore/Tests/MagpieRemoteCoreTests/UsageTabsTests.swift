@@ -369,4 +369,16 @@ final class UsageTabsClientTests: XCTestCase {
         XCTAssertEqual(StubURLProtocol.lastRequest?.url?.path, "/api/context")
         XCTAssertEqual(query(StubURLProtocol.lastRequest), ["days": "30"])
     }
+
+    func testCSVExport() async throws {
+        StubURLProtocol.handler = { _ in (200, ["Content-Type": "text/csv; charset=utf-8",
+                                               "Content-Disposition": #"attachment; filename="magpie-requests-7d-2026-11-01.csv""#],
+                                          Data("time,agent\n2026-11-01,claude\n".utf8)) }
+        let csv = try await client.usageRequestsCSV(UsageRequestQuery(period: .week, offset: 200, failedOnly: true))
+        XCTAssertEqual(csv.filename, "magpie-requests-7d-2026-11-01.csv")
+        XCTAssertTrue(csv.text.hasPrefix("time,agent"))
+        XCTAssertEqual(StubURLProtocol.lastRequest?.url?.path, "/api/usage/requests.csv")
+        XCTAssertEqual(query(StubURLProtocol.lastRequest), ["period": "7d", "failed": "1"])
+        XCTAssertEqual(UsageRequestsCSV.filename(contentDisposition: nil, period: "30d"), "magpie-requests-30d.csv")
+    }
 }

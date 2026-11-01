@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 // 「用量 › 请求」的仪表盘：趋势图、排名、热力图，以及一条请求的速度、协议与内容。
 // 口径照搬 magpie 网页（internal/gui/assets/plugins/usage/page.js 的 renderLedgerDash / drawLedTrend /
@@ -421,5 +424,50 @@ extension UsageRequestQuery {
     /// 热力图的参数：筛选条件，去掉时间段、某天与分页（magpie `ledHeatParams`）。
     public var heatmapItems: [URLQueryItem] {
         queryItems.filter { !["period", "day", "offset", "limit"].contains($0.name) }
+    }
+}
+
+// MARK: - 导出 CSV
+
+/// `GET /api/usage/requests.csv`：筛选后的全部请求（所有页），magpie 网页「导出 CSV」用的同一份文件。
+public struct UsageRequestsCSV: Hashable, Sendable {
+    public var filename: String
+    public var text: String
+
+    public init(filename: String, text: String) { self.filename = filename; self.text = text }
+
+    /// 从 Content-Disposition 取文件名；没有时用 `magpie-requests-<period>.csv`。
+    public static func filename(contentDisposition: String?, period: String) -> String {
+        if let header = contentDisposition, let range = header.range(of: "filename=") {
+            var name = String(header[range.upperBound...])
+            if let semicolon = name.firstIndex(of: ";") { name = String(name[..<semicolon]) }
+            name = name.trimmingCharacters(in: CharacterSet(charactersIn: "\" "))
+            name = String(name.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) && $0.isASCII || "-_.".unicodeScalars.contains($0) })
+            if !name.isEmpty && !name.hasPrefix(".") { return name.hasSuffix(".csv") ? name : name + ".csv" }
+        }
+        let safe = String(period.map { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-") ? $0 : "-" })
+        return "magpie-requests-\(safe).csv"
+    }
+}
+
+extension WebClient {
+    /// `GET /api/usage/requests.csv`（与请求记录同样的筛选，不分页）。
+    public func usageRequestsCSV(_ query: UsageRequestQuery) async throws -> UsageRequestsCSV {
+        let items = query.queryItems.filter { $0.name != "offset" && $0.name != "limit" }
+        var request = try makeRequest("/api/usage/requests.csv", query: items)
+        request.setValue("text/csv, application/json;q=0.5", forHTTPHeaderField: "Accept")
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw MagpieError.from(error)
+        }
+        guard let http = response as? HTTPURLResponse else { throw MagpieError.unreachable(.other) }
+        guard (200..<300).contains(http.statusCode) else {
+            throw Self.error(status: http.statusCode, contentType: http.value(forHTTPHeaderField: "Content-Type"), body: data)
+        }
+        let name = UsageRequestsCSV.filename(contentDisposition: http.value(forHTTPHeaderField: "Content-Disposition"), period: query.period.rawValue)
+        return UsageRequestsCSV(filename: name, text: String(decoding: data, as: UTF8.self))
     }
 }
