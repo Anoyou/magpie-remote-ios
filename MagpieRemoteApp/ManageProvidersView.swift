@@ -133,18 +133,35 @@ struct ProviderDetailView: View {
                     TextField("名称", text: $name)
                         .accessibilityIdentifier("provider.name")
                     if provider.preset.isEmpty {
-                        TextField("Base URL，例如 https://relay.example/v1", text: $chat)
-                            .keyboardType(.URL)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .accessibilityIdentifier("provider.chat")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Base URL").font(.caption).foregroundStyle(.secondary)
+                            TextField("例如 https://relay.example/v1", text: $chat)
+                                .keyboardType(.URL)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .accessibilityIdentifier("provider.chat")
+                        }
                     } else {
                         LabeledContent("预设", value: provider.preset)
                     }
-                    SecureField(provider.keySet ? "API Key（已保存 \(provider.keyMasked)，留空不变）" : "API Key", text: $key)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .accessibilityIdentifier("provider.key")
+                    // 其余已保存的地址（Responses / Anthropic / Gemini，以及预设自带的地址）只读显示
+                    ForEach(provider.baseURLs.filter { !(provider.preset.isEmpty && $0.api == "OpenAI Chat") }) { item in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Base URL · \(item.api)").font(.caption).foregroundStyle(.secondary)
+                            Text(item.url)
+                                .font(.callout)
+                                .textSelection(.enabled)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("provider.url.\(item.api)")
+                    }
+                    // 还没有 Key 时在这里填第一把；已有 Key 时到下面的「API Key」区管理（与网页端相同）
+                    if provider.keyList.isEmpty {
+                        SecureField(provider.keySet ? "API Key（已保存 \(provider.keyMasked)，留空不变）" : "API Key", text: $key)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .accessibilityIdentifier("provider.key")
+                    }
                     Button("保存修改") {
                         Task {
                             let edits = WebRequests.ProviderEdits(name: name.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -161,7 +178,13 @@ struct ProviderDetailView: View {
                 } header: {
                     Text("基本信息")
                 } footer: {
-                    Text("保存时其余设置（备用、请求头、代理、并发、计价等）保持不变。")
+                    Text(provider.keyList.isEmpty
+                         ? "保存时其余设置（备用、请求头、代理、并发、计价等）保持不变。"
+                         : "保存只改名称和地址；Key 在下面单独管理，已保存的 Key 和其余设置（备用、请求头、代理、并发、计价等）都保持不变。")
+                }
+
+                if !provider.keyList.isEmpty {
+                    ProviderKeysSection(store: store, provider: provider)
                 }
             }
 
