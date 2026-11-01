@@ -478,7 +478,7 @@ private struct StoryLog: View {
         VStack(alignment: .leading, spacing: 0) {
             Divider().overlay(RT.line)
             // .rt-log-head：flex-wrap，12px 600；按钮是 button.text
-            FlowRow(spacing: 0, lineSpacing: 2) {
+            FlowRow(spacing: 0, lineSpacing: 2).callAsFunction {
                 Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(RT.fg)
                     .padding(.trailing, 6)
                     .accessibilityIdentifier("routes.log.title")

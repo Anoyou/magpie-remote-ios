@@ -685,7 +685,7 @@ struct SeatRow: View {
         let seat = row.seat
         // 网页 makeRow()：标志（16×16，右边 7px）、名字（560）、空格、灰色补充、模型（margin-left 7、11px 等宽、卡片 2 色底）、
         // 快速 / 备用。整个 b 是一行：overflow hidden、text-overflow ellipsis、nowrap——放不下时从末尾截断，后面的不再画。
-        return InlineLine {
+        return InlineLine().callAsFunction {
             Group {
                 if BrandIcon.isBrand(seat.officialIcon) {
                     BrandIcon(seat.officialIcon, size: 16).foregroundStyle(RT.fg)
@@ -823,7 +823,7 @@ struct HeadingRow: View {
                                 .frame(width: 14, height: 14)
                         }
                     }
-                    InlineLine {
+                    InlineLine().callAsFunction {
                         PII.text(item.name, mask).font(.system(size: 12, weight: .medium)).foregroundStyle(RT.fg).padding(.trailing, 7)
                         Text(item.ref).font(.system(size: 11, design: .monospaced)).foregroundStyle(RT.fg2)
                             .padding(.horizontal, 5).background(RT.card2, in: .rect(cornerRadius: 5)).padding(.trailing, 7)
@@ -884,7 +884,7 @@ struct FoldRow: View {
                     .frame(width: 8, height: 8).frame(width: 10, height: 20.5)
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
-                        InlineLine {
+                        InlineLine().callAsFunction {
                             Group {
                                 if let w = item.iconOf, BrandIcon.isBrand(w.officialIcon) { BrandIcon(w.officialIcon, size: 16).foregroundStyle(RT.fg) }
                                 else { Image(systemName: "shippingbox").font(.system(size: 12)).foregroundStyle(RT.fg2).frame(width: 16, height: 16) }
