@@ -234,10 +234,19 @@ public struct WebState: Hashable, Sendable {
     public var agents: [WebAgent]
     /// 需要重启 Agent 等提示（英文原文）。
     public var notice: String?
+    /// 保存的方案（网页「方案」那一排）。
+    public var profiles: [WebProfile]
+    /// 打开「接入」开关时，magpie 选模型的方式（`connected.how`）。
+    public var connectedHow: String?
+    /// 应用方案时改了几项（`POST /api/profile/use` 的 `changed`）。
+    public var changed: Int?
 
     public init(json: WebJSON) {
         agents = (json["agents"]?.array ?? []).map(WebAgent.init(raw:))
         notice = json["notice"]?.string.flatMap { $0.isEmpty ? nil : $0 }
+        profiles = (json["profiles"]?.array ?? []).map(WebProfile.init(json:))
+        connectedHow = json["connected"]?["how"]?.string
+        changed = json["changed"]?.int
     }
 }
 
