@@ -1,6 +1,6 @@
 import XCTest
 
-/// 「管理 → Agent 会话记录」：fixture 模式下的示例会话（`FixtureAgentSessionsService`）。
+/// 底栏「会话」（Agent 会话记录）：fixture 模式下的示例会话（`FixtureAgentSessionsService`）。
 @MainActor
 final class AgentSessionsUITests: XCTestCase {
     private var launchTimeout: TimeInterval {
@@ -23,21 +23,15 @@ final class AgentSessionsUITests: XCTestCase {
         }
     }
 
-    /// 打开「管理」→「Agent 会话记录」。
+    /// 打开底栏「会话」。
     private func openSessions() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
-        let tab = app.tabBars.buttons["管理"]
-        XCTAssertTrue(tab.waitForExistence(timeout: launchTimeout), "没有出现「管理」标签")
-        tab.tap()
-        XCTAssertTrue(app.navigationBars["管理"].waitForExistence(timeout: 10))
-        let link = element(id: "manage.sessions", in: app)
-        XCTAssertTrue(link.waitForExistence(timeout: 15), "没有出现「Agent 会话记录」入口")
-        scrollTo(link, in: app)
-        link.tap()
-        XCTAssertTrue(app.navigationBars["会话记录"].waitForExistence(timeout: 10), "没有打开「会话记录」")
+        XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "没有出现底栏「更多」")
+        // 默认底栏第 2 个就是「会话」。
+        app.openDockTab("会话", navigationTitle: "会话记录")
         return app
     }
 

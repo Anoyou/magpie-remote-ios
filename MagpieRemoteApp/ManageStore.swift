@@ -47,6 +47,8 @@ final class ManageStore {
     private var configuredFor: String?
 
     var canIssue: Bool { service?.canIssue ?? false }
+    /// 当前连接的标识（主机或密钥变了就会变）：依赖服务的子页面用它重建自己的状态。
+    var configurationKey: String { configuredFor ?? "none" }
 
     /// 根据当前主机与密钥选择服务；主机或密钥变了才重新加载。
     func configure(model: AppModel) async {

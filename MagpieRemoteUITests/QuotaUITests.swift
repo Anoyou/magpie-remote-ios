@@ -12,7 +12,9 @@ final class QuotaUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"] + extra
         app.launch()
-        XCTAssertTrue(app.tabBars.buttons["额度"].waitForExistence(timeout: launchTimeout), "首屏没有出现「额度」标签")
+        XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "首屏没有出现底栏「更多」")
+        // 默认底栏里没有「额度」，从「更多」进入。
+        app.openFromMore("more.quota", title: "额度")
         return app
     }
 

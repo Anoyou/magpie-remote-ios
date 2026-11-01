@@ -1,135 +1,91 @@
 import SwiftUI
 import MagpieRemoteCore
 
-/// 「管理」标签页：主机、供应商、模型、路由组、Agent、网关密钥，以及只能在网页里完成的功能。
-/// 数据来自主机上的 magpie Web 管理接口（`magpie daemon web on --lan`，端口 3430），用 Web 密钥访问。
-struct ManageView: View {
+/// 需要 Web 密钥的页面（供应商、路由、Agent、会话、网关密钥、插件、主机工具、网页功能）的外壳：
+/// 还没有主机、没有 Web 密钥、第一次读取失败时显示原来的中文引导 / 错误，准备好后才显示页面本身。
+/// 不管页面在底栏还是在「更多」里，都用 `MainTabs` 里同一个 `ManageStore`。
+struct ManageGate<Content: View>: View {
     @Environment(AppModel.self) private var model
-    @State private var store = ManageStore()
+    @Environment(ManageStore.self) private var store
+    let title: String
+    @ViewBuilder let content: (ManageStore) -> Content
 
-    private var configurationID: String {
-        guard let host = model.activeHost else { return "none" }
-        return [host.id.uuidString, host.webURL.absoluteString, host.gatewayURL.absoluteString,
-                "\(model.hasSecret(.webKey, host: host.id))", "\(model.hasSecret(.issuerKey, host: host.id))",
-                "\(model.hosts.hosts.count)"].joined(separator: "|")
+    /// 从来没读成功过（例如密钥不对、连不上）：整页显示错误。读成功过之后的失败只在顶部提示，不打断当前页面。
+    private var failure: MagpieError? {
+        if case .failed(let error) = store.phase { return error }
+        return nil
     }
 
     var body: some View {
-        List {
-            Section("主机") {
-                Button {
-                    model.sheet = .hosts
-                } label: {
-                    LabeledContent("当前主机", value: model.activeHost?.name ?? "未添加")
-                }
-                .accessibilityIdentifier("manage.hosts")
-                Button("配置引导") { model.sheet = .guide }
-                    .accessibilityIdentifier("manage.guide")
-            }
-
-            statusSection
-
-            if store.service != nil {
-                Section {
-                    NavigationLink {
-                        ManageProvidersView(store: store)
-                    } label: {
-                        row("供应商", symbol: "server.rack", detail: store.phase == .ready ? "\(store.providers.count) 个" : nil)
+        Group {
+            if store.service != nil, failure == nil || store.settings != nil {
+                content(store)
+                    .safeAreaInset(edge: .top, spacing: 0) {
+                        if let failure { ManageFailureBanner(error: failure, store: store) }
                     }
-                    .accessibilityIdentifier("manage.providers")
-                    NavigationLink {
-                        ManageGroupsView(store: store)
-                    } label: {
-                        row("路由", symbol: "arrow.triangle.branch", detail: store.groups.map { "\($0.visible.count) 个路由组" })
-                    }
-                    .accessibilityIdentifier("manage.groups")
-                    NavigationLink {
-                        ManageAgentsView(store: store)
-                    } label: {
-                        row("Agent", symbol: "terminal", detail: store.phase == .ready ? "\(store.agents.count) 个" : nil)
-                    }
-                    .accessibilityIdentifier("manage.agents")
-                    if let sessions = AgentSessionsServices.make(from: store.service) {
-                        NavigationLink {
-                            AgentSessionsView(service: sessions)
-                        } label: {
-                            row("Agent 会话记录", symbol: "bubble.left.and.text.bubble.right", detail: nil)
-                        }
-                        .accessibilityIdentifier("manage.sessions")
-                    }
-                    NavigationLink {
-                        ManageKeysView(store: store)
-                    } label: {
-                        row("网关密钥", symbol: "key", detail: store.phase == .ready ? "\(store.keys.count) 把" : nil)
-                    }
-                    .accessibilityIdentifier("manage.keys")
-                } header: {
-                    Text("magpie")
-                } footer: {
-                    Text("模型的开关在各个供应商里。")
-                }
-
-                HostToolsSection(store: store)
-
-                Section {
-                    NavigationLink {
-                        ManagePluginsView(manage: store)
-                    } label: {
-                        Label("插件", systemImage: "puzzlepiece.extension")
-                    }
-                    .accessibilityIdentifier("manage.plugins")
-                } footer: {
-                    Text("已安装与内置插件：开关、检查更新、添加、移除和选项。")
-                }
-
-                Section {
-                    ForEach(MagpieWebPage.allCases) { page in
-                        NavigationLink {
-                            ManageWebPageView(store: store, page: page)
-                        } label: {
-                            Label {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(page.title)
-                                    Text(page.detail).font(.caption).foregroundStyle(.secondary)
-                                }
-                            } icon: {
-                                Image(systemName: page.symbol)
-                            }
-                        }
-                        .accessibilityIdentifier("manage.web.\(page.rawValue)")
-                    }
-                } header: {
-                    Text("在网页中打开")
-                } footer: {
-                    Text("这些功能需要 magpie 的完整网页界面，会在 App 内打开主机上的管理网页；供应商的登录页会在系统浏览器里打开。")
-                }
-            }
-
-            Section("App") {
-                NavigationLink {
-                    AboutView()
-                } label: {
-                    Label("关于", systemImage: "info.circle")
-                }
-                .accessibilityIdentifier("manage.about")
+            } else {
+                placeholder
+                    .navigationTitle(title)
             }
         }
-        .refreshable { await store.refresh() }
-        .task(id: configurationID) { await store.configure(model: model) }
         .onAppear { Task { await store.configure(model: model) } }
-        .manageAlerts(store: store, id: "root")
     }
 
-    private func row(_ title: String, symbol: String, detail: String?) -> some View {
-        LabeledContent {
-            if let detail { Text(detail) }
-        } label: {
-            Label(title, systemImage: symbol)
+    @ViewBuilder private var placeholder: some View {
+        switch store.phase {
+        case .noHost where model.activeHost == nil:
+            NoHostView()
+        case .noWebKey:
+            List {
+                Section {
+                    WebKeyGuide()
+                } header: {
+                    Text("需要 Web 密钥")
+                }
+            }
+        case .failed(let error):
+            // 密钥不对时用右上角「主机」按钮更新 Web 密钥。
+            ErrorStateView(error: error) { Task { await store.refresh() } }
+        case .noHost, .loading, .ready:
+            // 刚启动、还没按当前主机配置好时也显示读取中，不闪一下「还没有添加主机」。
+            ProgressView("正在读取 magpie 设置…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .accessibilityIdentifier("manage.loading")
         }
     }
+}
 
-    @ViewBuilder
-    private var statusSection: some View {
+/// 读成功过之后再次读取失败：页面上方的一条提示，可重试。
+private struct ManageFailureBanner: View {
+    let error: MagpieError
+    let store: ManageStore
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(error.title).font(.subheadline.weight(.semibold))
+                Text(error.message).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            }
+            Spacer(minLength: 0)
+            Button("重试") { Task { await store.refresh() } }
+                .buttonStyle(.glass)
+        }
+        .padding(12)
+        .glassEffect(.regular, in: .rect(cornerRadius: 16))
+        .padding(.horizontal)
+        .padding(.top, 4)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("manage.error.banner")
+    }
+}
+
+/// 「更多」顶部的 magpie 连接状态：没有 Web 密钥的引导、读取中、错误、版本 / 不兼容提示。
+struct ManageStatusSection: View {
+    @Environment(AppModel.self) private var model
+    let store: ManageStore
+
+    var body: some View {
         switch store.phase {
         case .noHost:
             Section { Text("添加主机后，可以在这里管理 magpie。").foregroundStyle(.secondary) }
@@ -177,6 +133,35 @@ struct ManageView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+/// 只能在 magpie 网页里完成的功能（账号登录、备份与同步、脱敏）。
+struct MagpieWebSection: View {
+    let store: ManageStore
+
+    var body: some View {
+        Section {
+            ForEach(MagpieWebPage.allCases) { page in
+                NavigationLink {
+                    ManageWebPageView(store: store, page: page)
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(page.title)
+                            Text(page.detail).font(.caption).foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: page.symbol)
+                    }
+                }
+                .accessibilityIdentifier("manage.web.\(page.rawValue)")
+            }
+        } header: {
+            Text("在网页中打开")
+        } footer: {
+            Text("这些功能需要 magpie 的完整网页界面，会在 App 内打开主机上的管理网页；供应商的登录页会在系统浏览器里打开。")
         }
     }
 }

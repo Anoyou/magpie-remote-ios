@@ -1,6 +1,6 @@
 import XCTest
 
-/// 「管理」页：fixture 模式下的示例供应商、网关密钥（`FixtureManageService`）。
+/// 供应商（默认在底栏）与网关密钥（在「更多」里）：fixture 模式下的示例数据（`FixtureManageService`）。
 @MainActor
 final class ManageUITests: XCTestCase {
     private var launchTimeout: TimeInterval {
@@ -12,10 +12,7 @@ final class ManageUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
-        let tab = app.tabBars.buttons["管理"]
-        XCTAssertTrue(tab.waitForExistence(timeout: launchTimeout), "没有出现「管理」标签")
-        tab.tap()
-        XCTAssertTrue(app.navigationBars["管理"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "没有出现底栏「更多」")
         return app
     }
 
@@ -36,17 +33,9 @@ final class ManageUITests: XCTestCase {
         }
     }
 
-    private func openSection(_ identifier: String, title: String, in app: XCUIApplication) {
-        let link = element(id: identifier, in: app)
-        XCTAssertTrue(link.waitForExistence(timeout: 15), "没有出现入口 \(identifier)")
-        scrollTo(link, in: app)
-        link.tap()
-        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 10), "没有打开「\(title)」")
-    }
-
     func testProvidersListShowsFixtureProviders() {
         let app = launchManage()
-        openSection("manage.providers", title: "供应商", in: app)
+        app.openDockTab("供应商")
         XCTAssertTrue(element(containing: "示例中转", in: app).waitForExistence(timeout: 10))
         XCTAssertTrue(element(containing: "示例 DeepSeek", in: app).exists)
         XCTAssertTrue(element(containing: "示例 Codex 订阅", in: app).exists)
@@ -54,7 +43,7 @@ final class ManageUITests: XCTestCase {
 
     func testDeleteProviderAsksForConfirmation() {
         let app = launchManage()
-        openSection("manage.providers", title: "供应商", in: app)
+        app.openDockTab("供应商")
         let row = element(id: "provider.row.relay-example", in: app)
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
@@ -75,7 +64,7 @@ final class ManageUITests: XCTestCase {
 
     func testCreateGatewayKeyShowsSecretOnce() {
         let app = launchManage()
-        openSection("manage.keys", title: "网关密钥", in: app)
+        app.openFromMore("manage.keys", title: "网关密钥")
         XCTAssertTrue(element(containing: "iPhone", in: app).waitForExistence(timeout: 10))
         let add = element(id: "key.add", in: app)
         XCTAssertTrue(add.waitForExistence(timeout: 5))

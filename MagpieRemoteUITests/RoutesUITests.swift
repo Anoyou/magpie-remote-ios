@@ -1,6 +1,6 @@
 import XCTest
 
-/// 「管理 › 路由」：fixture 模式下的实时路由舞台（RoutesFixture.trace 每 6 秒一个示例请求）与路由组卡片。
+/// 底栏「路由」：fixture 模式下的实时路由舞台（RoutesFixture.trace 每 6 秒一个示例请求）与路由组卡片。
 @MainActor
 final class RoutesUITests: XCTestCase {
     private var launchTimeout: TimeInterval {
@@ -12,13 +12,9 @@ final class RoutesUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
-        let tab = app.tabBars.buttons["管理"]
-        XCTAssertTrue(tab.waitForExistence(timeout: launchTimeout), "没有出现「管理」标签")
-        tab.tap()
-        let link = element(id: "manage.groups", in: app)
-        XCTAssertTrue(link.waitForExistence(timeout: 15), "没有出现「路由组」入口")
-        link.tap()
-        XCTAssertTrue(app.navigationBars["路由"].waitForExistence(timeout: 10), "没有打开「路由」页")
+        XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "没有出现底栏「更多」")
+        // 默认底栏第 4 个就是「路由」。
+        app.openDockTab("路由")
         return app
     }
 

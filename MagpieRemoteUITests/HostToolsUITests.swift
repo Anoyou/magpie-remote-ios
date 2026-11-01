@@ -1,6 +1,6 @@
 import XCTest
 
-/// 「管理 › 主机工具」：fixture 模式下的主机更新、自动调优、隐私模型（`FixtureHostToolsService`）。
+/// 「更多 › 主机工具」：fixture 模式下的主机更新、自动调优、隐私模型（`FixtureHostToolsService`）。
 @MainActor
 final class HostToolsUITests: XCTestCase {
     private var launchTimeout: TimeInterval {
@@ -12,15 +12,8 @@ final class HostToolsUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
-        let tab = app.tabBars.buttons["管理"]
-        XCTAssertTrue(tab.waitForExistence(timeout: launchTimeout), "没有出现「管理」标签")
-        tab.tap()
-        XCTAssertTrue(app.navigationBars["管理"].waitForExistence(timeout: 10))
-        let link = element(id: identifier, in: app)
-        XCTAssertTrue(link.waitForExistence(timeout: 15), "没有出现入口 \(identifier)")
-        scrollTo(link, in: app)
-        link.tap()
-        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 10), "没有打开「\(title)」")
+        XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "没有出现底栏「更多」")
+        app.openFromMore(identifier, title: title)
         return app
     }
 

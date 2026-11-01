@@ -1,6 +1,6 @@
 import XCTest
 
-/// 「管理 › 插件」：fixture 模式下的示例插件（`FixturePluginService`）。
+/// 「更多 › 插件」：fixture 模式下的示例插件（`FixturePluginService`）。
 @MainActor
 final class PluginsUITests: XCTestCase {
     private var launchTimeout: TimeInterval {
@@ -23,21 +23,14 @@ final class PluginsUITests: XCTestCase {
         }
     }
 
-    /// 打开「管理 › 插件」。
+    /// 打开「更多 › 插件」。
     private func launchPlugins() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
-        let tab = app.tabBars.buttons["管理"]
-        XCTAssertTrue(tab.waitForExistence(timeout: launchTimeout), "没有出现「管理」标签")
-        tab.tap()
-        XCTAssertTrue(app.navigationBars["管理"].waitForExistence(timeout: 10))
-        let link = element(id: "manage.plugins", in: app)
-        XCTAssertTrue(link.waitForExistence(timeout: 15), "没有出现「插件」入口")
-        scrollTo(link, in: app)
-        link.tap()
-        XCTAssertTrue(app.navigationBars["插件"].waitForExistence(timeout: 10), "没有打开「插件」")
+        XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "没有出现底栏「更多」")
+        app.openFromMore("manage.plugins", title: "插件")
         return app
     }
 

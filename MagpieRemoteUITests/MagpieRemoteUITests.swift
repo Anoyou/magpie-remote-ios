@@ -13,7 +13,7 @@ final class MagpieRemoteUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"] + extra
         app.launch()
-        XCTAssertTrue(app.tabBars.buttons["额度"].waitForExistence(timeout: launchTimeout), "首屏没有出现「额度」标签")
+        XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "首屏没有出现底栏「更多」")
         return app
     }
 
@@ -27,17 +27,24 @@ final class MagpieRemoteUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
     }
 
-    func testFourTabsExist() {
+    /// 默认底栏：Agent、会话、供应商、路由、更多；额度 / 用量 / 对话改从「更多」进入。
+    func testDefaultDockTabs() {
         let app = launch()
-        for title in ["额度", "用量", "对话", "管理"] {
+        for title in ["Agent", "会话", "供应商", "路由", "更多"] {
             XCTAssertTrue(app.tabBars.buttons[title].exists, "缺少标签：\(title)")
         }
-        app.tabBars.buttons["管理"].tap()
-        XCTAssertTrue(app.navigationBars["管理"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.tabBars.buttons["管理"].exists, "旧的「管理」标签应当已经去掉")
+        XCTAssertTrue(app.navigationBars["Agent"].waitForExistence(timeout: 10), "首屏应当是底栏第一个页面「Agent」")
+        app.openMore()
+        for id in ["more.quota", "more.usage", "more.chat", "manage.keys"] {
+            XCTAssertTrue(app.descendants(matching: .any).matching(identifier: id).firstMatch.waitForExistence(timeout: 10), "「更多」里缺少 \(id)")
+        }
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "manage.providers").firstMatch.exists, "在底栏里的页面不应再出现在「更多」里")
     }
 
     func testFixtureHostConnectsAndShowsQuota() {
         let app = launch()
+        app.openFromMore("more.quota", title: "额度")
         XCTAssertTrue(element(containing: "工作 Claude", in: app).waitForExistence(timeout: 15))
     }
 
@@ -69,6 +76,7 @@ final class MagpieRemoteUITests: XCTestCase {
 
     func testOfflineHostShowsChineseError() {
         let app = launch(["--fixture-offline"])
+        app.openFromMore("more.quota", title: "额度")
         XCTAssertTrue(element(containing: "连不上主机", in: app).waitForExistence(timeout: 15), "没有出现中文错误标题「连不上主机」")
         XCTAssertTrue(element(containing: "主机都没有回应", in: app).waitForExistence(timeout: 5), "没有出现超时的中文说明")
         XCTAssertTrue(element(id: "state.retry", in: app).waitForExistence(timeout: 5), "错误页里没有「重试」按钮（state.retry）")
@@ -76,14 +84,8 @@ final class MagpieRemoteUITests: XCTestCase {
 
     func testAboutShowsVersionAndChangelog() {
         let app = launch()
-        app.tabBars.buttons["管理"].tap()
-        let about = app.buttons["manage.about"].firstMatch
-        XCTAssertTrue(app.navigationBars["管理"].waitForExistence(timeout: 10))
-        // 「关于」在管理页最下面，列表懒加载：先滑到底
-        for _ in 0..<6 where !(about.exists && about.isHittable) { app.swipeUp() }
-        XCTAssertTrue(about.waitForExistence(timeout: 10))
-        about.tap()
-        XCTAssertTrue(app.navigationBars["关于"].waitForExistence(timeout: 10))
+        // 「关于」在「更多」最下面，列表懒加载：openFromMore 会先滑到它
+        app.openFromMore("manage.about", title: "关于")
         app.buttons["about.changelog"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["更新日志"].waitForExistence(timeout: 10))
         // 「未发布」条目变多后 0.1.0 段落可能在屏幕下方（List 懒加载），需要往下滚。
@@ -115,7 +117,7 @@ final class MagpieRemoteUITests: XCTestCase {
     }
 
     private func openUsage(_ app: XCUIApplication) {
-        app.tabBars.buttons["用量"].tap()
+        app.openFromMore("more.usage", title: "用量")
         XCTAssertTrue(element(id: "usage.totalCost", in: app).waitForExistence(timeout: 15), "用量页没有出现总花费（usage.totalCost）")
     }
 
@@ -172,7 +174,7 @@ final class MagpieRemoteUITests: XCTestCase {
 
     func testUsageHeldKeyShowsOwnRequestsOnly() {
         let app = launch(["--fixture-held-key"])
-        app.tabBars.buttons["用量"].tap()
+        app.openFromMore("more.usage", title: "用量")
         XCTAssertTrue(element(id: "usage.heldNote", in: app).waitForExistence(timeout: 15), "受限密钥没有显示说明")
         XCTAssertFalse(element(id: "usage.totalCost", in: app).exists, "受限密钥不应显示总花费")
         openRequests(app)
@@ -182,7 +184,7 @@ final class MagpieRemoteUITests: XCTestCase {
     // MARK: 对话（fixture：假模型目录 + 假的流式回答）
 
     private func openChatAndSend(_ text: String, in app: XCUIApplication) {
-        app.tabBars.buttons["对话"].tap()
+        app.openFromMore("more.chat", title: "对话")
         let composer = app.descendants(matching: .any)["chat.composer"].firstMatch
         XCTAssertTrue(composer.waitForExistence(timeout: 15), "没有出现输入框")
         // 模型目录加载后自动选中第一个路由组。
