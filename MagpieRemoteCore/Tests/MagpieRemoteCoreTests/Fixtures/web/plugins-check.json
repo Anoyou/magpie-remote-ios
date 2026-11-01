@@ -1,0 +1,101 @@
+{
+ "at": "2026-11-01T07:10:00.123456789+08:00",
+ "plugins": [
+  {
+   "spec": "@magpie-community/example-auth",
+   "package": "@magpie-community/example-auth",
+   "version": "1.2.0",
+   "latest": "1.3.0",
+   "status": "update",
+   "auto": true
+  },
+  {
+   "spec": "github:example-owner/magpie-dash",
+   "package": "magpie-dash",
+   "version": "0.4.1",
+   "status": "current",
+   "commit": "abc1234",
+   "head": "abc1234",
+   "off": true
+  },
+  {
+   "spec": "example-middleware@2",
+   "package": "example-middleware",
+   "version": "2.0.0",
+   "status": "unknown",
+   "why": "offline",
+   "error": "dial tcp: i/o timeout"
+  }
+ ],
+ "state": {
+  "plugins": [
+   {
+    "spec": "@magpie-community/example-auth",
+    "options": {
+     "region": "cn",
+     "verbose": true
+    },
+    "providers": [
+     "Example Cloud"
+    ],
+    "version": "1.2.0",
+    "latest": "1.3.0",
+    "icon": "",
+    "ownName": "示例云登录",
+    "moved": [],
+    "named": true,
+    "optionsExample": {
+     "region": "global"
+    }
+   },
+   {
+    "spec": "github:example-owner/magpie-dash",
+    "off": true,
+    "providers": [],
+    "version": "0.4.1",
+    "package": "magpie-dash",
+    "commit": "abc1234",
+    "head": "def5678",
+    "moved": [],
+    "page": {
+     "title": "Dash",
+     "reads": [
+      "usage:summary"
+     ]
+    },
+    "panels": [
+     {
+      "slot": "usage",
+      "title": "Spend"
+     }
+    ]
+   },
+   {
+    "spec": "example-middleware@2",
+    "error": "Cannot find module 'left-pad'",
+    "providers": [],
+    "version": "2.0.0",
+    "moved": [],
+    "isMiddleware": true,
+    "middlewareOnly": true,
+    "tools": [
+     {
+      "name": "lookup",
+      "mcp": "example_lookup"
+     }
+    ],
+    "unknownFutureField": {
+     "x": 1
+    }
+   }
+  ],
+  "bun": true,
+  "bunVersion": "1.3.0",
+  "picker": false,
+  "movable": [],
+  "mirror": false,
+  "registry": {
+   "url": "https://registry.npmjs.org"
+  }
+ }
+}

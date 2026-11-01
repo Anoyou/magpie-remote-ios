@@ -1,0 +1,2 @@
+{"on":true,"model":"astrlink-guard","supported":true,"installed":true,"size":180000000,"running":true,"minScore":0.7,"defaultScore":0.7,
+ "models":[{"model":"privacy-filter","supported":true,"installed":false,"size":1500000000,"downloading":true,"done":300000000,"total":1500000000},{"model":"astrlink-guard","supported":true,"installed":true,"size":180000000,"running":true}]}

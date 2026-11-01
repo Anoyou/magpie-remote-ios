@@ -47,12 +47,12 @@ struct QuotaView: View {
                     QuotaEmptyView()
                 case .cards(let cards):
                     TimelineView(.periodic(from: .now, by: 60)) { context in
-                        QuotaGroupsView(cards: cards, now: context.date, refreshingCard: refreshingCard) { card in
+                        QuotaGroupsView(cards: cards, now: context.date, refreshingCard: refreshingCard,
+                                        range: $range, history: history, historyFailed: historyFailed) { card in
                             Task { await refresh(card) }
                         }
                     }
-                    QuotaHistorySection(range: $range, history: history, failed: historyFailed, cards: cards)
-                        .task(id: range) { await loadHistory() }
+                    .task(id: range) { await loadHistory() }
                 }
             }
         } else {
@@ -137,65 +137,201 @@ struct QuotaView: View {
     }
 }
 
-// MARK: 卡片
+// MARK: 账号（默认折叠）
+
+/// 哪些账号是展开的：保存在本机（UserDefaults），重新打开 App 也保持；默认全部折叠。
+/// UI 测试（--ui-testing）不读写，保证每次都从折叠开始。
+@MainActor @Observable
+final class QuotaExpansionStore {
+    static let shared = QuotaExpansionStore()
+    private static let key = "quota.expandedAccounts"
+    private let persists = !ProcessInfo.processInfo.arguments.contains("--ui-testing")
+
+    var state = QuotaExpansion() {
+        didSet {
+            guard persists else { return }
+            UserDefaults.standard.set(Array(state.expanded).sorted(), forKey: Self.key)
+        }
+    }
+
+    init() {
+        guard persists else { return }
+        var restored = QuotaExpansion()
+        for id in UserDefaults.standard.stringArray(forKey: Self.key) ?? [] {
+            restored.set(id, expanded: true)
+        }
+        state = restored
+    }
+}
 
 private struct QuotaGroupsView: View {
     let cards: [QuotaCard]
     let now: Date
     let refreshingCard: String?
+    @Binding var range: QuotaHistoryRange
+    let history: [QuotaHistorySeries]?
+    let historyFailed: Bool
     let refresh: (QuotaCard) -> Void
+    @State private var expansion = QuotaExpansionStore.shared
 
     var body: some View {
-        GlassEffectContainer(spacing: 12) {
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(QuotaGroup.group(cards)) { group in
-                    if group.cards.count > 1 {
-                        Text("\(group.title) · \(group.cards.count) 个账号")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 4)
-                    }
-                    ForEach(group.cards) { card in
-                        QuotaCardView(card: card, now: now, showsProvider: group.cards.count == 1, refreshing: refreshingCard == card.id)
-                            .contextMenu {
-                                if card.canRefresh {
-                                    Button("重新读取这个账号", systemImage: "arrow.clockwise") { refresh(card) }
-                                }
-                            }
-                    }
+        VStack(alignment: .leading, spacing: 12) {
+            ForEach(QuotaGroup.group(cards)) { group in
+                let accounts = QuotaAccount.group(group.cards)
+                if accounts.count > 1 {
+                    Text("\(group.title) · \(accounts.count) 个账号")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
+                }
+                ForEach(accounts) { account in
+                    QuotaAccountView(
+                        account: account, now: now,
+                        expanded: expansion.state.isExpanded(account.id),
+                        refreshing: account.cards.contains { $0.id == refreshingCard },
+                        range: $range,
+                        history: history.map { all in all.filter { account.historyKeys.contains($0.id) } },
+                        historyFailed: historyFailed,
+                        toggle: {
+                            withAnimation(.snappy(duration: 0.3)) { expansion.state.toggle(account.id) }
+                        },
+                        refresh: { if let card = account.refreshCard { refresh(card) } }
+                    )
                 }
             }
         }
     }
 }
 
-private struct QuotaCardView: View {
-    let card: QuotaCard
+private struct QuotaAccountView: View {
+    let account: QuotaAccount
     let now: Date
-    let showsProvider: Bool
+    let expanded: Bool
     let refreshing: Bool
+    @Binding var range: QuotaHistoryRange
+    let history: [QuotaHistorySeries]?
+    let historyFailed: Bool
+    let toggle: () -> Void
+    let refresh: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
+        VStack(alignment: .leading, spacing: 0) {
+            header
+            if expanded {
+                detail
+                    .transition(.opacity)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // 玻璃放在背景层，不用 .glassCard() 包住内容：直接套在 VStack 上时，第一个子视图（折叠行按钮）
+        // 的点按 / 无障碍区域会被撑成整张卡片，展开后点「中心」落在明细里，VoiceOver 和测试都收不起来。
+        .background {
+            Color.clear.glassEffect(.regular, in: .rect(cornerRadius: 22, style: .continuous))
+        }
+    }
+
+    private var header: some View {
+        Button(action: toggle) {
+            HStack(spacing: 12) {
+                ProviderBadge(account: account)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(showsProvider && card.accountLabel != card.name ? "\(card.name) · \(card.accountLabel)" : card.accountLabel)
-                        .font(.headline)
-                    if let detail = card.accountDetail {
-                        Text(detail).font(.footnote).foregroundStyle(.secondary)
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(account.title).font(.headline).lineLimit(1)
+                        if !account.subtitle.isEmpty {
+                            Text(account.subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }
                     }
+                    Text(account.summary(now: now))
+                        .font(.footnote).foregroundStyle(.secondary).lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
                 Spacer(minLength: 8)
                 if refreshing {
                     ProgressView()
-                } else if let lowest = card.lowestRemaining {
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text(QuotaFormat.percent(lowest)).font(.title2.weight(.semibold).monospacedDigit())
-                            .foregroundStyle(quotaTint(lowest))
-                        Text("剩余").font(.caption2).foregroundStyle(.secondary)
+                } else if let lowest = account.lowestRemaining {
+                    Text(QuotaFormat.percent(lowest)).font(.title3.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(statusTint(account.status))
+                } else if account.status == .problem {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                }
+                Image(systemName: "chevron.down")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(expanded ? 180 : 0))
+                    .accessibilityHidden(true)
+            }
+            .padding(16)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(expanded ? "已展开" : "已收起")
+        .accessibilityHint(expanded ? "点按收起明细" : "点按展开明细")
+        .accessibilityIdentifier("quota.account.header")
+    }
+
+    private var detail: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Divider()
+            ForEach(account.cards, id: \.self) { card in
+                QuotaCardView(card: card, now: now, showsTitle: account.cards.count > 1)
+            }
+            if account.hasMeteredWindows {
+                AccountHistoryView(range: $range, history: history, failed: historyFailed, title: account.title)
+            }
+            if account.canRefresh {
+                Button(action: refresh) {
+                    Label(refreshing ? "正在重新读取…" : "重新读取这个账号", systemImage: "arrow.clockwise")
+                        .frame(maxWidth: .infinity)
+                }
+                // 不用 .glass：玻璃按钮放进玻璃卡片里会和卡片的玻璃合并，抢走折叠行的点按。
+                .buttonStyle(.bordered)
+                .disabled(refreshing)
+                .accessibilityIdentifier("quota.account.refresh")
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
+    }
+}
+
+/// 供应商标记：首字母圆角方块，底色跟随账号状态。
+private struct ProviderBadge: View {
+    let account: QuotaAccount
+
+    var body: some View {
+        Text(account.monogram)
+            .font(.headline)
+            .foregroundStyle(.white)
+            .frame(width: 36, height: 36)
+            .background(statusTint(account.status).gradient, in: .rect(cornerRadius: 10, style: .continuous))
+            .accessibilityLabel(account.providerName)
+    }
+}
+
+private func statusTint(_ status: QuotaAccount.Status) -> Color {
+    switch status {
+    case .ok: return .accentColor
+    case .low: return .orange
+    case .critical: return .red
+    case .problem: return .orange
+    case .neutral: return .gray
+    }
+}
+
+/// 展开后的单张卡片明细（窗口、余额、问题、读取时间）；外层账号卡片已有标题。
+private struct QuotaCardView: View {
+    let card: QuotaCard
+    let now: Date
+    let showsTitle: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if showsTitle || card.accountDetail != nil {
+                VStack(alignment: .leading, spacing: 2) {
+                    if showsTitle { Text(card.plan ?? card.name).font(.subheadline.weight(.semibold)) }
+                    if let detail = card.accountDetail {
+                        Text(detail).font(.footnote).foregroundStyle(.secondary)
                     }
-                } else if let balance = card.balanceText {
-                    Text(balance).font(.title3.weight(.semibold).monospacedDigit())
                 }
             }
 
@@ -203,10 +339,11 @@ private struct QuotaCardView: View {
                 WindowRow(window: window, readAt: card.readAt, now: now)
             }
 
-            if card.lowestRemaining != nil, let balance = card.balanceText {
+            if let balance = card.balanceText {
                 Label("余额 \(balance)", systemImage: "creditcard").font(.subheadline)
-            } else if card.windows.isEmpty, card.balanceText != nil {
-                Text("预付余额（供应商显示的金额）").font(.footnote).foregroundStyle(.secondary)
+                if card.windows.isEmpty {
+                    Text("预付余额（供应商显示的金额）").font(.footnote).foregroundStyle(.secondary)
+                }
             }
             if let problem = card.problem {
                 Label(problem, systemImage: "exclamationmark.triangle")
@@ -214,9 +351,7 @@ private struct QuotaCardView: View {
             }
             footer
         }
-        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassCard()
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("quota.card")
     }
@@ -390,18 +525,19 @@ private struct NoticeBanner: View {
 
 // MARK: 历史曲线
 
-private struct QuotaHistorySection: View {
+/// 展开账号里的剩余额度走势；时间范围在所有账号间共用。
+private struct AccountHistoryView: View {
     @Binding var range: QuotaHistoryRange
     let history: [QuotaHistorySeries]?
     let failed: Bool
-    let cards: [QuotaCard]
+    let title: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("剩余额度走势").font(.headline)
+                Text("剩余额度走势").font(.subheadline.weight(.semibold))
                 Spacer()
-                Text("近 \(range.days) 天").font(.subheadline).foregroundStyle(.secondary)
+                Text("近 \(range.days) 天").font(.footnote).foregroundStyle(.secondary)
                     .accessibilityIdentifier("quota.history.caption")
             }
             Picker("时间范围", selection: $range) {
@@ -418,22 +554,13 @@ private struct QuotaHistorySection: View {
                     Text("还没有历史记录：主机大约每 5 分钟记一次剩余额度。").font(.footnote).foregroundStyle(.secondary)
                 } else {
                     ForEach(shown) { series in
-                        HistoryChart(series: series, title: title(for: series))
+                        HistoryChart(series: series, title: title)
                     }
                 }
             } else {
                 ProgressView().frame(maxWidth: .infinity)
             }
         }
-        .padding(16)
-        .glassCard()
-    }
-
-    private func title(for series: QuotaHistorySeries) -> String {
-        if let card = cards.first(where: { $0.historyKey == series.id }) {
-            return card.accountLabel == card.name ? card.name : "\(card.name) · \(card.accountLabel)"
-        }
-        return [series.provider, series.user].compactMap { $0 }.joined(separator: " · ")
     }
 }
 
@@ -443,7 +570,6 @@ private struct HistoryChart: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.subheadline.weight(.medium))
             Chart {
                 ForEach(series.lines) { line in
                     ForEach(line.points, id: \.at) { point in

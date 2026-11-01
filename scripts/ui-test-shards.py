@@ -31,7 +31,7 @@ DURATIONS = {
     "MagpieRemoteUITests/testChatCreateAndDeleteSession": 47,
     "MagpieRemoteUITests/testChatSendsMessageAndStreamsReply": 24,
     "MagpieRemoteUITests/testFixtureHostConnectsAndShowsQuota": 10,
-    "MagpieRemoteUITests/testFourTabsExist": 13,
+    "MagpieRemoteUITests/testDefaultDockTabs": 15,
     "MagpieRemoteUITests/testHostSheetOpensAndAddForm": 15,
     "MagpieRemoteUITests/testOfflineHostShowsChineseError": 12,
     "MagpieRemoteUITests/testSetupGuideOpensFromEmptyState": 16,

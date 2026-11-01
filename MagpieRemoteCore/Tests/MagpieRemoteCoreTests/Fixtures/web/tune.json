@@ -1,0 +1,19 @@
+{"days":7,"agents":[
+ {"agent":"claude","calls":5321,"advice":[
+  {"knob":"compact","model":"claude-sonnet-example","setting":{"value":"200000","source":"model"},
+   "compact":{"model":"claude-sonnet-example","current":200000,"window":1000000,"best":150000,"cost":9800000,"low":8100000,
+     "curve":[{"value":100000,"cost":8600000,"compacts":40},{"value":150000,"cost":8100000,"compacts":22},{"value":200000,"cost":9800000,"compacts":12}],
+     "facts":{"calls":4100,"streams":88,"compacts":12,"peak":180000,"after":42000,"growth":3100,"rework":21000,"long":0.12}}},
+  {"knob":"cache_ttl","setting":{"value":"5m","source":"settings"},
+   "ttl":{"current":"5m","best":"1h","cost":5000000,"low":4200000,"short":5000000,"hour":4200000,"facts":{"calls":4100,"streams":88,"quick":0.61,"pause":0.3,"away":0.09}}},
+  {"knob":"subagent_cache_ttl","setting":{"value":"1h","source":"settings","ours":true},
+   "ttl":{"current":"1h","best":"1h","cost":800000,"low":800000,"short":950000,"hour":800000,"facts":{"calls":1200,"streams":40,"quick":0.8,"pause":0.15}}}
+ ]},
+ {"agent":"codex","calls":2100,"advice":[
+  {"knob":"compact","setting":{"value":"272000","source":"long"},
+   "compact":{"model":"gpt-example","current":272000,"window":400000,"best":220000,"cost":7000000,"low":6400000,
+     "curve":[{"value":200000,"cost":6500000,"compacts":30,"wait":900},{"value":220000,"cost":6400000,"compacts":25,"wait":750},{"value":272000,"cost":7000000,"compacts":18,"wait":540}],
+     "facts":{"calls":2100,"streams":30,"compacts":18,"growth":4200,"after":51000,"rework":30000,"took":30,"timed":12},"wait":540,"wait_best":750},
+   "async":{"percent":55,"value":220000,"window":400000,"setting":{"source":"async"}}}
+ ]}
+]}

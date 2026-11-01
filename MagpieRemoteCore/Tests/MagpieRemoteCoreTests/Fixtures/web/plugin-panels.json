@@ -1,0 +1,16 @@
+[
+ {
+  "spec": "github:example-owner/magpie-dash",
+  "name": "magpie-dash",
+  "key": "magpie-dash-spend",
+  "slot": "usage",
+  "title": "Spend",
+  "titles": {
+   "zh-CN": "花费"
+  },
+  "url": "/_magpie/plugin/00112233445566778899aabbccddeeff/panel.html",
+  "reads": [
+   "usage:summary"
+  ]
+ }
+]

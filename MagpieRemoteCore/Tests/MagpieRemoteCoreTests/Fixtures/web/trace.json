@@ -1,0 +1,141 @@
+{
+ "seq": 4,
+ "routes": [
+  {
+   "seq": 3,
+   "id": 41,
+   "time": "2026-11-01T09:59:58.5+08:00",
+   "agent": "codex",
+   "model": "group/smart",
+   "provider": "relay-one",
+   "group": {
+    "id": "smart",
+    "name": "Smart group",
+    "routing": "order",
+    "affinity": "",
+    "members": [
+     "relay-one/gpt-4.1",
+     "codex/gpt-5"
+    ]
+   },
+   "order": [
+    {
+     "id": "relay-one#k1",
+     "provider": "relay-one",
+     "name": "Relay One",
+     "who": "主 Key",
+     "kind": "key",
+     "model": "gpt-4.1",
+     "routing": "",
+     "used": 0
+    },
+    {
+     "id": "codex#someone",
+     "provider": "codex",
+     "name": "Codex",
+     "who": "someone@example.com",
+     "kind": "account",
+     "plan": "plus",
+     "model": "gpt-5",
+     "routing": "",
+     "known": true,
+     "used": 72.5,
+     "usedRenews": "2026-11-01T12:00:00.123456789+08:00",
+     "renews": [
+      "2026-11-01T12:00:00+08:00"
+     ]
+    },
+    {
+     "id": "deepseek#k1",
+     "provider": "deepseek",
+     "name": "DeepSeek",
+     "who": "sk-d…1111",
+     "kind": "key",
+     "model": "deepseek-chat",
+     "routing": "",
+     "used": 0,
+     "unlisted": true
+    }
+   ],
+   "tries": [
+    {
+     "id": "relay-one#k1",
+     "model": "gpt-4.1",
+     "start": "2026-11-01T09:59:58.6+08:00",
+     "done": true,
+     "status": 429,
+     "ms": 380,
+     "fail": "rate",
+     "rest": {
+      "why": "rate",
+      "status": 429,
+      "until": "2026-11-01T10:00:40+08:00",
+      "by": "retry-after",
+      "key": "relay-one#k1"
+     }
+    },
+    {
+     "id": "codex#someone",
+     "model": "gpt-5",
+     "start": "2026-11-01T09:59:59.0+08:00",
+     "done": true,
+     "status": 200,
+     "ms": 2100,
+     "ttft": 900
+    }
+   ],
+   "done": true,
+   "status": 200,
+   "ms": 2500,
+   "tokens": 1840,
+   "out": 320,
+   "sessionTitle": "修复登录页",
+   "cost": 0.0042,
+   "priced": true,
+   "unpriced": 0
+  },
+  {
+   "seq": 4,
+   "id": 42,
+   "time": "2026-11-01T10:00:00+08:00",
+   "agent": "claude",
+   "model": "relay-one/gpt-4.1",
+   "provider": "relay-one",
+   "order": [
+    {
+     "id": "relay-one#k1",
+     "provider": "relay-one",
+     "name": "Relay One",
+     "who": "主 Key",
+     "kind": "key",
+     "model": "gpt-4.1",
+     "routing": "",
+     "used": 0
+    }
+   ],
+   "tries": [
+    {
+     "id": "relay-one#k1",
+     "model": "gpt-4.1",
+     "start": "2026-11-01T10:00:00.1+08:00",
+     "done": false
+    }
+   ],
+   "done": false,
+   "cost": 0,
+   "priced": false,
+   "unpriced": 0
+  }
+ ],
+ "totals": {
+  "requests": 7,
+  "rerouted": 2,
+  "errors": 1
+ },
+ "ids": [
+  41,
+  42
+ ],
+ "mine": true,
+ "now": "2026-11-01T10:00:01.000000001+08:00"
+}

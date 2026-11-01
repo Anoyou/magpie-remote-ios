@@ -1,0 +1,4 @@
+{"days":30,"agents":[{"agent":"claude","calls":10,"advice":[
+ {"knob":"compact","model":"claude-example","setting":{"value":"180000","source":"env","locked":"CLAUDE_AUTOCOMPACT_PCT_OVERRIDE"},
+  "compact":{"current":180000,"window":200000,"best":120000,"cost":100,"low":80,"curve":[],"facts":{"calls":10,"streams":1}}}]},
+ {"agent":"codex","calls":0,"advice":[]}]}

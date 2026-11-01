@@ -9,6 +9,9 @@ protocol ManageServing: Sendable {
     func arrangeProviders(_ order: [String]) async throws -> WebProviders
     func groups() async throws -> WebGroups
     func group(_ action: GroupAction, _ body: WebJSON) async throws -> WebGroups
+    /// 路由页：各模型近 7 天的速度、网关的实时路由记录。
+    func modelSpeeds() async throws -> ModelSpeeds
+    func trace(after seq: Int64, wait: Bool) async throws -> TraceSnapshot
     func state() async throws -> WebState
     func setAgent(_ agent: String, field: String, value: String) async throws -> WebState
     func callerKeys() async throws -> WebCallerKeys
@@ -37,6 +40,8 @@ struct LiveManageService: ManageServing {
     func arrangeProviders(_ order: [String]) async throws -> WebProviders { try await web.arrangeProviders(order) }
     func groups() async throws -> WebGroups { try await web.groups() }
     func group(_ action: GroupAction, _ body: WebJSON) async throws -> WebGroups { try await web.group(action, body) }
+    func modelSpeeds() async throws -> ModelSpeeds { try await web.modelSpeeds() }
+    func trace(after seq: Int64, wait: Bool) async throws -> TraceSnapshot { try await web.trace(after: seq, wait: wait) }
     func state() async throws -> WebState { try await web.state() }
     func setAgent(_ agent: String, field: String, value: String) async throws -> WebState {
         try await web.setAgent(agent, field: field, value: value)
@@ -72,6 +77,9 @@ actor FixtureManageService: ManageServing {
     private var agentList: [WebJSON]
     private var keyList: [WebJSON]
     private var issued: [WebJSON] = []
+    private var fixturePools: [WebJSON] = RoutesFixture.pools
+    private var foundGroups = true
+    private let traceStart = Date()
     private var counter = 0
 
     init() {
@@ -91,10 +99,7 @@ actor FixtureManageService: ManageServing {
              "account": ["agent": "codex", "user": "someone@example.com"],
              "models": [model("gpt-5", "GPT-5", true)]]
         providerList = [provider1, provider2, provider3]
-        groupList = [
-            ["id": "smart", "name": "聪明组", "members": ["relay-example/gpt-4.1", "deepseek/deepseek-chat"], "routing": "order",
-             "ready": true, "ref": "group/smart"],
-        ]
+        groupList = RoutesFixture.groups
         func option(_ value: String, _ label: String, _ group: String) -> WebJSON {
             ["value": .string(value), "label": .string(label), "note": .string(group + " · via magpie"), "group": .string(group)]
         }
@@ -117,14 +122,7 @@ actor FixtureManageService: ManageServing {
     private func pause() async throws { try await Task.sleep(for: .milliseconds(80)) }
     private var providersJSON: WebProviders { WebProviders(json: ["providers": .array(providerList), "presets": [["id": "deepseek", "name": "DeepSeek"]]]) }
     private var groupsJSON: WebGroups {
-        var models: [WebJSON] = []
-        for provider in providerList {
-            for model in provider["models"]?.array ?? [] where model["on"]?.bool == true {
-                models.append(["id": .string("\(provider["id"]?.string ?? "")/\(model["id"]?.string ?? "")"),
-                               "name": model["name"] ?? "", "providerName": provider["name"] ?? ""])
-            }
-        }
-        return WebGroups(json: ["groups": .array(groupList), "models": .array(models)])
+        RoutesFixture.groupsJSON(groups: groupList, providers: providerList, pools: fixturePools, found: foundGroups)
     }
     private func keys(secret: String? = nil) -> WebCallerKeys {
         WebCallerKeys(json: ["keys": .array(keyList), "secret": .string(secret ?? "")])
@@ -169,6 +167,10 @@ actor FixtureManageService: ManageServing {
             }
         case .key, .models:
             break
+        case .route, .affinity, .sink:
+            if let index = fixturePools.firstIndex(where: { $0["provider"]?.string == id }) {
+                for field in ["routing", "affinity", "sink"] { if let value = body[field] { fixturePools[index][field] = value } }
+            }
         }
         return providersJSON
     }
@@ -188,25 +190,47 @@ actor FixtureManageService: ManageServing {
     func group(_ action: GroupAction, _ body: WebJSON) async throws -> WebGroups {
         try await pause()
         let id = body["id"]?.string ?? ""
+        let index = groupList.firstIndex { $0["id"]?.string == id }
         switch action {
         case .delete:
             groupList.removeAll { $0["id"]?.string == id }
         case .switch:
-            if let index = groupList.firstIndex(where: { $0["id"]?.string == id }) {
-                groupList[index]["disabled"] = .bool(body["on"]?.bool == false)
-            }
+            if let index { groupList[index]["disabled"] = .bool(body["on"]?.bool == false) }
         case .save:
             let from = body["from"]?.string ?? id
-            var group = body.removing(["from"])
-            group["ready"] = true
-            group["ref"] = .string("group/" + id)
-            if let index = groupList.firstIndex(where: { $0["id"]?.string == from }) {
-                groupList[index] = group
+            var group = body.removing(["from", "placed"])
+            if let placed = body["placed"] { group["members"] = placed }
+            if let old = groupList.first(where: { $0["id"]?.string == from }) { group["disabled"] = old["disabled"] }
+            if let at = groupList.firstIndex(where: { $0["id"]?.string == from }) {
+                groupList[at] = group
             } else {
                 groupList.append(group)
             }
+        case .pick:
+            if let index { groupList[index]["pick"] = body["pick"] }
+        case .arrange:
+            let order = body["order"]?.strings ?? []
+            groupList.sort { (order.firstIndex(of: $0["id"]?.string ?? "") ?? .max) < (order.firstIndex(of: $1["id"]?.string ?? "") ?? .max) }
+        case .found:
+            foundGroups = body["on"]?.bool ?? true
+        case .copy:
+            if let index {
+                var copy = groupList[index]
+                copy["id"] = .string(id + "-copy")
+                copy["name"] = body["name"] ?? .string(id + " 副本")
+                copy["auto"] = nil
+                groupList.insert(copy, at: index + 1)
+            }
         }
         return groupsJSON
+    }
+
+    func modelSpeeds() async throws -> ModelSpeeds { ModelSpeeds(json: RoutesFixture.speeds) }
+
+    func trace(after seq: Int64, wait: Bool) async throws -> TraceSnapshot {
+        // 一次挂起最多 1.5 秒，模拟网页的长轮询；示例请求按时间推进（见 RoutesFixture.trace）
+        if wait { try await Task.sleep(for: .milliseconds(700)) }
+        return TraceSnapshot(json: RoutesFixture.trace(elapsed: Date().timeIntervalSince(traceStart), now: Date()))
     }
 
     func state() async throws -> WebState { try await pause(); return WebState(json: ["agents": .array(agentList)]) }

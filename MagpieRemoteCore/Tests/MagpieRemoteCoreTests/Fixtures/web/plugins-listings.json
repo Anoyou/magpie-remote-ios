@@ -1,0 +1,43 @@
+{
+ "listings": [
+  {
+   "package": "@magpie-community/example-auth",
+   "name": "Example Cloud",
+   "providers": [
+    "example"
+   ],
+   "community": true,
+   "summary": {
+    "en": "Sign in to Example Cloud",
+    "zh": "登录示例云"
+   },
+   "npm": {
+    "version": "1.3.0",
+    "description": "npm text",
+    "weekly": 120
+   }
+  },
+  {
+   "package": "example-agent",
+   "name": "Example Agent",
+   "kind": "agent",
+   "summary": {
+    "en": "An agent"
+   },
+   "npm": {
+    "weekly": 0
+   }
+  },
+  {
+   "package": "example-tools",
+   "name": "",
+   "kind": "tools",
+   "npm": {
+    "description": "Tools from npm"
+   }
+  },
+  {
+   "name": "no package, skipped"
+  }
+ ]
+}

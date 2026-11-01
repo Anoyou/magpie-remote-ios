@@ -1,66 +1,74 @@
 import SwiftUI
 import MagpieRemoteCore
 
-/// 「主机」设置：添加 / 编辑 / 删除 / 切换主机。
+/// 「主机」设置（从右上角「主机」按钮弹出）：添加 / 编辑 / 删除 / 切换主机。
 struct HostSettingsView: View {
-    @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    @State private var editing: HostEditorTarget?
 
     var body: some View {
         NavigationStack {
-            List {
-                if model.hosts.hosts.isEmpty {
-                    Section {
-                        Text("还没有添加主机。主机就是运行 magpie 的那台 Mac。")
-                            .foregroundStyle(.secondary)
-                    }
-                } else {
-                    Section {
-                        ForEach(model.hosts.hosts) { host in
-                            HostRow(host: host, isActive: host.id == model.activeHost?.id) {
-                                model.activate(host.id)
-                            } edit: {
-                                editing = .existing(host)
-                            }
-                        }
-                        .onDelete { offsets in
-                            let ids = offsets.map { model.hosts.hosts[$0].id }
-                            for id in ids { model.delete(id) }
-                        }
-                    } header: {
-                        Text("我的主机")
-                    } footer: {
-                        Text("点一下切换当前主机；左滑可删除，删除时会一并清除这台主机保存在本机钥匙串里的密钥。")
+            HostListContent()
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("完成") { dismiss() }
+                            .accessibilityIdentifier("hosts.done")
                     }
                 }
+        }
+    }
+}
 
+/// 主机列表本身：既用在弹出的「主机」设置里，也可以放进底栏或从「更多」推入。
+struct HostListContent: View {
+    @Environment(AppModel.self) private var model
+    @State private var editing: HostEditorTarget?
+
+    var body: some View {
+        List {
+            if model.hosts.hosts.isEmpty {
                 Section {
-                    Button {
-                        editing = .new
-                    } label: {
-                        Label("添加主机", systemImage: "plus.circle.fill")
+                    Text("还没有添加主机。主机就是运行 magpie 的那台 Mac。")
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Section {
+                    ForEach(model.hosts.hosts) { host in
+                        HostRow(host: host, isActive: host.id == model.activeHost?.id) {
+                            model.activate(host.id)
+                        } edit: {
+                            editing = .existing(host)
+                        }
                     }
-                    .accessibilityIdentifier("hosts.add")
-                    NavigationLink {
-                        SetupGuideView(showsDone: false)
-                    } label: {
-                        Label("配置引导", systemImage: "list.number")
+                    .onDelete { offsets in
+                        let ids = offsets.map { model.hosts.hosts[$0].id }
+                        for id in ids { model.delete(id) }
                     }
-                    .accessibilityIdentifier("guide.open")
+                } header: {
+                    Text("我的主机")
+                } footer: {
+                    Text("点一下切换当前主机；左滑可删除，删除时会一并清除这台主机保存在本机钥匙串里的密钥。")
                 }
             }
-            .navigationTitle("主机")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") { dismiss() }
-                        .accessibilityIdentifier("hosts.done")
+
+            Section {
+                Button {
+                    editing = .new
+                } label: {
+                    Label("添加主机", systemImage: "plus.circle.fill")
                 }
+                .accessibilityIdentifier("hosts.add")
+                NavigationLink {
+                    SetupGuideView(showsDone: false)
+                } label: {
+                    Label("配置引导", systemImage: "list.number")
+                }
+                .accessibilityIdentifier("guide.open")
             }
-            .navigationDestination(item: $editing) { target in
-                HostEditorView(target: target)
-            }
+        }
+        .navigationTitle("主机")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $editing) { target in
+            HostEditorView(target: target)
         }
     }
 }

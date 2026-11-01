@@ -107,7 +107,25 @@
      "current",
      "latest?",
      "notes?",
-     "url?"
+     "url?",
+     "stuck?",
+     "stuckDir?",
+     "packaged?.manager",
+     "packaged?.command?",
+     "retry?",
+     "mirror?",
+     "network?",
+     "error?",
+     "done?",
+     "total?",
+     "size?",
+     "blocked?.version",
+     "blocked?.error",
+     "busy?.requests",
+     "busy?.tools",
+     "waiting?",
+     "gaveUp?",
+     "handover?"
     ]
    },
    "goTags": [
@@ -118,7 +136,425 @@
       "current",
       "latest",
       "notes",
-      "url"
+      "url",
+      "stuck",
+      "stuckDir",
+      "packaged",
+      "retry",
+      "mirror",
+      "network",
+      "error",
+      "done",
+      "blocked",
+      "total",
+      "size",
+      "busy",
+      "waiting",
+      "gaveUp",
+      "handover",
+      "manager",
+      "package",
+      "command"
+     ]
+    },
+    {
+     "file": "internal/update/blocked.go",
+     "tags": [
+      "version",
+      "error",
+      "policy"
+     ]
+    },
+    {
+     "file": "internal/gateway/busy.go",
+     "tags": [
+      "requests",
+      "tools"
+     ]
+    }
+   ],
+   "note": "?fresh=1 asks the feed again when stale; ?lang=zh for Chinese notes",
+   "contains": [
+    "r.URL.Query().Get(\"fresh\") == \"1\"",
+    "updates.jsonIn(askedLang(r))",
+    "\"checking\"",
+    "\"latest\"",
+    "\"found\"",
+    "\"downloading\"",
+    "\"ready\"",
+    "\"available\"",
+    "\"source\"",
+    "\"error\"",
+    "\"blocked\""
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/update/check",
+   "source": "internal/gui/update.go",
+   "anchor": "mux.HandleFunc(\"POST /api/update/check\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<updateJSON>"
+    ]
+   },
+   "contains": [
+    "updates.check()"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/update/notes",
+   "source": "internal/gui/update.go",
+   "anchor": "mux.HandleFunc(\"GET /api/update/notes\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "latest?",
+     "releases[].version",
+     "releases[].notes",
+     "releases[].url?",
+     "releases[].pending?",
+     "error?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/update.go",
+     "tags": [
+      "latest",
+      "releases",
+      "error"
+     ]
+    },
+    {
+     "file": "internal/update/notes.go",
+     "tags": [
+      "version",
+      "notes",
+      "url",
+      "pending"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/update/install",
+   "source": "internal/gui/update.go",
+   "anchor": "mux.HandleFunc(\"POST /api/update/install\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "when?"
+    ],
+    "response": [
+     "<updateJSON>",
+     "204 = restarting"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/update.go",
+     "tags": [
+      "view",
+      "when"
+     ]
+    }
+   ],
+   "note": "found/error+retry: starts the download; ready: 204 then the host restarts (busy: waits unless when=now); available: opens the release page on the Mac only, so the App never sends it",
+   "contains": [
+    "in.When == \"cancel\"",
+    "in.When != \"now\"",
+    "rw.WriteHeader(http.StatusNoContent)",
+    "j.State == \"error\" && j.Retry, j.State == \"found\"",
+    "j.State == \"available\" && j.URL != \"\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/tune",
+   "source": "internal/gui/tune.go",
+   "anchor": "mux.HandleFunc(\"GET /api/tune\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "days",
+     "agents[].agent",
+     "agents[].calls",
+     "agents[].advice[].knob",
+     "agents[].advice[].model?",
+     "agents[].advice[].setting.value?",
+     "agents[].advice[].setting.source?",
+     "agents[].advice[].setting.locked?",
+     "agents[].advice[].setting.ours?",
+     "agents[].advice[].compact?.current",
+     "agents[].advice[].compact?.window",
+     "agents[].advice[].compact?.best",
+     "agents[].advice[].compact?.cost",
+     "agents[].advice[].compact?.low",
+     "agents[].advice[].compact?.curve",
+     "agents[].advice[].compact?.facts",
+     "agents[].advice[].ttl?.current",
+     "agents[].advice[].ttl?.best",
+     "agents[].advice[].ttl?.cost",
+     "agents[].advice[].ttl?.low",
+     "agents[].advice[].own?.model",
+     "agents[].advice[].async?.percent"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/tune.go",
+     "tags": [
+      "knob",
+      "model",
+      "setting",
+      "compact",
+      "ttl",
+      "own",
+      "async",
+      "percent",
+      "value",
+      "window",
+      "held",
+      "days",
+      "agents",
+      "agent",
+      "calls",
+      "advice"
+     ]
+    },
+    {
+     "file": "internal/agent/tune.go",
+     "tags": [
+      "value",
+      "source",
+      "locked",
+      "ours"
+     ]
+    },
+    {
+     "file": "internal/tune/tune.go",
+     "tags": [
+      "model",
+      "current",
+      "window",
+      "best",
+      "cost",
+      "low",
+      "curve",
+      "facts",
+      "wait",
+      "wait_best",
+      "cheapest",
+      "wait_cheapest",
+      "short",
+      "hour",
+      "calls",
+      "streams",
+      "compacts",
+      "peak",
+      "after",
+      "growth",
+      "rework",
+      "long",
+      "quick",
+      "pause",
+      "away",
+      "sessions",
+      "took",
+      "timed"
+     ]
+    },
+    {
+     "file": "internal/agent/codex_async.go",
+     "tags": [
+      "kind",
+      "version"
+     ]
+    }
+   ],
+   "note": "?days=1..30 (else 7)",
+   "contains": [
+    "days <= 0 || days > 30",
+    "for _, name := range []string{\"claude\", \"codex\"}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/tune/apply",
+   "source": "internal/gui/tune.go",
+   "anchor": "mux.HandleFunc(\"POST /api/tune/apply\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "agent",
+     "knob",
+     "model",
+     "value"
+    ],
+    "response": [
+     "<agent.TuneSetting>"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/agent/tune.go",
+     "tags": [
+      "value",
+      "source",
+      "locked",
+      "ours"
+     ]
+    }
+   ],
+   "note": "untagged struct; knob compact|cache_ttl|subagent_cache_ttl|async_compact",
+   "contains": [
+    "Agent, Knob, Model, Value string"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/tune/undo",
+   "source": "internal/gui/tune.go",
+   "anchor": "mux.HandleFunc(\"POST /api/tune/undo\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "agent",
+     "knob",
+     "model"
+    ],
+    "response": [
+     "<agent.TuneSetting>"
+    ]
+   },
+   "contains": [
+    "agent.TuneUndo(\"\", in.Agent, in.Knob, in.Model)"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/privacy-model",
+   "source": "internal/gui/privacymodel.go",
+   "anchor": "mux.HandleFunc(\"GET /api/privacy-model\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "on",
+     "chosen?",
+     "model",
+     "supported",
+     "installed",
+     "size",
+     "downloading?",
+     "done?",
+     "total?",
+     "error?",
+     "running?",
+     "device?",
+     "via?",
+     "gpu?",
+     "gpuError?",
+     "failed?",
+     "minScore",
+     "defaultScore",
+     "models[].model",
+     "models[].supported",
+     "models[].installed",
+     "models[].size"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/privacymodel.go",
+     "tags": [
+      "on",
+      "chosen",
+      "minScore",
+      "defaultScore",
+      "models"
+     ]
+    },
+    {
+     "file": "internal/pii/pii.go",
+     "tags": [
+      "model",
+      "supported",
+      "installed",
+      "size",
+      "downloading",
+      "done",
+      "total",
+      "error",
+      "running",
+      "device",
+      "via",
+      "gpu",
+      "loadMs",
+      "gpuError",
+      "failed",
+      "loading",
+      "waiting"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/privacy-model",
+   "source": "internal/gui/privacymodel.go",
+   "anchor": "mux.HandleFunc(\"POST /api/privacy-model\"",
+   "actions": [
+    "pick",
+    "score",
+    "on",
+    "off",
+    "cancel",
+    "remove"
+   ],
+   "fields": {
+    "request": [
+     "do",
+     "model?",
+     "score?"
+    ],
+    "response": [
+     "<privacyModelJSON>"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/privacymodel.go",
+     "tags": [
+      "do",
+      "model",
+      "score"
+     ]
+    }
+   ],
+   "note": "model must be privacy-filter or astrlink-guard; score 0 = model default",
+   "contains": [
+    "in.Model != pii.PrivacyFilter && in.Model != pii.AstrLinkGuard",
+    "in.Score >= pii.Floor && in.Score < 1",
+    {
+     "file": "internal/pii/pii.go",
+     "contains": [
+      "PrivacyFilter = \"privacy-filter\"",
+      "AstrLinkGuard = \"astrlink-guard\"",
+      "const Floor = guard.Floor"
+     ]
+    },
+    {
+     "file": "internal/pii/guard/guard.go",
+     "contains": [
+      "const Floor = 0.5"
      ]
     }
    ]
@@ -397,10 +833,41 @@
      "moved?",
      "added?",
      "had?",
-     "removed?"
+     "removed?",
+     "plugins[].pid",
+     "plugins[].name",
+     "plugins[].spec",
+     "plugins[].options[]?.key",
+     "plugins[].options[]?.label",
+     "plugins[].options[]?.on"
     ]
    },
    "goTags": [
+    {
+     "file": "internal/gui/plugins.go",
+     "tags": [
+      "id",
+      "pid",
+      "name",
+      "icon",
+      "spec",
+      "methods",
+      "signedIn",
+      "models",
+      "options",
+      "on"
+     ]
+    },
+    {
+     "file": "internal/plugin/providers.go",
+     "tags": [
+      "key",
+      "label",
+      "description",
+      "default",
+      "confirm"
+     ]
+    },
     {
      "file": "internal/gui/providers.go",
      "tags": [
@@ -764,6 +1231,33 @@
      "groups[].memberInfo[].on",
      "groups[].picked?",
      "groups[].ref",
+     "groups[].sink?",
+     "groups[].firstToken?",
+     "groups[].patience?",
+     "groups[].off?",
+     "groups[].weights?",
+     "groups[].fast?",
+     "groups[].match?",
+     "groups[].matched?",
+     "groups[].unlists?",
+     "groups[].rules?",
+     "groups[].classifier?",
+     "groups[].patterns[].pattern",
+     "groups[].patterns[].models",
+     "groups[].memberInfo[].of?",
+     "groups[].memberInfo[].effort?",
+     "groups[].memberInfo[].group?",
+     "groups[].memberInfo[].providerOff?",
+     "groups[].memberInfo[].canFast?",
+     "groups[].memberInfo[].context?",
+     "groups[].memberInfo[].images?",
+     "groups[].memberInfo[].imagesUnknown?",
+     "pools[].provider",
+     "pools[].name",
+     "pools[].kind",
+     "pools[].who",
+     "pools[].routing",
+     "pools[].affinity",
      "models[].id",
      "models[].name",
      "models[].provider",
@@ -806,7 +1300,19 @@
       "order",
       "ids",
       "kind",
-      "text"
+      "text",
+      "who",
+      "sink",
+      "protocol",
+      "group",
+      "providerOff",
+      "of",
+      "effort",
+      "canFast",
+      "context",
+      "images",
+      "imagesUnknown",
+      "classifierFailed"
      ]
     },
     {
@@ -821,7 +1327,25 @@
       "disabled",
       "hidden",
       "off",
-      "weights"
+      "weights",
+      "sink",
+      "firstToken",
+      "patience",
+      "fast",
+      "match",
+      "matched",
+      "placed",
+      "unlists",
+      "rules",
+      "classifier",
+      "auto"
+     ]
+    },
+    {
+     "file": "internal/provider/groupmatch.go",
+     "tags": [
+      "pattern",
+      "models"
      ]
     }
    ]
@@ -850,8 +1374,16 @@
      "id",
      "name",
      "members",
+     "placed?",
      "routing?",
      "affinity?",
+     "sink?",
+     "off?",
+     "weights?",
+     "fast?",
+     "firstToken?",
+     "patience?",
+     "unlists?",
      "pick?",
      "from?",
      "on?",
@@ -865,6 +1397,136 @@
      "<groupsJSON>"
     ]
    }
+  },
+  {
+   "method": "GET",
+   "path": "/api/model-speeds",
+   "source": "internal/gui/speeds.go",
+   "anchor": "mux.HandleFunc(\"GET /api/model-speeds\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": []
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/speeds.go",
+     "tags": [
+      "ttft",
+      "tps",
+      "n"
+     ]
+    }
+   ],
+   "note": "map provider/model \u2192 {ttft ms?, tps?, n}; the Routing page shows each group member's speed"
+  },
+  {
+   "method": "GET",
+   "path": "/api/gateway/trace",
+   "source": "internal/gui/trace.go",
+   "anchor": "mux.HandleFunc(\"GET /api/gateway/trace\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "seq",
+     "routes[].id",
+     "routes[].seq",
+     "routes[].agent",
+     "routes[].model",
+     "routes[].provider",
+     "routes[].order[].id",
+     "routes[].order[].provider",
+     "routes[].order[].name",
+     "routes[].order[].kind",
+     "routes[].order[].model",
+     "routes[].order[].routing",
+     "routes[].order[].used",
+     "routes[].tries[].id",
+     "routes[].tries[].start",
+     "routes[].tries[].done",
+     "routes[].done",
+     "routes[].cost",
+     "routes[].priced",
+     "totals.requests",
+     "totals.rerouted",
+     "totals.errors",
+     "mine",
+     "now"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gateway/trace.go",
+     "tags": [
+      "seq",
+      "id",
+      "time",
+      "agent",
+      "model",
+      "provider",
+      "group",
+      "order",
+      "tries",
+      "done",
+      "status",
+      "error",
+      "ms",
+      "ttft",
+      "tokens",
+      "out",
+      "kind",
+      "name",
+      "routing",
+      "members",
+      "who",
+      "plan",
+      "fixed",
+      "fast",
+      "fallback",
+      "known",
+      "used",
+      "balance",
+      "unit",
+      "free",
+      "rest",
+      "unlisted",
+      "window",
+      "credits",
+      "usedRenews",
+      "renews",
+      "start",
+      "fail",
+      "again",
+      "routes",
+      "totals",
+      "ids",
+      "requests",
+      "rerouted",
+      "errors"
+     ]
+    },
+    {
+     "file": "internal/gui/trace.go",
+     "tags": [
+      "mine",
+      "now",
+      "routes",
+      "sessionTitle",
+      "cost",
+      "priced"
+     ]
+    },
+    {
+     "file": "internal/gateway/routing.go",
+     "tags": [
+      "why",
+      "status",
+      "until"
+     ]
+    }
+   ],
+   "note": "query ?after=<seq>[&wait=1] (long poll \u226425 s); the live Routing stage. Gateway /v1/magpie/trace is loopback-only"
   },
   {
    "method": "GET",
@@ -1165,6 +1827,752 @@
     "response": []
    },
    "note": "duplicates gateway /v1/magpie/*; reference only"
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions",
+   "source": "internal/gui/sessions.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "sessions[].agent",
+     "sessions[].id",
+     "sessions[].cwd",
+     "sessions[].title",
+     "sessions[].nickname?",
+     "sessions[].start",
+     "sessions[].last",
+     "sessions[].models",
+     "sessions[].input",
+     "sessions[].output",
+     "sessions[].cache_read",
+     "sessions[].cache_write",
+     "sessions[].cost",
+     "sessions[].unpriced",
+     "sessions[].path",
+     "sessions[].transcript?",
+     "sessions[].subagents?",
+     "sessions[].gateway?",
+     "sessions[].model_effort?",
+     "sessions[].via?",
+     "sessions[].name",
+     "sessions[].icon",
+     "terminal",
+     "dirs"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/sessions/sessions.go",
+     "tags": [
+      "read_only",
+      "gateway",
+      "agent",
+      "id",
+      "cwd",
+      "title",
+      "nickname",
+      "start",
+      "last",
+      "role",
+      "model_effort",
+      "models",
+      "cost",
+      "unpriced",
+      "resume",
+      "path",
+      "transcript",
+      "subagents",
+      "input",
+      "output",
+      "cache_read",
+      "cache_write",
+      "model",
+      "effort",
+      "priced"
+     ]
+    },
+    {
+     "file": "internal/sessions/subagents.go",
+     "tags": [
+      "id",
+      "title",
+      "kind",
+      "last"
+     ]
+    },
+    {
+     "file": "internal/usage/usage.go",
+     "tags": [
+      "provider",
+      "model",
+      "calls",
+      "tokens"
+     ]
+    }
+   ],
+   "note": "every agent's sessions merged, newest first; reference only (the app lists per agent via /api/sessions/manage)"
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions/manage",
+   "source": "internal/gui/sessions_manage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions/manage\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "agents[].agent",
+     "agents[].count",
+     "agents[].deletable",
+     "agents[].name",
+     "agents[].icon",
+     "agent",
+     "sessions[].agent",
+     "sessions[].id",
+     "sessions[].cwd",
+     "sessions[].title",
+     "sessions[].nickname?",
+     "sessions[].start",
+     "sessions[].last",
+     "sessions[].models",
+     "sessions[].input",
+     "sessions[].output",
+     "sessions[].cache_read",
+     "sessions[].cache_write",
+     "sessions[].cost",
+     "sessions[].unpriced",
+     "sessions[].path",
+     "sessions[].transcript?",
+     "sessions[].subagents?",
+     "sessions[].gateway?",
+     "sessions[].model_effort?",
+     "sessions[].via?",
+     "sessions[].size",
+     "sessions[].messages",
+     "sessions[].files",
+     "sessions[].deletable",
+     "sessions[].pending?",
+     "trash",
+     "trashDir",
+     "recording",
+     "recorded",
+     "reads.asked",
+     "reads.all",
+     "reads.found[].agent",
+     "reads.found[].name",
+     "reads.found[].on"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/sessions/sessions.go",
+     "tags": [
+      "read_only",
+      "gateway",
+      "agent",
+      "id",
+      "cwd",
+      "title",
+      "nickname",
+      "start",
+      "last",
+      "role",
+      "model_effort",
+      "models",
+      "cost",
+      "unpriced",
+      "resume",
+      "path",
+      "transcript",
+      "subagents",
+      "input",
+      "output",
+      "cache_read",
+      "cache_write",
+      "model",
+      "effort",
+      "priced"
+     ]
+    },
+    {
+     "file": "internal/sessions/subagents.go",
+     "tags": [
+      "id",
+      "title",
+      "kind",
+      "last"
+     ]
+    },
+    {
+     "file": "internal/usage/usage.go",
+     "tags": [
+      "provider",
+      "model",
+      "calls",
+      "tokens"
+     ]
+    },
+    {
+     "file": "internal/gui/sessions_manage.go",
+     "tags": [
+      "agents",
+      "agent",
+      "sessions",
+      "terminal",
+      "trash",
+      "trashDir",
+      "home",
+      "recording",
+      "recorded",
+      "reads"
+     ]
+    },
+    {
+     "file": "internal/sessions/manage.go",
+     "tags": [
+      "agent",
+      "count",
+      "deletable",
+      "size",
+      "messages",
+      "files",
+      "pending",
+      "key",
+      "deleted"
+     ]
+    },
+    {
+     "file": "internal/gui/sessions_reads.go",
+     "tags": [
+      "asked",
+      "all",
+      "found",
+      "agent",
+      "name",
+      "on"
+     ]
+    }
+   ],
+   "note": "?agent= picks the agent listed (else the one with the most sessions); fresh installs read no agent until POST /api/sessions/reads"
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions/transcript",
+   "source": "internal/gui/sessions.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions/transcript\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?agent",
+     "?id",
+     "?sub"
+    ],
+    "response": [
+     "parts[].role",
+     "parts[].kind",
+     "parts[].text",
+     "parts[].name?",
+     "parts[].cut?",
+     "parts[].model?",
+     "cut?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/sessions/transcript.go",
+     "tags": [
+      "parts",
+      "cut"
+     ]
+    },
+    {
+     "file": "internal/sessions/content.go",
+     "tags": [
+      "role",
+      "kind",
+      "name",
+      "text",
+      "cut",
+      "model"
+     ]
+    }
+   ],
+   "note": "400 {error} for an unknown session or an agent whose conversations can't be read"
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions/search",
+   "source": "internal/gui/sessions_manage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions/search\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?agent",
+     "?q (>=2 runes)"
+    ],
+    "response": [
+     "hits[].id",
+     "hits[].role",
+     "hits[].kind",
+     "hits[].before",
+     "hits[].match",
+     "hits[].after",
+     "searched",
+     "total",
+     "cut?",
+     "unread?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/sessions_manage.go",
+     "tags": [
+      "hits",
+      "searched",
+      "total",
+      "cut",
+      "unread",
+      "id"
+     ]
+    },
+    {
+     "file": "internal/sessions/search.go",
+     "tags": [
+      "role",
+      "kind",
+      "before",
+      "match",
+      "after"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions/markdown",
+   "source": "internal/gui/sessions.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions/markdown\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?agent",
+     "?id"
+    ],
+    "response": [
+     "<text/markdown body; Content-Disposition attachment filename>"
+    ]
+   },
+   "note": "the app shares this file through the iOS share sheet"
+  },
+  {
+   "method": "POST",
+   "path": "/api/sessions/export",
+   "source": "internal/gui/sessions.go",
+   "anchor": "mux.HandleFunc(\"POST /api/sessions/export\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?agent",
+     "?id"
+    ],
+    "response": [
+     "path"
+    ]
+   },
+   "note": "saves the same Markdown into the host's Downloads folder; untagged map {path}"
+  },
+  {
+   "method": "POST",
+   "path": "/api/sessions/delete",
+   "source": "internal/gui/sessions_manage.go",
+   "anchor": "mux.HandleFunc(\"POST /api/sessions/delete\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "agent",
+     "ids"
+    ],
+    "response": [
+     "deleted",
+     "refused[].id",
+     "refused[].error",
+     "refused[].active"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/sessions_manage.go",
+     "tags": [
+      "agent",
+      "ids",
+      "deleted",
+      "refused",
+      "id",
+      "error",
+      "active"
+     ]
+    }
+   ],
+   "note": "moves into magpie's trash; a session written to in the last minute is refused with active=true"
+  },
+  {
+   "method": "POST",
+   "path": "/api/sessions/reads",
+   "source": "internal/gui/sessions_reads.go",
+   "anchor": "mux.HandleFunc(\"POST /api/sessions/reads\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "all?",
+     "agents"
+    ],
+    "response": [
+     "asked",
+     "all",
+     "found[].agent",
+     "found[].name",
+     "found[].on"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/sessions_reads.go",
+     "tags": [
+      "all",
+      "agents",
+      "asked",
+      "found",
+      "on"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "plugins[].spec",
+     "plugins[].off?",
+     "plugins[].options?",
+     "plugins[].error?",
+     "plugins[].providers",
+     "plugins[].version?",
+     "plugins[].latest?",
+     "plugins[].icon?",
+     "plugins[].package?",
+     "plugins[].ownName?",
+     "plugins[].commit?",
+     "plugins[].head?",
+     "plugins[].optionsExample?",
+     "plugins[].isMiddleware?",
+     "plugins[].isGateway?",
+     "plugins[].isAgent?",
+     "plugins[].page?.title?",
+     "plugins[].page?.reads",
+     "plugins[].panels[]?.slot",
+     "plugins[].tools[]?.name",
+     "bun",
+     "bunVersion",
+     "error?",
+     "mirror"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/plugins.go",
+     "tags": [
+      "plugins",
+      "bun",
+      "bunVersion",
+      "error",
+      "mirror",
+      "providers",
+      "version",
+      "latest",
+      "icon",
+      "package",
+      "ownName",
+      "commit",
+      "head",
+      "optionsExample",
+      "isMiddleware",
+      "isGateway",
+      "isAgent",
+      "page",
+      "panels",
+      "tools",
+      "title",
+      "reads",
+      "slot",
+      "name",
+      "listings",
+      "npm"
+     ]
+    },
+    {
+     "file": "internal/plugin/store.go",
+     "tags": [
+      "spec",
+      "off",
+      "options"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/plugins/{op}",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"POST /api/plugins/{op}\"",
+   "actions": [
+    "add",
+    "remove",
+    "update",
+    "upgrade",
+    "off",
+    "options",
+    "prefer"
+   ],
+   "fields": {
+    "request": [
+     "spec",
+     "off?",
+     "options?",
+     "provider?"
+    ],
+    "response": [
+     "<pluginsJSON>"
+    ]
+   },
+   "note": "untagged struct{ Spec string; Off bool; Options map[string]any; Provider string }; options replaces the whole map; add/update/upgrade may take minutes (Bun download, npm install)"
+  },
+  {
+   "method": "POST",
+   "path": "/api/plugins/check",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"POST /api/plugins/check\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "at",
+     "plugins[].spec",
+     "plugins[].package",
+     "plugins[].version",
+     "plugins[].status",
+     "plugins[].latest?",
+     "plugins[].why?",
+     "plugins[].error?",
+     "state"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/plugin/updates.go",
+     "tags": [
+      "at",
+      "plugins",
+      "spec",
+      "package",
+      "version",
+      "latest",
+      "status",
+      "commit",
+      "head",
+      "why",
+      "error",
+      "limited",
+      "auto"
+     ]
+    }
+   ],
+   "note": "asks npm now; installs nothing"
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/builtin",
+   "source": "internal/gui/builtins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/builtin\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<[]builtinJSON>"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/builtins.go",
+     "tags": [
+      "id",
+      "name",
+      "sub",
+      "on",
+      "chosen",
+      "source",
+      "state",
+      "why",
+      "inUse",
+      "use",
+      "parts",
+      "schema",
+      "config",
+      "broken"
+     ]
+    },
+    {
+     "file": "internal/pluginrt/schema.go",
+     "tags": [
+      "type",
+      "properties",
+      "x-order",
+      "title",
+      "description",
+      "enum",
+      "minimum",
+      "maximum",
+      "default"
+     ]
+    }
+   ],
+   "note": "a JSON array; each: id, name (English), sub, on, chosen, state (off|pending|active|failed|disposed), inUse, schema?, config?"
+  },
+  {
+   "method": "POST",
+   "path": "/api/plugins/builtin",
+   "source": "internal/gui/builtins.go",
+   "anchor": "mux.HandleFunc(\"POST /api/plugins/builtin\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "id",
+     "on?",
+     "config?"
+    ],
+    "response": [
+     "<[]builtinJSON>"
+    ]
+   },
+   "note": "exactly one of on / config; config is merged after schema validation; one in use is refused off"
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/listings",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/listings\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "listings[].package",
+     "listings[].name",
+     "listings[].kind?",
+     "listings[].summary?",
+     "listings[].npm?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/plugin/market.go",
+     "tags": [
+      "package",
+      "name",
+      "icon",
+      "providers",
+      "community",
+      "replaces",
+      "kind",
+      "summary",
+      "version",
+      "description",
+      "weekly"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/agents",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/agents\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<[]string>"
+    ]
+   },
+   "note": "names of agent plugins in the market that are not installed"
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugin-pages",
+   "source": "internal/gui/pluginpage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugin-pages\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<[]pluginPage>"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/pluginpage.go",
+     "tags": [
+      "spec",
+      "name",
+      "key",
+      "title",
+      "titles",
+      "url",
+      "icon",
+      "replaces",
+      "reads",
+      "slot"
+     ]
+    }
+   ],
+   "note": "a JSON array; open a page in the web shell as /?view=<key> (the page file itself expects the window's bridge)"
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugin-panels",
+   "source": "internal/gui/pluginpage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugin-panels\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<[]pluginPanel>"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/api/settings/plugin-option",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/settings/plugin-option\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "provider",
+     "key",
+     "on"
+    ],
+    "response": [
+     "<settingsJSON>"
+    ]
+   },
+   "note": "untagged struct{ Provider, Key string; On bool }; provider = the plugin's own provider id (pid)"
   }
  ]
 }

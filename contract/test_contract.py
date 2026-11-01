@@ -414,7 +414,12 @@ WEB_GETS = [("web-settings", "/api/settings", "/api/settings"), ("web-state", "/
             ("web-agent-models-codex", "/api/agent-models/codex", "/api/agent-models/{id}"),
             ("web-providers", "/api/providers", "/api/providers"), ("web-groups", "/api/groups", "/api/groups"),
             ("web-caller-keys", "/api/caller-keys", "/api/caller-keys"),
-            ("web-caller-keys-models", "/api/caller-keys/models", "/api/caller-keys/models")]
+            ("web-caller-keys-models", "/api/caller-keys/models", "/api/caller-keys/models"),
+            # 主机工具：更新状态（不带 fresh，不访问发布源）、自动调优、本地脱敏模型
+            ("web-update", "/api/update?lang=zh", "/api/update"), ("web-tune", "/api/tune?days=7", "/api/tune"),
+            ("web-privacy-model", "/api/privacy-model", "/api/privacy-model"),
+            ("web-model-speeds", "/api/model-speeds", "/api/model-speeds"),
+            ("web-gateway-trace", "/api/gateway/trace?after=0", "/api/gateway/trace")]
 
 
 def t_web(errs):
@@ -430,6 +435,24 @@ def t_web(errs):
         if path == "/api/state":
             ids = [a.get("id") for a in (r.json or {}).get("agents") or []]
             expect("codex" in ids and "claude" in ids, f"web /api/state: 应检测到 codex 与 claude，实际 {ids}", errs)
+        if route == "/api/update":
+            states = ["", "checking", "latest", "found", "downloading", "ready", "available", "source", "error", "blocked"]
+            expect((r.json or {}).get("state") in states, f"web /api/update: 未知 state {(r.json or {}).get('state')!r}", errs)
+        if route == "/api/tune":
+            expect((r.json or {}).get("days") == 7, f"web /api/tune?days=7: days 应为 7，实际 {(r.json or {}).get('days')}", errs)
+        if route == "/api/privacy-model":
+            ids = [m.get("model") for m in (r.json or {}).get("models") or []]
+            expect(set(ids) <= {"privacy-filter", "astrlink-guard"} and ids, f"web /api/privacy-model: 模型 id 应为 privacy-filter / astrlink-guard，实际 {ids}", errs)
+        if path == "/api/model-speeds":
+            expect(isinstance(r.json, dict), "web /api/model-speeds: 应为对象（provider/model → 速度）", errs)
+            for ref, sp in (r.json or {}).items() if isinstance(r.json, dict) else []:
+                expect(isinstance(sp, dict) and isinstance(sp.get("n"), int), f"web /api/model-speeds: {ref} 缺少整数 n", errs)
+        if path.startswith("/api/gateway/trace"):
+            d = r.json or {}
+            expect(isinstance(d.get("seq"), int) and isinstance(d.get("routes"), list), "web /api/gateway/trace: 应有整数 seq 与 routes 列表", errs)
+            expect(isinstance(d.get("mine"), bool), "web /api/gateway/trace: 应有布尔 mine", errs)
+            if d.get("mine"):
+                expect(len(d.get("routes") or []) > 0, "web /api/gateway/trace: 前面发过 chat，trace 里应有请求", errs)
         if path == "/api/caller-keys":
             names = [k.get("name") for k in (r.json or {}).get("keys") or []]
             expect("Magpie" in names, f"web /api/caller-keys: 开启共享后应有名为 Magpie 的 lan 密钥，实际 {names}", errs)
@@ -441,6 +464,219 @@ def t_web(errs):
     status_is(r, 401, "text/plain", errs, "web 错误 cookie")
     r = call("err-web-unknown-agent", "GET", WEB + "/api/agent-models/nosuchagent", remote=False, cookie=COOKIE)
     expect(r.status == 400, f"web 未知 agent 应得 400，实际 {r.status}", errs)
+
+
+# Agent 会话记录：在隔离的 HOME 里放两个 Claude Code 会话文件（形状同 ~/.claude/projects/<目录>/<id>.jsonl）
+SESSION_IDS = ("aaaaaaaa-1111-4222-8333-000000000001", "aaaaaaaa-1111-4222-8333-000000000002")
+
+
+def _seed_claude_sessions() -> None:
+    home = os.path.join(ENV.get("MAGPIE_FIXTURE_DIR") or "/tmp/magpie-fixture", "home")
+    folder = os.path.join(home, ".claude", "projects", "-Users-example-demo")
+    os.makedirs(folder, exist_ok=True)
+    old = time.time() - 3 * 3600  # 最近一分钟写过的会话 magpie 拒绝删除
+    for n, sid in enumerate(SESSION_IDS):
+        lines = [
+            {"type": "user", "message": {"role": "user", "content": f"Contract demo {n + 1}: fix the login button"},
+             "uuid": f"u{n}", "parentUuid": None, "timestamp": f"2026-10-30T10:0{n}:00.000Z", "cwd": "/Users/example/demo", "sessionId": sid},
+            {"type": "assistant", "message": {"model": "claude-sonnet-4-5", "id": f"msg_{n}", "type": "message", "role": "assistant",
+             "content": [{"type": "text", "text": "Done: the button now uses the accent color."}],
+             "usage": {"input_tokens": 120, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "output_tokens": 30}},
+             "uuid": f"a{n}", "parentUuid": f"u{n}", "timestamp": f"2026-10-30T10:0{n}:05.000Z", "cwd": "/Users/example/demo", "sessionId": sid},
+        ]
+        path = os.path.join(folder, sid + ".jsonl")
+        with open(path, "w", encoding="utf-8") as f:
+            # 紧凑写法：magpie 按字节找 "type":"user"（不带空格），和 Claude Code 自己写的一样
+            f.write("\n".join(json.dumps(l, ensure_ascii=False, separators=(",", ":")) for l in lines) + "\n")
+        os.utime(path, (old, old))
+
+
+def t_sessions(errs):
+    """web Agent 会话记录：列表、对话、搜索、Markdown、导出、删除"""
+    _seed_claude_sessions()
+    q = lambda sid: f"agent=claude&id={sid}"
+    r = call("web-sessions-reads", "POST", WEB + "/api/sessions/reads", remote=False, cookie=COOKIE, body={"all": True})
+    status_is(r, 200, "application/json", errs, "web POST /api/sessions/reads")
+    errs += check_web_fields(("POST", "/api/sessions/reads"), r.json or {}, "web POST /api/sessions/reads")
+    expect((r.json or {}).get("asked") is True, "web /api/sessions/reads: 选过之后 asked 应为 true", errs)
+
+    ids: list = []
+    for _ in range(30):  # 第一次读会话文件可能要一会儿
+        r = call("web-sessions-manage", "GET", WEB + "/api/sessions/manage?agent=claude", remote=False, cookie=COOKIE)
+        ids = [s.get("id") for s in (r.json or {}).get("sessions") or []]
+        pending = any(s.get("pending") for s in (r.json or {}).get("sessions") or [])
+        if all(i in ids for i in SESSION_IDS) and not pending:
+            break
+        time.sleep(0.5)
+    status_is(r, 200, "application/json", errs, "web GET /api/sessions/manage")
+    errs += check_web_fields(("GET", "/api/sessions/manage"), r.json or {}, "web GET /api/sessions/manage")
+    expect(all(i in ids for i in SESSION_IDS), f"web /api/sessions/manage: 应列出放进去的两个 Claude Code 会话，实际 {ids}", errs)
+    expect((r.json or {}).get("agent") == "claude", f"web /api/sessions/manage: agent 应为 claude，实际 {(r.json or {}).get('agent')!r}", errs)
+    claude = next((a for a in (r.json or {}).get("agents") or [] if a.get("agent") == "claude"), {})
+    expect(claude.get("deletable") is True and (claude.get("count") or 0) >= 2, f"web /api/sessions/manage: claude 应可删除且至少 2 个会话，实际 {claude}", errs)
+    for s in (r.json or {}).get("sessions") or []:
+        for k in ("start", "last"):
+            v = s.get(k)
+            if isinstance(v, str) and not RFC3339.match(v):
+                errs.append(f"web /api/sessions/manage: sessions[].{k} 不是 RFC3339：{v!r}")
+
+    r = call("web-sessions", "GET", WEB + "/api/sessions", remote=False, cookie=COOKIE)
+    status_is(r, 200, "application/json", errs, "web GET /api/sessions")
+    errs += check_web_fields(("GET", "/api/sessions"), r.json or {}, "web GET /api/sessions")
+
+    r = call("web-sessions-transcript", "GET", WEB + "/api/sessions/transcript?" + q(SESSION_IDS[0]), remote=False, cookie=COOKIE)
+    status_is(r, 200, "application/json", errs, "web GET /api/sessions/transcript")
+    errs += check_web_fields(("GET", "/api/sessions/transcript"), r.json or {}, "web GET /api/sessions/transcript")
+    texts = [p.get("text", "") for p in (r.json or {}).get("parts") or []]
+    expect(any("Contract demo 1" in t for t in texts), f"web /api/sessions/transcript: 应含用户的第一句话，实际 {texts[:3]}", errs)
+    r = call("err-web-sessions-transcript-unknown", "GET", WEB + "/api/sessions/transcript?agent=claude&id=nosuchsession", remote=False, cookie=COOKIE)
+    status_is(r, 400, "application/json", errs, "web GET /api/sessions/transcript 未知会话")
+    expect(bool((r.json or {}).get("error")), "web /api/sessions/transcript 未知会话: 应有 error", errs)
+
+    r = call("web-sessions-search", "GET", WEB + "/api/sessions/search?agent=claude&q=login%20button", remote=False, cookie=COOKIE)
+    status_is(r, 200, "application/json", errs, "web GET /api/sessions/search")
+    errs += check_web_fields(("GET", "/api/sessions/search"), r.json or {}, "web GET /api/sessions/search")
+    hits = [h.get("id") for h in (r.json or {}).get("hits") or []]
+    expect(SESSION_IDS[0] in hits, f"web /api/sessions/search: 应命中 {SESSION_IDS[0]}，实际 {hits}", errs)
+
+    r = call("web-sessions-markdown", "GET", WEB + "/api/sessions/markdown?" + q(SESSION_IDS[0]), remote=False, cookie=COOKIE)
+    status_is(r, 200, "text/markdown", errs, "web GET /api/sessions/markdown")
+    expect("filename=" in (r.headers.get("Content-Disposition") or ""), f"web /api/sessions/markdown: 应有 Content-Disposition 文件名，实际 {r.headers.get('Content-Disposition')!r}", errs)
+    expect("Contract demo 1" in r.text, "web /api/sessions/markdown: 正文应含对话", errs)
+
+    r = call("web-sessions-export", "POST", WEB + "/api/sessions/export?" + q(SESSION_IDS[0]), remote=False, cookie=COOKIE)
+    status_is(r, 200, "application/json", errs, "web POST /api/sessions/export")
+    expect(str((r.json or {}).get("path", "")).endswith(".md"), f"web /api/sessions/export: path 应为 .md 文件，实际 {(r.json or {}).get('path')!r}", errs)
+
+    r = call("web-sessions-delete", "POST", WEB + "/api/sessions/delete", remote=False, cookie=COOKIE, body={"agent": "claude", "ids": [SESSION_IDS[1]]})
+    status_is(r, 200, "application/json", errs, "web POST /api/sessions/delete")
+    errs += check_web_fields(("POST", "/api/sessions/delete"), r.json or {}, "web POST /api/sessions/delete")
+    expect(SESSION_IDS[1] in ((r.json or {}).get("deleted") or []), f"web /api/sessions/delete: 应删除 {SESSION_IDS[1]}，实际 {r.json}", errs)
+    r = call("web-sessions-delete-unknown", "POST", WEB + "/api/sessions/delete", remote=False, cookie=COOKIE, body={"agent": "claude", "ids": ["nosuchsession"]})
+    status_is(r, 200, "application/json", errs, "web POST /api/sessions/delete 未知会话")
+    expect(len((r.json or {}).get("refused") or []) == 1, f"web /api/sessions/delete 未知会话: 应在 refused 里，实际 {r.json}", errs)
+    r = call("web-sessions-manage-after-delete", "GET", WEB + "/api/sessions/manage?agent=claude", remote=False, cookie=COOKIE)
+    ids = [s.get("id") for s in (r.json or {}).get("sessions") or []]
+    expect(SESSION_IDS[1] not in ids and SESSION_IDS[0] in ids, f"web /api/sessions/manage 删除后: 应只剩 {SESSION_IDS[0]}，实际 {ids}", errs)
+    expect(any(t.get("id") == SESSION_IDS[1] for t in (r.json or {}).get("trash") or []), "web /api/sessions/manage 删除后: 回收站里应有删掉的会话", errs)
+
+
+def t_plugins(errs):
+    """「管理 › 插件」依赖的 web 接口：列表、内置插件开关与设置、检查更新、页面 / 面板、市场、插件供应商开关。不安装任何插件。"""
+    def web(name, method, path, body=None):
+        return call(name, method, WEB + path, remote=False, cookie=COOKIE, body=body)
+
+    r = web("web-plugins", "GET", "/api/plugins")
+    status_is(r, 200, "application/json", errs, "web GET /api/plugins")
+    errs += check_web_fields(("GET", "/api/plugins"), r.json or {}, "web GET /api/plugins")
+    expect(isinstance((r.json or {}).get("plugins"), list), "web /api/plugins: plugins 应为数组", errs)
+    expect(isinstance((r.json or {}).get("bun"), bool), "web /api/plugins: bun 应为布尔", errs)
+
+    r = web("web-plugins-builtin", "GET", "/api/plugins/builtin")
+    status_is(r, 200, "application/json", errs, "web GET /api/plugins/builtin")
+    builtins = r.json if isinstance(r.json, list) else []
+    expect(bool(builtins), f"web /api/plugins/builtin: 应为非空数组，实际 {r.text[:120]}", errs)
+    for b in builtins:
+        for k, typ in (("id", str), ("name", str), ("on", bool), ("chosen", bool), ("state", str), ("inUse", int)):
+            expect(isinstance(b.get(k), typ), f"web /api/plugins/builtin: {b.get('id')} 的 {k} 应为 {typ.__name__}", errs)
+        if b.get("schema") is not None:
+            expect(isinstance(b["schema"].get("properties"), dict), f"web /api/plugins/builtin: {b.get('id')} 的 schema.properties 应为对象", errs)
+    expect("usage" in [b.get("id") for b in builtins], "web /api/plugins/builtin: 应有内置插件 usage", errs)
+
+    # 开关一个没在使用的内置插件，再恢复原状
+    # 只动只影响窗口的插件（会话、资源库、预热与签到），不碰网关路径上的
+    free = next((b for b in builtins if b.get("id") in ("sessions", "library", "warmups") and not b.get("inUse") and not b.get("broken")), None)
+    if free:
+        was = bool(free.get("chosen"))
+        r = web("web-plugins-builtin-switch", "POST", "/api/plugins/builtin", {"id": free["id"], "on": not was})
+        status_is(r, 200, "application/json", errs, f"web POST /api/plugins/builtin 切换 {free['id']}")
+        now = next((b for b in (r.json or []) if isinstance(b, dict) and b.get("id") == free["id"]), {})
+        expect(now.get("chosen") == (not was), f"web /api/plugins/builtin: {free['id']} 的 chosen 应变为 {not was}", errs)
+        r = web("web-plugins-builtin-restore", "POST", "/api/plugins/builtin", {"id": free["id"], "on": was})
+        status_is(r, 200, "application/json", errs, f"web POST /api/plugins/builtin 恢复 {free['id']}")
+    used = next((b for b in builtins if b.get("inUse")), None)
+    if used:
+        r = web("err-web-plugins-builtin-in-use", "POST", "/api/plugins/builtin", {"id": used["id"], "on": False})
+        expect(r.status == 400 and "error" in (r.json or {}), f"web /api/plugins/builtin: 关闭正在使用的 {used['id']} 应得 400 JSON，实际 {r.status}", errs)
+    withschema = next((b for b in builtins if b.get("schema")), None)
+    if withschema:
+        r = web("web-plugins-builtin-config", "POST", "/api/plugins/builtin", {"id": withschema["id"], "config": {}})
+        status_is(r, 200, "application/json", errs, f"web POST /api/plugins/builtin config {withschema['id']}")
+        r = web("err-web-plugins-builtin-config", "POST", "/api/plugins/builtin", {"id": withschema["id"], "config": {"no-such-setting": 1}})
+        expect(r.status == 400, f"web /api/plugins/builtin: 不存在的设置应得 400，实际 {r.status}", errs)
+
+    r = web("web-plugins-check", "POST", "/api/plugins/check", {})
+    status_is(r, 200, "application/json", errs, "web POST /api/plugins/check")
+    errs += check_web_fields(("POST", "/api/plugins/check"), r.json or {}, "web POST /api/plugins/check")
+    expect(isinstance(((r.json or {}).get("state") or {}).get("plugins"), list), "web /api/plugins/check: state.plugins 应为数组", errs)
+
+    for name, path in (("web-plugin-pages", "/api/plugin-pages"), ("web-plugin-panels", "/api/plugin-panels")):
+        r = web(name, "GET", path)
+        status_is(r, 200, "application/json", errs, f"web GET {path}")
+        expect(isinstance(r.json, list), f"web {path}: 应为数组，实际 {r.text[:80]}", errs)
+        for e in r.json if isinstance(r.json, list) else []:
+            expect(isinstance(e.get("key"), str) and isinstance(e.get("url"), str), f"web {path}: 每项应有 key 与 url", errs)
+
+    # 市场是第三方的列表（包名、作者、链接），只校验形状，不留抓取文件
+    r = web("web-plugins-listings", "GET", "/api/plugins/listings")
+    status_is(r, 200, "application/json", errs, "web GET /api/plugins/listings")
+    ls = (r.json or {}).get("listings")
+    expect(isinstance(ls, list), "web /api/plugins/listings: listings 应为数组", errs)
+    for l in ls if isinstance(ls, list) else []:
+        expect(isinstance(l.get("package"), str) and isinstance(l.get("name"), str), "web /api/plugins/listings: 每项应有 package 与 name", errs)
+    r2 = web("web-plugins-agents", "GET", "/api/plugins/agents")
+    status_is(r2, 200, "application/json", errs, "web GET /api/plugins/agents")
+    expect(isinstance(r2.json, list) and all(isinstance(x, str) for x in r2.json), "web /api/plugins/agents: 应为字符串数组", errs)
+    for name in ("web-plugins-listings", "web-plugins-agents"):
+        try:
+            os.remove(os.path.join(CAP, name + ".json"))
+        except OSError:
+            pass
+
+    # 不存在的插件：操作被拒，400 JSON
+    for op, body in (("off", {"spec": "example-no-such-plugin", "off": True}), ("options", {"spec": "example-no-such-plugin", "options": {"a": 1}}),
+                     ("remove", {"spec": "example-no-such-plugin"})):
+        r = web(f"err-web-plugins-{op}", "POST", f"/api/plugins/{op}", body)
+        expect(r.status == 400 and "no plugin" in str((r.json or {}).get("error", "")),
+               f"web /api/plugins/{op}: 不存在的插件应得 400 JSON「no plugin…」，实际 {r.status} {r.text[:120]}", errs)
+
+    r = web("web-providers-plugins", "GET", "/api/providers")
+    expect(isinstance((r.json or {}).get("plugins"), list), "web /api/providers: plugins（插件供应商）应为数组", errs)
+    r = web("web-plugin-option", "POST", "/api/settings/plugin-option", {"provider": "example", "key": "fast-mode", "on": True})
+    status_is(r, 200, "application/json", errs, "web POST /api/settings/plugin-option")
+    errs += check_web_fields(("GET", "/api/settings"), r.json or {}, "web POST /api/settings/plugin-option")
+    r = web("err-web-plugin-option", "POST", "/api/settings/plugin-option", {"provider": "example", "key": "Not A Key!"})
+    expect(r.status == 400, f"web /api/settings/plugin-option: 不合法的 key 应得 400，实际 {r.status}", errs)
+GROUP_COMPUTED = ["ready", "memberInfo", "holds", "offers", "shared", "picked", "patterns", "decides", "ref", "classifierFailed", "auto", "matched"]
+
+
+def t_web_groups(errs):
+    """路由组整组保存：只改路由方式 / 会话保持 / 关掉的成员，其余字段原样保留（App 的 WebRequests.groupSave 同样做法）。"""
+    r = call("web-groups-before", "GET", WEB + "/api/groups", remote=False, cookie=COOKIE)
+    groups = {g.get("id"): g for g in (r.json or {}).get("groups") or []}
+    g = groups.get("fast")
+    if not g:
+        errs.append("web /api/groups: 没有 fixture 路由组 fast")
+        return
+    body = {k: v for k, v in g.items() if k not in GROUP_COMPUTED}
+    body.update({"routing": "fast", "affinity": "session", "off": ["mock/mock-gpt-mini"], "placed": g.get("members") or [], "firstToken": 60})
+    r = call("web-groups-save", "POST", WEB + "/api/groups/save", remote=False, cookie=COOKIE, body=body)
+    status_is(r, 200, "application/json", errs, "web POST /api/groups/save")
+    errs += check_web_fields(("GET", "/api/groups"), r.json or {}, "web POST /api/groups/save")
+    saved = {x.get("id"): x for x in (r.json or {}).get("groups") or []}.get("fast") or {}
+    expect(saved.get("routing") == "fast", f"保存后 routing 应为 fast，实际 {saved.get('routing')!r}", errs)
+    expect(saved.get("affinity") == "session", f"保存后 affinity 应为 session，实际 {saved.get('affinity')!r}", errs)
+    expect(saved.get("off") == ["mock/mock-gpt-mini"], f"保存后 off 应为 [mock/mock-gpt-mini]，实际 {saved.get('off')!r}", errs)
+    expect(saved.get("firstToken") == 60, f"保存后 firstToken 应为 60，实际 {saved.get('firstToken')!r}", errs)
+    expect(saved.get("members") == g.get("members"), f"成员不应改变：{saved.get('members')!r}", errs)
+    r = call("web-groups-arrange", "POST", WEB + "/api/groups/arrange", remote=False, cookie=COOKIE, body={"order": list(groups)})
+    status_is(r, 200, "application/json", errs, "web POST /api/groups/arrange")
+    # 还原，免得影响后面的网关测试
+    restore = {k: v for k, v in g.items() if k not in GROUP_COMPUTED}
+    r = call("web-groups-restore", "POST", WEB + "/api/groups/save", remote=False, cookie=COOKIE, body=restore)
+    status_is(r, 200, "application/json", errs, "web POST /api/groups/save（还原）")
+    back = {x.get("id"): x for x in (r.json or {}).get("groups") or []}.get("fast") or {}
+    expect(back.get("routing") == g.get("routing") and not back.get("off"), f"还原后应回到原来的设置：{back}", errs)
 
 
 def t_sharing_off(errs):
@@ -458,7 +694,7 @@ def t_sharing_off(errs):
     status_is(r, 200, "application/json", errs, "重新共享后 GET /v1")
 
 
-TESTS = [t_info, t_auth, t_models, t_chat, t_responses, t_usage, t_quotas_limit, t_keys, t_web, t_sharing_off]
+TESTS = [t_info, t_auth, t_models, t_chat, t_responses, t_usage, t_quotas_limit, t_keys, t_web, t_web_groups, t_sessions, t_plugins, t_sharing_off]
 
 
 def main() -> int:

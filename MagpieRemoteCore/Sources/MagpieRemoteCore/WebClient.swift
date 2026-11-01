@@ -227,3 +227,26 @@ extension GatewayClient {
         do { return try WebJSON.decode(data) } catch { throw MagpieError.decoding(String(describing: error)) }
     }
 }
+
+// MARK: 路由页（/api/model-speeds、/api/gateway/trace）
+
+extension WebClient {
+    /// `GET /api/model-speeds`：各 `provider/model` 近 7 天的首字时间与输出速度。旧版 magpie 没有这个接口时返回空。
+    public func modelSpeeds() async throws -> ModelSpeeds {
+        do {
+            return ModelSpeeds(json: try await get("/api/model-speeds"))
+        } catch MagpieError.webRejected {
+            return ModelSpeeds()
+        }
+    }
+
+    /// `GET /api/gateway/trace?after=<seq>[&wait=1]`：网关的实时路由记录。`wait` 时主机最多挂起 25 秒等新变化，
+    /// 所以这个请求的超时放宽到 40 秒。
+    public func trace(after seq: Int64, wait: Bool) async throws -> TraceSnapshot {
+        var query = [URLQueryItem(name: "after", value: String(seq))]
+        if wait { query.append(URLQueryItem(name: "wait", value: "1")) }
+        var request = try makeRequest("/api/gateway/trace", query: query)
+        request.timeoutInterval = wait ? 40 : timeout
+        return TraceSnapshot(json: try await send(request))
+    }
+}

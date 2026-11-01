@@ -1,0 +1,11 @@
+{
+ "seq": 0,
+ "routes": [],
+ "totals": {
+  "requests": 0,
+  "rerouted": 0,
+  "errors": 0
+ },
+ "mine": false,
+ "now": "2026-11-01T10:00:03+08:00"
+}

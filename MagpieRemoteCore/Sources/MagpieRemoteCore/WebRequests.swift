@@ -186,9 +186,13 @@ public enum CallerKeyAction: String, Sendable, CaseIterable {
 /// 供应商的操作（对应 `POST /api/provider/{action}`）。
 public enum ProviderAction: String, Sendable {
     case save, delete, on, off, key, models
+    /// 多账号 / 多 Key 供应商自己的路由方式、会话保持、限流后排到最后。
+    case route, affinity, sink
 }
 
 /// 路由组的操作（对应 `POST /api/groups/{action}`）。
 public enum GroupAction: String, Sendable {
     case save, delete, `switch`
+    /// 路由组顺序、手动路由的选中成员、自动发现开关、复制。
+    case arrange, pick, found, copy
 }

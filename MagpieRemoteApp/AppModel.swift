@@ -2,26 +2,10 @@ import Foundation
 import Observation
 import MagpieRemoteCore
 
-enum AppTab: String, Hashable, CaseIterable {
-    case quota, usage, chat, manage
-
-    var title: String {
-        switch self {
-        case .quota: "额度"
-        case .usage: "用量"
-        case .chat: "对话"
-        case .manage: "管理"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .quota: "gauge.with.dots.needle.67percent"
-        case .usage: "chart.bar.xaxis"
-        case .chat: "bubble.left.and.bubble.right"
-        case .manage: "slider.horizontal.3"
-        }
-    }
+/// 底栏的一个标签：前 4 个是用户选的页面（见 `DockLayout`），最后一个固定是「更多」。
+enum AppTab: Hashable {
+    case page(AppPage)
+    case more
 }
 
 enum AppSheet: String, Identifiable {
@@ -44,10 +28,12 @@ final class AppModel {
     private let service: any RemoteServing
     /// 「对话」页的状态（对话列表、当前对话、模型目录）。
     let chat: ChatController
+    /// 底栏放哪些页面（存本机 UserDefaults，不分主机）。
+    let dock: DockStore
 
     private(set) var hosts: HostList
     private(set) var connection: ConnectionState = .noHost
-    var selectedTab: AppTab = .quota
+    var selectedTab: AppTab = .more
     var sheet: AppSheet?
 
     var activeHost: HostProfile? { hosts.active }
@@ -68,12 +54,16 @@ final class AppModel {
             // 每次启动一个全新的临时目录：UI 测试互不影响。
             chat = ChatController(store: ChatStore(directory: FileManager.default.temporaryDirectory
                 .appendingPathComponent("fixture-chats-\(UUID().uuidString)", isDirectory: true)), defaults: nil)
+            // 示例模式不读写真实设置：每次启动都是默认底栏，UI 测试互不影响。
+            dock = DockStore(defaults: nil)
         } else {
             store = HostStore(persistence: UserDefaultsHostListPersistence(), keychain: SystemKeychainStore())
             service = LiveRemoteService()
             chat = ChatController(store: .applicationSupport(), defaults: .standard)
+            dock = DockStore(defaults: .standard)
         }
         hosts = store.load()
+        selectedTab = dock.layout.pages.first.map(AppTab.page) ?? .more
     }
 
     func start() async {

@@ -30,6 +30,8 @@ final class ManageStore {
     private(set) var providers: [WebProvider] = []
     private(set) var presets: [WebPreset] = []
     private(set) var groups: WebGroups?
+    /// 各模型近 7 天的速度（路由组成员旁显示）。
+    private(set) var speeds = ModelSpeeds()
     private(set) var agents: [WebAgent] = []
     private(set) var keys: [WebCallerKey] = []
     private(set) var issued: [IssuedKey] = []
@@ -45,6 +47,8 @@ final class ManageStore {
     private var configuredFor: String?
 
     var canIssue: Bool { service?.canIssue ?? false }
+    /// 当前连接的标识（主机或密钥变了就会变）：依赖服务的子页面用它重建自己的状态。
+    var configurationKey: String { configuredFor ?? "none" }
 
     /// 根据当前主机与密钥选择服务；主机或密钥变了才重新加载。
     func configure(model: AppModel) async {
@@ -102,6 +106,7 @@ final class ManageStore {
             self.keys = try await keys.keys
             self.issued = (try? await issued) ?? []
             phase = .ready
+            speeds = (try? await service.modelSpeeds()) ?? speeds
         } catch {
             phase = .failed(MagpieError.from(error))
         }
@@ -188,6 +193,52 @@ final class ManageStore {
 
     func setGroup(_ id: String, on: Bool) async {
         await run { service in self.groups = try await service.group(.switch, WebRequests.groupSwitch(id, on: on)) }
+    }
+
+    /// 整组保存，只改 `edits` 里给出的设置。
+    @discardableResult
+    func saveGroup(_ group: WebGroup?, edits: GroupEdits) async -> Bool {
+        await run { service in
+            self.groups = try await service.group(.save, WebRequests.groupSave(group, edits: edits))
+        }
+    }
+
+    func pickGroupMember(_ id: String, member: String) async {
+        await run { service in self.groups = try await service.group(.pick, WebRequests.groupPick(id, member: member)) }
+    }
+
+    func copyGroup(_ group: WebGroup) async {
+        await run { service in self.groups = try await service.group(.copy, WebRequests.groupCopy(group.id, name: group.name + " 副本")) }
+    }
+
+    func setFoundGroups(_ on: Bool) async {
+        await run { service in self.groups = try await service.group(.found, WebRequests.groupFound(on)) }
+    }
+
+    /// 拖动调整路由组顺序：先在本地挪动，再提交；失败时恢复主机的顺序。
+    func moveGroups(from source: IndexSet, to destination: Int) async {
+        guard let groups else { return }
+        let order = groups.order(moving: source, to: destination)
+        var local = groups
+        local.groups = order.compactMap { id in groups.groups.first { $0.id == id } }
+        self.groups = local
+        let ok = await run { service in self.groups = try await service.group(.arrange, WebRequests.groupArrange(order)) }
+        if !ok { await refresh() }
+    }
+
+    /// 多账号 / 多 Key 供应商自己的路由设置；改完重新读路由组（pools 在里面）。
+    func setPool(_ provider: String, routing: GroupRouting? = nil, affinity: GroupAffinity? = nil, sink: Bool? = nil) async {
+        await run { service in
+            if let routing { self.apply(try await service.provider(.route, WebRequests.providerRouting(provider, routing: routing))) }
+            if let affinity { self.apply(try await service.provider(.affinity, WebRequests.providerAffinity(provider, affinity: affinity))) }
+            if let sink { self.apply(try await service.provider(.sink, WebRequests.providerSink(provider, sink: sink))) }
+            self.groups = try await service.groups()
+        }
+    }
+
+    func refreshSpeeds() async {
+        guard let service else { return }
+        if let speeds = try? await service.modelSpeeds() { self.speeds = speeds }
     }
 
     // MARK: Agent
