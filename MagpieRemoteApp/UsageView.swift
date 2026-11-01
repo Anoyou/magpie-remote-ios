@@ -48,9 +48,6 @@ struct UsageView: View {
             }
             .listStyle(.insetGrouped)
             .refreshable { await reload(); await reloadConcurrency() }
-            .navigationDestination(for: UsageRequestsRoute.self) { route in
-                UsageRequestsView(period: $period, held: route.held)
-            }
         }
         .task(id: LoadKey(connection: model.connection, period: period)) { await reload() }
         .task(id: model.connection) {
@@ -65,7 +62,12 @@ struct UsageView: View {
 
     private func requestsLink(held: Bool) -> some View {
         Section {
-            NavigationLink(value: UsageRequestsRoute(held: held)) {
+            // 用「目标视图」式链接，不用 NavigationLink(value:) + navigationDestination(for:)：
+            // 用量页本身是从「更多」以目标视图方式推入的，混用时 SwiftUI 会把按值推入的页面插到
+            // 已推入页面的下面（点「请求记录」后看到的仍是用量页，返回按钮却变成「请求记录」）。
+            NavigationLink {
+                UsageRequestsView(period: $period, held: held)
+            } label: {
                 Label(held ? "查看这把密钥的请求记录" : "请求记录", systemImage: "list.bullet.rectangle")
             }
             .accessibilityIdentifier("usage.requests.open")
@@ -92,10 +94,6 @@ struct UsageView: View {
         guard case .connected = model.connection else { concurrency = nil; return }
         if let result = try? await model.loadConcurrency() { concurrency = result }
     }
-}
-
-struct UsageRequestsRoute: Hashable {
-    var held: Bool
 }
 
 struct UsagePeriodPicker: View {

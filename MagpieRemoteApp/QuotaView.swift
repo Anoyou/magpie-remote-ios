@@ -219,11 +219,15 @@ private struct QuotaAccountView: View {
             header
             if expanded {
                 detail
-                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
+                    .transition(.opacity)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassCard()
+        // 玻璃放在背景层，不用 .glassCard() 包住内容：直接套在 VStack 上时，第一个子视图（折叠行按钮）
+        // 的点按 / 无障碍区域会被撑成整张卡片，展开后点「中心」落在明细里，VoiceOver 和测试都收不起来。
+        .background {
+            Color.clear.glassEffect(.regular, in: .rect(cornerRadius: 22, style: .continuous))
+        }
     }
 
     private var header: some View {

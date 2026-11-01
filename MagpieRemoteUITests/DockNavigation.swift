@@ -33,4 +33,10 @@ extension XCUIApplication {
         link.tap()
         XCTAssertTrue(navigationBars[title].waitForExistence(timeout: 10), "没有打开「\(title)」", file: file, line: line)
     }
+
+    /// 弹出菜单里的一项。放在 Menu 的 Section 里的按钮，iOS 不会把 SwiftUI 的 accessibilityIdentifier
+    /// 带到菜单项上（只剩标题），所以按 identifier 或按标题找，哪个先出现用哪个。
+    func menuItem(id identifier: String, label: String) -> XCUIElement {
+        buttons.matching(NSPredicate(format: "identifier == %@ OR label == %@", identifier, label)).firstMatch
+    }
 }

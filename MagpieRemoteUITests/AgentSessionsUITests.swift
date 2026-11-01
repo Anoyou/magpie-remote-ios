@@ -67,7 +67,7 @@ final class AgentSessionsUITests: XCTestCase {
         let menu = element(id: "session.menu", in: app)
         XCTAssertTrue(menu.waitForExistence(timeout: 10))
         menu.tap()
-        let delete = element(id: "session.delete", in: app)
+        let delete = app.menuItem(id: "session.delete", label: "删除会话")
         XCTAssertTrue(delete.waitForExistence(timeout: 5))
         delete.tap()
         let confirm = app.buttons["移到回收站"].firstMatch

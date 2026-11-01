@@ -158,7 +158,8 @@ jobs:
     needs: plan
     if: needs.plan.outputs.skip != 'true' && needs.plan.outputs.ios == 'true'
     runs-on: xcode-27
-    timeout-minutes: 40
+    # 34+ 个 UI 用例约 30 分钟，模拟器冷启动最长可到 9 分钟，再加编译与打 IPA。
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:

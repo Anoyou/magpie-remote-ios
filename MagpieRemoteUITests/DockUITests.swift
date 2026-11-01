@@ -19,6 +19,11 @@ final class DockUITests: XCTestCase {
         for _ in 0..<attempts where !(element.exists && element.isHittable) { app.swipeUp() }
     }
 
+    /// 往回滑到列表顶部附近，直到元素可点（列表懒加载，滑走的行不在无障碍树里）。
+    private func scrollBack(to element: XCUIElement, in app: XCUIApplication, attempts: Int = 6) {
+        for _ in 0..<attempts where !(element.exists && element.isHittable) { app.swipeDown() }
+    }
+
     private func launchCustomize() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -36,21 +41,29 @@ final class DockUITests: XCTestCase {
         XCTAssertTrue(first.waitForExistence(timeout: 10), "没有显示底栏第 1 个位置")
         XCTAssertTrue(first.label.contains("Agent"), "默认第 1 个应当是 Agent：\(first.label)")
         XCTAssertTrue(element(id: "dock.slot.more", in: app).exists, "第 5 个位置应当固定为「更多」")
-        XCTAssertFalse(element(id: "dock.reset", in: app).isEnabled, "默认底栏时「恢复默认」应当不可点")
+        // 「恢复默认」在列表最下面（懒加载，要先滑到它）。
+        let defaultReset = element(id: "dock.reset", in: app)
+        scrollTo(defaultReset, in: app)
+        XCTAssertTrue(defaultReset.waitForExistence(timeout: 5), "没有「恢复默认」按钮")
+        XCTAssertFalse(defaultReset.isEnabled, "默认底栏时「恢复默认」应当不可点")
 
         let quota = element(id: "dock.candidate.quota", in: app)
+        scrollBack(to: quota, in: app)
         XCTAssertTrue(quota.waitForExistence(timeout: 10), "「在『更多』里」没有列出额度")
-        scrollTo(quota, in: app)
         quota.tap()
-        let place = element(id: "dock.place.0", in: app)
+        let place = app.menuItem(id: "dock.place.0", label: "第 1 个位置（换下「Agent」）")
         XCTAssertTrue(place.waitForExistence(timeout: 5), "没有出现「放进底栏」的位置选项")
         place.tap()
 
         XCTAssertTrue(app.tabBars.buttons["额度"].waitForExistence(timeout: 10), "底栏没有出现「额度」")
         XCTAssertFalse(app.tabBars.buttons["Agent"].exists, "被换下的 Agent 不应还在底栏")
         XCTAssertTrue(app.tabBars.buttons["更多"].exists, "「更多」应当一直在底栏")
-        XCTAssertTrue(element(id: "dock.slot.0", in: app).label.contains("额度"))
-        XCTAssertTrue(element(id: "dock.candidate.agents", in: app).waitForExistence(timeout: 5), "被换下的 Agent 应当回到「更多」")
+        let slot0 = element(id: "dock.slot.0", in: app)
+        scrollBack(to: slot0, in: app)
+        XCTAssertTrue(slot0.label.contains("额度"), "第 1 个位置应当换成额度：\(slot0.label)")
+        let agents = element(id: "dock.candidate.agents", in: app)
+        scrollTo(agents, in: app)
+        XCTAssertTrue(agents.waitForExistence(timeout: 5), "被换下的 Agent 应当回到「更多」")
         XCTAssertFalse(element(id: "dock.candidate.quota", in: app).exists, "放进底栏的额度不应还在「更多」里")
 
         let reset = element(id: "dock.reset", in: app)
@@ -71,7 +84,7 @@ final class DockUITests: XCTestCase {
         let menu = element(id: "dock.slot.3.menu", in: app)
         XCTAssertTrue(menu.waitForExistence(timeout: 10), "底栏第 4 个位置没有更换按钮")
         menu.tap()
-        let usage = element(id: "dock.slot.3.use.usage", in: app)
+        let usage = app.menuItem(id: "dock.slot.3.use.usage", label: "用量")
         XCTAssertTrue(usage.waitForExistence(timeout: 5), "更换菜单里没有「用量」")
         usage.tap()
         XCTAssertTrue(app.tabBars.buttons["用量"].waitForExistence(timeout: 10), "底栏没有出现「用量」")

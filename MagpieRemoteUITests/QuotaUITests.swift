@@ -65,6 +65,8 @@ final class QuotaUITests: XCTestCase {
         XCTAssertTrue(app.buttons["quota.account.refresh"].firstMatch.exists, "展开后没有「重新读取」按钮")
         XCTAssertEqual(work.value as? String, "已展开")
         XCTAssertEqual(cards(app).count, 1, "只应展开点按的那个账号")
+        // 折叠行的点按 / 无障碍区域只应是标题这一行，不能被撑成整张卡片（否则点中心会落在明细里）。
+        XCTAssertLessThan(work.frame.height, 160, "展开后折叠行的区域覆盖了整张卡片：\(work.frame)")
         work.tap()
         let collapsed = expectation(for: NSPredicate(format: "value == %@", "已收起"), evaluatedWith: work)
         wait(for: [collapsed], timeout: 5)

@@ -29,7 +29,8 @@ struct MainTabs: View {
             }
             .accessibilityIdentifier("tab.more")
         }
-        .tabBarMinimizeBehavior(.onScrollDown)
+        // 下滑时底栏缩成一个按钮；UI 测试里关掉，免得滑动列表后找不到底栏上的页面。
+        .tabBarMinimizeBehavior(RT.uiTesting ? .never : .onScrollDown)
         .sheet(item: $model.sheet) { sheet in
             switch sheet {
             case .hosts: HostSettingsView()
