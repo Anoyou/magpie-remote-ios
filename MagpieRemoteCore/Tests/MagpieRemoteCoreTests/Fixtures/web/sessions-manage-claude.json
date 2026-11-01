@@ -1,0 +1,14 @@
+{"agents":[{"agent":"claude","count":3,"deletable":true,"name":"Claude Code","icon":"claude"},{"agent":"codex","count":2,"deletable":true,"name":"Codex","icon":"codex"},{"agent":"opencode","count":1,"deletable":false,"name":"OpenCode","icon":"opencode"}],
+ "agent":"claude",
+ "sessions":[
+  {"agent":"claude","id":"11111111-aaaa-4bbb-8ccc-000000000001","cwd":"~/code/demo-app","title":"修复登录页的样式问题","start":"2026-10-31T09:12:03.123456789+08:00","last":"2026-10-31T10:40:57.5+08:00","models":[{"model":"claude-sonnet-4-5","input":1200,"output":3400,"cache_read":56000,"cache_write":8000,"cost":0.42,"priced":true},{"model":"claude-haiku-4-5","input":300,"output":100,"cache_read":0,"cache_write":0,"cost":0.001,"priced":true}],"input":1500,"output":3500,"cache_read":56000,"cache_write":8000,"cost":0.421,"unpriced":0,"resume":"cd ~/code/demo-app && claude --resume 11111111-aaaa-4bbb-8ccc-000000000001","path":"~/.claude/projects/-Users-example-code-demo-app/11111111-aaaa-4bbb-8ccc-000000000001.jsonl","transcript":true,"subagents":[{"id":"agent-a1","title":"Search the repo","kind":"Explore","start":"2026-10-31T09:20:00Z","last":"2026-10-31T09:21:00Z"}],"size":1288490,"messages":86,"files":2,"deletable":true,"via":[{"provider":"relay-example","model":"claude-sonnet-4-5","calls":40,"tokens":68900,"last":"2026-10-31T10:40:57+08:00"}]},
+  {"agent":"claude","id":"11111111-aaaa-4bbb-8ccc-000000000002","cwd":"~/code/notes","title":"","nickname":"整理笔记","start":"2026-10-30T20:00:00Z","last":"2026-10-30T21:05:00Z","models":null,"input":0,"output":0,"cache_read":0,"cache_write":0,"cost":0,"unpriced":0,"resume":"","path":"~/.claude/projects/-Users-example-code-notes/11111111-aaaa-4bbb-8ccc-000000000002.jsonl","transcript":true,"size":2048,"messages":0,"files":1,"deletable":true,"pending":true},
+  {"gateway":true,"agent":"claude","id":"ses_gateway_EXAMPLE","cwd":"","title":"写一个周报模板","start":"0001-01-01T00:00:00Z","last":"2026-10-29T08:00:00Z","models":[{"model":"group/smart","input":10,"output":20,"cache_read":0,"cache_write":0,"cost":0,"priced":false}],"input":10,"output":20,"cache_read":0,"cache_write":0,"cost":0,"unpriced":1,"resume":"","path":"","size":0,"messages":0,"files":0,"deletable":true}
+ ],
+ "terminal":false,
+ "trash":[{"key":"claude/old","agent":"claude","id":"old","title":"旧会话","cwd":"~","last":"2026-09-01T00:00:00Z","deleted":"2026-10-01T00:00:00Z","size":100,"items":[{"from":"~/.claude/projects/x/old.jsonl","name":"old.jsonl"}],"name":"Claude Code","icon":"claude"}],
+ "trashDir":"~/.config/magpie/trash/sessions",
+ "home":"/Users/example",
+ "recording":false,
+ "recorded":false,
+ "reads":{"asked":true,"all":true,"found":[{"agent":"claude","name":"Claude Code","icon":"claude","on":true},{"agent":"codex","name":"Codex","icon":"codex","on":true}]}}
