@@ -2,10 +2,12 @@ import SwiftUI
 import Charts
 import MagpieRemoteCore
 
-/// 「用量」页：时间段切换、总花费 / 请求 / 词元、按模型 / Agent / 供应商 / 账号 / 密钥分组、当前并发，以及请求记录入口。
-struct UsageView: View {
+/// 「用量 › 概览」：时间段切换、总花费、词元 / 缓存读取 / 推理 / 请求、按时间的词元图、按 Agent / 模型 / 账号 / 网关密钥 / 供应商分组、
+/// 当前并发，以及请求记录入口（magpie 网页 Usage 页的 Overview；额度卡片在「额度」页）。
+struct UsageOverviewPane: View {
     @Environment(AppModel.self) private var model
-    @State private var period: UsagePeriod = .today
+    @Binding var period: UsagePeriod
+    @Binding var held: Bool
     @State private var summary: UsageAccess<UsageSummary>?
     @State private var error: MagpieError?
     @State private var concurrency: UsageAccess<ConcurrencySnapshot>?
@@ -40,6 +42,9 @@ struct UsageView: View {
                             ConcurrencySection(snapshot: snapshot)
                         }
                         UsageBreakdownSection(summary: value, dimension: $dimension)
+                        Section {} footer: {
+                            Text("只算经过网关的调用；从 Agent 会话文件读到的调用在「请求」里。被本机拒绝的请求不计入合计。")
+                        }
                     }
                 } else {
                     Section { ProgressView().frame(maxWidth: .infinity) }
@@ -49,6 +54,7 @@ struct UsageView: View {
             .listStyle(.insetGrouped)
             .refreshable { await reload(); await reloadConcurrency() }
         }
+        .onChange(of: summary?.isHeld) { _, isHeld in held = isHeld ?? held }
         .task(id: LoadKey(connection: model.connection, period: period)) { await reload() }
         .task(id: model.connection) {
             // 并发是「此刻」的数据：页面在前台时每 5 秒刷新一次（接口很轻）。
@@ -129,6 +135,8 @@ struct UsageHeldKeyNote: View {
 private struct UsageSummarySection: View {
     let period: UsagePeriod
     let summary: UsageSummary
+    /// 词元合计里算不算缓存读写（magpie「概览」的词元口径开关，记在本机）。
+    @AppStorage("usage.overview.withCache") private var withCache = false
 
     private var totals: UsageTotals { summary.totals }
 
@@ -155,15 +163,10 @@ private struct UsageSummarySection: View {
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("usage.counts")
 
+            UsageOverviewTiles(totals: totals, withCache: $withCache)
+
             if summary.series.contains(where: { $0.totals.calls > 0 }) {
-                Chart(Array(summary.series.enumerated()), id: \.offset) { item in
-                    BarMark(x: .value("时间", item.offset), y: .value("请求", item.element.totals.calls))
-                        .foregroundStyle(Color.accentColor.gradient)
-                }
-                .chartXAxis(.hidden)
-                .chartYAxis { AxisMarks(position: .leading) }
-                .frame(height: 90)
-                .accessibilityLabel("每\(summary.bucket == "hour" ? "小时" : "天")请求数")
+                UsageTokenChart(summary: summary, withCache: withCache)
             }
 
             DisclosureGroup("词元明细") {
@@ -245,10 +248,13 @@ private struct BreakdownRow: View {
                         .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                 }
             }
-            ProgressView(value: min(max(item.share, 0), 1))
+            ProgressView(value: min(max(item.tokenShare > 0 ? item.tokenShare : item.share, 0), 1))
                 .tint(item.totals.errors > 0 && item.totals.errors == item.totals.calls ? .red : .accentColor)
             if item.totals.errors > 0 {
                 Text("失败 \(UsageFormat.count(item.totals.errors)) 次").font(.caption2).foregroundStyle(.red)
+            }
+            if let details = UsageOverviewTiles.details(item.totals) {
+                Text(details).font(.caption2.monospacedDigit()).foregroundStyle(.secondary).lineLimit(2)
             }
         }
         .padding(.vertical, 2)
