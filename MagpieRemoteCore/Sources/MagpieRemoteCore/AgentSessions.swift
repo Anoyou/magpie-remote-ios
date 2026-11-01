@@ -202,6 +202,12 @@ public struct SessionReads: Hashable, Sendable {
         public var id: String
         public var name: String
         public var on: Bool
+
+        public init(id: String, name: String, on: Bool) {
+            self.id = id
+            self.name = name
+            self.on = on
+        }
     }
 
     /// 用户已经选过。
