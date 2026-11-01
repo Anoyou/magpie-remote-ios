@@ -29,6 +29,9 @@ public struct TraceSeat: Hashable, Sendable {
     public var provider: String
     /// 供应商名。
     public var name: String
+    /// 主机给的标志名（gateway.Weighed 的 `icon`）与供应商预设（`preset`）。
+    public var icon: String = ""
+    public var preset: String = ""
     /// 账号名，或 Key 的名字 / 脱敏值。
     public var who: String
     /// "account" / "key" / "provider"。
@@ -59,6 +62,8 @@ public struct TraceSeat: Hashable, Sendable {
         id = json["id"]?.string ?? ""
         provider = json["provider"]?.string ?? ""
         name = json["name"]?.string ?? ""
+        icon = json["icon"]?.string ?? ""
+        preset = json["preset"]?.string ?? ""
         who = json["who"]?.string ?? ""
         kind = json["kind"]?.string ?? "key"
         plan = json["plan"]?.string ?? ""

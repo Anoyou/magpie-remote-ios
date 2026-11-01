@@ -105,6 +105,7 @@ private struct AgentSection: View {
             }
         } header: {
             HStack {
+                BrandIcon(agent.officialIcon, size: 16)
                 Text(agent.name)
                 Spacer()
                 Text(agent.wired ? "已接入 magpie" : "未接入").foregroundStyle(agent.wired ? .green : .secondary)

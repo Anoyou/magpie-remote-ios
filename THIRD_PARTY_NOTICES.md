@@ -14,6 +14,15 @@
 `#bird` 路径），均取自 magpie 原作，路径数据原样保留，适用下方同一份 MIT 许可。
 对应代码：`MagpieRemoteApp/RoutesMagpie.swift`、`MagpieRemoteApp/RoutesStageView.swift`。
 
+App 图标（`MagpieRemoteApp/Assets.xcassets/AppIcon.appiconset`）由 magpie 的 App 图标
+（`build/darwin/AppIcon.icon` 的喜鹊图层与浅色 / 深色底色）合成；资源目录 `Brand/` 里的供应商、模型厂商与
+Agent 标志取自 magpie 网页的 `internal/gui/assets/icons/`（SVG 去掉了 iOS 不认的根节点属性，少数带 mask /
+filter / clipPath 的渲染成 PNG），`Nav/` 里的页面图标取自 `internal/gui/assets/index.html` 的导航栏线条图；
+图标名与供应商 / Agent / 模型的对应关系照 `app.js` 的 `icon()`、`internal/agent`、`internal/provider/presets.go`
+生成（`scripts/gen-official-icons.py`）。对应代码：`MagpieRemoteCore/Sources/MagpieRemoteCore/OfficialIcon.swift`、
+`OfficialIconNames.swift`、`MagpieRemoteApp/OfficialIconViews.swift`。各品牌标志的商标归其所有者，这里只用来
+标明对应的服务。
+
 来源：https://github.com/yetone/magpie
 
 ```

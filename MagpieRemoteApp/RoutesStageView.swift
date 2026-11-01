@@ -537,12 +537,19 @@ private struct AgentNode: View {
 
     var body: some View {
         VStack(spacing: 2) {
-            Text(String(agent.name.prefix(1)).uppercased())
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 26, height: 26)
-                .background(RT.hue(agent.id), in: .rect(cornerRadius: 7, style: .continuous))
-                .padding(.bottom, 3)
+            Group {
+                // 网页 .rt-src 的 .rt-ic：Agent 的官方图标；认不出的 Agent 用首字母方块。
+                if BrandIcon.isBrand(OfficialIcon.agent(agent.id)) {
+                    BrandIcon(OfficialIcon.agent(agent.id), size: 22).foregroundStyle(RT.fg).frame(width: 26, height: 26)
+                } else {
+                    Text(String(agent.name.prefix(1)).uppercased())
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 26, height: 26)
+                        .background(RT.hue(agent.id), in: .rect(cornerRadius: 7, style: .continuous))
+                }
+            }
+            .padding(.bottom, 3)
             Text(agent.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(RT.fg).lineLimit(1)
             Text(agent.busy ? "正在发送" : "Agent").font(.system(size: 11)).foregroundStyle(RT.muted).lineLimit(1)
         }
@@ -702,8 +709,13 @@ private struct SeatRow: View {
     private var title: some View {
         let seat = row.seat
         return HStack(spacing: 6) {
-            Image(systemName: seat.kind == "account" ? "person.crop.circle" : seat.kind == "provider" ? "shippingbox" : "key")
-                .font(.system(size: 12)).foregroundStyle(RT.fg2)
+            if BrandIcon.isBrand(seat.officialIcon) {
+                // 网页 .rt-accts b .ic：供应商标志
+                BrandIcon(seat.officialIcon, size: 14).foregroundStyle(RT.fg)
+            } else {
+                Image(systemName: seat.kind == "account" ? "person.crop.circle" : seat.kind == "provider" ? "shippingbox" : "key")
+                    .font(.system(size: 12)).foregroundStyle(RT.fg2)
+            }
             PII.text(seat.title, mask).font(.system(size: 13, weight: .medium)).foregroundStyle(RT.fg).lineLimit(1)
             if !seat.detail.isEmpty {
                 PII.text(seat.detail, mask).font(.system(size: 13)).foregroundStyle(RT.muted).lineLimit(1)

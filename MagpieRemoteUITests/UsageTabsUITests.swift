@@ -25,7 +25,7 @@ final class UsageTabsUITests: XCTestCase {
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "没有出现底栏「更多」")
-        app.openFromMore("more.usage", title: "用量")
+        app.openDockTab("用量")
         XCTAssertTrue(element(id: "usage.totalCost", in: app).waitForExistence(timeout: 15), "概览没有出现总花费")
         return app
     }

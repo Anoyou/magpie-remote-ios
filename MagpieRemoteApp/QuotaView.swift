@@ -294,17 +294,26 @@ private struct QuotaAccountView: View {
     }
 }
 
-/// 供应商标记：首字母圆角方块，底色跟随账号状态。
+/// 供应商标记：magpie 官方标志放在圆角方块里；没有标志时用首字母方块，底色跟随账号状态。
 private struct ProviderBadge: View {
     let account: QuotaAccount
 
     var body: some View {
-        Text(account.monogram)
-            .font(.headline)
-            .foregroundStyle(.white)
-            .frame(width: 36, height: 36)
-            .background(statusTint(account.status).gradient, in: .rect(cornerRadius: 10, style: .continuous))
-            .accessibilityLabel(account.providerName)
+        Group {
+            if BrandIcon.isBrand(account.officialIcon) {
+                BrandIcon(account.officialIcon, size: 22)
+                    .frame(width: 36, height: 36)
+                    .background(.fill.tertiary, in: .rect(cornerRadius: 10, style: .continuous))
+            } else {
+                Text(account.monogram)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(statusTint(account.status).gradient, in: .rect(cornerRadius: 10, style: .continuous))
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(account.providerName)
     }
 }
 

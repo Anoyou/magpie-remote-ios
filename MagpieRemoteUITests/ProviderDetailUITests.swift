@@ -20,21 +20,9 @@ final class ProviderDetailUITests: XCTestCase {
         }
     }
 
-    /// 打开供应商列表：底栏里有「供应商」就直接点；合并成「主页」后则切到主页分页器的「供应商」。
+    /// 打开供应商列表：「主页」分页器里的「供应商」。
     private func openProviders(_ app: XCUIApplication) {
-        if app.tabBars.buttons["供应商"].waitForExistence(timeout: 3) {
-            app.openDockTab("供应商")
-            return
-        }
-        let home = app.tabBars.buttons["主页"]
-        XCTAssertTrue(home.waitForExistence(timeout: 10), "底栏里既没有「供应商」也没有「主页」")
-        home.tap()
-        let byID = app.segmentedControls["home.segment"]
-        let control = byID.waitForExistence(timeout: 5) ? byID : app.segmentedControls.firstMatch
-        let segment = control.buttons["供应商"]
-        XCTAssertTrue(segment.waitForExistence(timeout: 10), "主页分页器里没有「供应商」")
-        if !segment.isSelected { segment.tap() }
-        XCTAssertTrue(app.navigationBars["供应商"].waitForExistence(timeout: 10))
+        app.openHome("供应商")
     }
 
     private func openRelay() -> XCUIApplication {

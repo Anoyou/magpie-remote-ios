@@ -80,7 +80,7 @@ actor FixtureAgentSessionsService: AgentSessionsServing {
         let agents = counts.keys.sorted { (counts[$0] ?? 0, $1) > (counts[$1] ?? 0, $0) }
         let chosen = agent.flatMap { counts[$0] != nil ? $0 : nil } ?? agents.first ?? ""
         let list: [WebJSON] = agents.map { id in
-            ["agent": .string(id), "name": .string(Self.names[id] ?? id), "icon": .string(id), "count": .int(Int64(counts[id] ?? 0)), "deletable": true]
+            ["agent": .string(id), "name": .string(Self.names[id] ?? id), "icon": .string(OfficialIcon.agent(id)), "count": .int(Int64(counts[id] ?? 0)), "deletable": true]
         }
         return SessionsOverview(json: [
             "agents": .array(list), "agent": .string(chosen),

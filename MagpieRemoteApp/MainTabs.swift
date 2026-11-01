@@ -18,8 +18,10 @@ struct MainTabs: View {
         @Bindable var model = model
         TabView(selection: $model.selectedTab) {
             ForEach(model.dock.layout.pages) { page in
-                Tab(page.title, systemImage: page.symbol, value: AppTab.page(page)) {
+                Tab(value: AppTab.page(page)) {
                     TabRoot { AppPageView(page: page) }
+                } label: {
+                    Label(page.title, page: page)
                 }
                 .accessibilityIdentifier("tab.\(page.rawValue)")
             }

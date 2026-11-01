@@ -24,8 +24,10 @@
 		2E7598833243DB9AF1306F4A /* AgentSessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E6139AF65D4C71F91D0F709 /* AgentSessionsView.swift */; };
 		3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */; };
 		35D255575382D36B60E6A361 /* ManageGroupsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 068941B029A4B89038CE9F9F /* ManageGroupsView.swift */; };
+		402156A6F7C67024BC8CEA17 /* OfficialIconViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E0F7A1DD10B13C5F72FFA8 /* OfficialIconViews.swift */; };
 		40D92CDAFCDD28C4919D472B /* DockUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3FC619A941C0D64DF0F8A56 /* DockUITests.swift */; };
 		4461AAA05215104827D8F5CB /* UsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B3684D1FBFD9F309DF04EE /* UsageView.swift */; };
+		46691A0663D2E79200332052 /* OfficialIconsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55952D448E60FDA0346ED597 /* OfficialIconsUITests.swift */; };
 		48C06B76D88866821E061143 /* AgentSessionsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDF3F3ED69DBC6AF4B0861E /* AgentSessionsUITests.swift */; };
 		4B61D5B1A09F2430742A3519 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58959F16F79E9B000864BC3D /* AppModel.swift */; };
 		4C67294CFC0AA0F7B3D0B5D5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4276B4618D4C2849903B8C78 /* PrivacyInfo.xcprivacy */; };
@@ -104,6 +106,7 @@
 		251C3B145D0B03072705F992 /* UsageTabsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageTabsView.swift; sourceTree = "<group>"; };
 		266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageView.swift; sourceTree = "<group>"; };
 		2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageUITests.swift; sourceTree = "<group>"; };
+		28E0F7A1DD10B13C5F72FFA8 /* OfficialIconViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialIconViews.swift; sourceTree = "<group>"; };
 		2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		389C0198DFDDB6F053E5B0F4 /* ManageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageStore.swift; sourceTree = "<group>"; };
 		3A368A41C1D950B939843EED /* UsageLedgerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageLedgerViews.swift; sourceTree = "<group>"; };
@@ -111,6 +114,7 @@
 		48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderDetailUITests.swift; sourceTree = "<group>"; };
 		539E56C3200203FA4B1DE6B0 /* DockNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockNavigation.swift; sourceTree = "<group>"; };
 		53B3684D1FBFD9F309DF04EE /* UsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageView.swift; sourceTree = "<group>"; };
+		55952D448E60FDA0346ED597 /* OfficialIconsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialIconsUITests.swift; sourceTree = "<group>"; };
 		561B078F07A52896FF08A607 /* ChatController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatController.swift; sourceTree = "<group>"; };
 		58959F16F79E9B000864BC3D /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		59AD83E4A36A7C989968FEF4 /* ProviderKeysSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderKeysSection.swift; sourceTree = "<group>"; };
@@ -218,6 +222,7 @@
 				74E7401B70153C04ECA16C7A /* HostToolsUITests.swift */,
 				8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */,
 				2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */,
+				55952D448E60FDA0346ED597 /* OfficialIconsUITests.swift */,
 				0D6DB79AF3E4D0FC04E2BFAD /* PluginsUITests.swift */,
 				48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */,
 				726F02F062C85BC63F1B4072 /* QuotaUITests.swift */,
@@ -264,6 +269,7 @@
 				266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */,
 				D0D0018F229A70CBA54BFECD /* ManageWebPageView.swift */,
 				793F539829F0FF3C2E4C218C /* MoreView.swift */,
+				28E0F7A1DD10B13C5F72FFA8 /* OfficialIconViews.swift */,
 				FA5767857C60806660E639B6 /* PluginComponents.swift */,
 				DA773FD5DA6B3DB82F02868D /* PluginDetailView.swift */,
 				D90D4267EF9983628F5A705C /* PluginService.swift */,
@@ -399,6 +405,7 @@
 				2B8283D8CC115EDE7165B0D0 /* HostToolsUITests.swift in Sources */,
 				FF51B2EAE72A2A70428D3694 /* MagpieRemoteUITests.swift in Sources */,
 				3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */,
+				46691A0663D2E79200332052 /* OfficialIconsUITests.swift in Sources */,
 				224F756965E44160F0793E7D /* PluginsUITests.swift in Sources */,
 				868CD4E99FACF3A03D4300D4 /* ProviderDetailUITests.swift in Sources */,
 				B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */,
@@ -444,6 +451,7 @@
 				7992886DB34CB4F2EA75D5AB /* ManageView.swift in Sources */,
 				5C0AC2052468A97ECF8620BB /* ManageWebPageView.swift in Sources */,
 				BE07FE492CF20ADED83A0B4F /* MoreView.swift in Sources */,
+				402156A6F7C67024BC8CEA17 /* OfficialIconViews.swift in Sources */,
 				8093DD89947CFB33F3673ED7 /* PluginComponents.swift in Sources */,
 				762E0FC0C41941341BD7FF16 /* PluginDetailView.swift in Sources */,
 				71BCE8E10AAFE6B65CC4EE13 /* PluginService.swift in Sources */,

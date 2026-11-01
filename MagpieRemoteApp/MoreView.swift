@@ -116,7 +116,7 @@ private struct MorePageLink<Detail: View>: View {
             LabeledContent {
                 detail
             } label: {
-                Label(page.moreTitle, systemImage: page.symbol)
+                Label(page.moreTitle, page: page)
             }
         }
         .accessibilityIdentifier(page.moreIdentifier)
