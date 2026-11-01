@@ -118,10 +118,10 @@ struct UsageContextPane: View {
             }
             if shown.isEmpty { Text("这段时间没有会话。").font(.footnote).foregroundStyle(.secondary) }
             ForEach(Array(shown.enumerated()), id: \.element.id) { index, session in
-                ContextSessionRow(session: session, open: open == session.id) {
+                // identifier 交给行里的按钮：挂在整行（按钮 + 展开的卡片）上会盖掉卡片自己的 usage.context.card
+                ContextSessionRow(session: session, open: open == session.id, identifier: "usage.context.session.\(index)") {
                     open = open == session.id ? nil : session.id
                 }
-                .accessibilityIdentifier("usage.context.session.\(index)")
             }
         } header: {
             Text("会话")
@@ -333,6 +333,7 @@ private struct FlowLegend: View {
 private struct ContextSessionRow: View {
     let session: ContextSession
     let open: Bool
+    let identifier: String
     let toggle: () -> Void
 
     private var health: ContextHealth { ContextHealth(fill: session.peakFill ?? 0) }
@@ -381,6 +382,7 @@ private struct ContextSessionRow: View {
             }
             .buttonStyle(.plain)
             .accessibilityElement(children: .combine)
+            .accessibilityIdentifier(identifier)
             .accessibilityLabel("\(session.displayTitle)，最大提示 \(ContextFormat.tokens(session.peak))"
                                 + (session.window > 0 ? "，窗口 \(ContextFormat.tokens(session.window))" : ""))
 
