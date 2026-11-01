@@ -56,7 +56,7 @@ struct ManagePluginsView: View {
             }
         }
         .navigationTitle("插件")
-        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "搜索插件和 npm…")
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索插件和 npm…")
         .onChange(of: query) { _, new in
             if !new.isEmpty, tab != .discover { tab = .discover }
         }
@@ -94,11 +94,11 @@ struct ManagePluginsView: View {
             AddPluginSheet(store: store) { tab = .installed }
         }
         .sheet(item: $detail) { listing in
-            PluginListingSheet(store: store, listing: listing, install: { ask(install: $0.package, name: $0.name) },
-                               move: { pendingMove = $0 }, signIn: { signIn($0) }, openProvider: { openProvider($0) })
+            PluginListingSheet(store: store, listing: listing, install: { l in later { ask(install: l.package, name: l.name) } },
+                               move: { c in later { pendingMove = c } }, signIn: { signIn($0) }, openProvider: { openProvider($0) })
         }
         .sheet(item: $web) { target in PluginWebSheet(service: store.service, target: target) }
-        .confirmationDialog(pendingInstall.map(installTitle) ?? "", isPresented: present($pendingInstall),
+        .confirmationDialog(pendingInstall.map { installTitle($0) } ?? "", isPresented: present($pendingInstall),
                             titleVisibility: .visible, presenting: pendingInstall) { item in
             Button(item.replacement == nil ? "安装" : "替换") {
                 Task {
@@ -460,6 +460,14 @@ struct ManagePluginsView: View {
         if !plugin.off, !plugin.moved.isEmpty { pendingOff = plugin } else { Task { await store.setEnabled(plugin, plugin.off) } }
     }
 
+    /// 表单收起后再弹确认。
+    private func later(_ action: @escaping @MainActor () -> Void) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(450))
+            action()
+        }
+    }
+
     private func ask(install spec: String, name: String, typed: Bool = false, key: String? = nil) {
         pendingInstall = PendingInstall(spec: spec, name: name, replacement: store.market.namesake(of: spec, typed: typed), key: key)
     }
@@ -467,13 +475,24 @@ struct ManagePluginsView: View {
     private func installTitle(_ item: PendingInstall) -> String { item.replacement?.title ?? "安装「\(item.name)」？" }
 
     private func signIn(_ sub: PluginSub) {
-        detail = nil
-        web = PluginWebTarget(view: "providers", title: "登录 \(sub.name)")
+        openWeb(PluginWebTarget(view: "providers", title: "登录 \(sub.name)"))
     }
 
     private func openProvider(_ sub: PluginSub) {
+        openWeb(PluginWebTarget(view: "providers", extra: [URLQueryItem(name: "edit", value: sub.id)], title: sub.name))
+    }
+
+    /// 从详情表单里打开网页：先收起表单，再弹出网页。
+    private func openWeb(_ target: PluginWebTarget) {
+        guard detail != nil else {
+            web = target
+            return
+        }
         detail = nil
-        web = PluginWebTarget(view: "providers", extra: [URLQueryItem(name: "edit", value: sub.id)], title: sub.name)
+        Task {
+            try? await Task.sleep(for: .milliseconds(450))
+            web = target
+        }
     }
 
     private func movedNames(_ plugin: WebPlugin) -> String { plugin.moved.joined(separator: "、") }
@@ -607,7 +626,7 @@ struct PluginStatusLines: View {
                 line(text, tone: .secondary)
             }
             if !plugin.off, plugin.error == nil {
-                ForEach(Array(PluginFormat.clashLines(plugin, ownName: store.shownName(plugin), nameOf: nameOf).enumerated()), id: \.offset) { _, c in
+                ForEach(Array(PluginFormat.clashLines(plugin, ownName: store.shownName(plugin), nameOf: { nameOf($0) }).enumerated()), id: \.offset) { _, c in
                     line(c.text, tone: c.here ? .secondary : .orange)
                 }
             }
@@ -783,10 +802,10 @@ struct ManualInstallSection: View {
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                     .keyboardType(.URL)
                     .submitLabel(.go)
-                    .onSubmit(go)
+                    .onSubmit { go() }
                     .disabled(store.busy["+"] != nil)
                     .accessibilityIdentifier("plugins.manual.spec")
-                Button(store.busy["+"] != nil ? "安装中…" : "安装", action: go)
+                Button(store.busy["+"] != nil ? "安装中…" : "安装") { go() }
                     .buttonStyle(.glassProminent)
                     .disabled(PluginRequests.normalizedSpec(text) == nil || store.isBusy)
                     .accessibilityIdentifier("plugins.manual.install")
@@ -820,12 +839,12 @@ struct RegistrySection: View {
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                     .keyboardType(.URL)
                     .submitLabel(.done)
-                    .onSubmit(save)
+                    .onSubmit { save() }
                     .accessibilityIdentifier("plugins.registry.field")
                 HStack {
                     Button("取消") { editing = false; draft = ""; problem = nil }.buttonStyle(.borderless)
                     Spacer()
-                    Button("保存", action: save)
+                    Button("保存") { save() }
                         .buttonStyle(.borderless).fontWeight(.semibold)
                         .disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty || store.registrySaving)
                 }
@@ -860,6 +879,7 @@ struct RegistrySection: View {
                 problem = nil
             } else {
                 problem = store.actionError?.message
+                store.actionError = nil
             }
         }
     }

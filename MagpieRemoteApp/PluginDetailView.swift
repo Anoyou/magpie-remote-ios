@@ -140,7 +140,7 @@ struct PluginDetailView: View {
         let check = store.versionCheck(for: plugin.spec)
         if plugin.updateOffered || check != nil || plugin.autoUpdated != nil {
             Section {
-                if let check { Text(check.summary).font(.footnote).foregroundStyle(check.status == .unknown ? .orange : .secondary) }
+                if let check { Text(check.summary).font(.footnote).foregroundStyle(check.status == .unknown ? Color.orange : Color.secondary) }
                 if let auto = plugin.autoUpdated, auto.to == plugin.version {
                     Text("magpie 已于 \(Self.day(auto.at)) 自动将它从 v\(auto.from) 更新到 v\(auto.to)").font(.footnote).foregroundStyle(.secondary)
                 }

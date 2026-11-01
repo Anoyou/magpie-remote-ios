@@ -39,8 +39,10 @@
 		6F993518B8F8F51B4EFE11B7 /* SetupGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA9472625D556D20B30C141 /* SetupGuideView.swift */; };
 		71900D884DFFCAE7E0F16F92 /* ManagePluginsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 956776CE0C93C73B96065EF2 /* ManagePluginsView.swift */; };
 		71BCE8E10AAFE6B65CC4EE13 /* PluginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90D4267EF9983628F5A705C /* PluginService.swift */; };
+		762E0FC0C41941341BD7FF16 /* PluginDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA773FD5DA6B3DB82F02868D /* PluginDetailView.swift */; };
 		7992886DB34CB4F2EA75D5AB /* ManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */; };
 		7DA13AE4E57978E415092923 /* AgentSessionsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30475E3A14C3C501962A461 /* AgentSessionsService.swift */; };
+		8093DD89947CFB33F3673ED7 /* PluginComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5767857C60806660E639B6 /* PluginComponents.swift */; };
 		878A35BAC4EDA886ABCB2A00 /* HostUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA685B0A7948AA062BF1218E /* HostUpdateView.swift */; };
 		915FEEF1B6DAAC51D0831145 /* UsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778AD74AE35795A31AAC5EF5 /* UsageService.swift */; };
 		9C3D6FAD32863EB8F27CA822 /* ChatModelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */; };
@@ -130,6 +132,7 @@
 		D735EF3971F23500E9C63F87 /* RoutesStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesStageView.swift; sourceTree = "<group>"; };
 		D8FF93AA7A2D9498A020FDE3 /* DockCustomizeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockCustomizeView.swift; sourceTree = "<group>"; };
 		D90D4267EF9983628F5A705C /* PluginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginService.swift; sourceTree = "<group>"; };
+		DA773FD5DA6B3DB82F02868D /* PluginDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginDetailView.swift; sourceTree = "<group>"; };
 		DC159FECE3AE2C80CE293EBA /* RemoteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteService.swift; sourceTree = "<group>"; };
 		DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesMagpie.swift; sourceTree = "<group>"; };
 		DFA9472625D556D20B30C141 /* SetupGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupGuideView.swift; sourceTree = "<group>"; };
@@ -138,6 +141,7 @@
 		ECE8F1E3AAD18758C5FF55CC /* HostTuneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostTuneView.swift; sourceTree = "<group>"; };
 		ED21306234672F3C88C45E0E /* RoutesFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesFixture.swift; sourceTree = "<group>"; };
 		EFD02FB5DF5AB6DC37E6577F /* RoutesLiveModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesLiveModel.swift; sourceTree = "<group>"; };
+		FA5767857C60806660E639B6 /* PluginComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginComponents.swift; sourceTree = "<group>"; };
 		FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassStyle.swift; sourceTree = "<group>"; };
 		FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -234,6 +238,8 @@
 				266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */,
 				D0D0018F229A70CBA54BFECD /* ManageWebPageView.swift */,
 				793F539829F0FF3C2E4C218C /* MoreView.swift */,
+				FA5767857C60806660E639B6 /* PluginComponents.swift */,
+				DA773FD5DA6B3DB82F02868D /* PluginDetailView.swift */,
 				D90D4267EF9983628F5A705C /* PluginService.swift */,
 				8936C3A022E0EA20FD5A9DFE /* PluginStore.swift */,
 				4276B4618D4C2849903B8C78 /* PrivacyInfo.xcprivacy */,
@@ -401,6 +407,8 @@
 				7992886DB34CB4F2EA75D5AB /* ManageView.swift in Sources */,
 				5C0AC2052468A97ECF8620BB /* ManageWebPageView.swift in Sources */,
 				BE07FE492CF20ADED83A0B4F /* MoreView.swift in Sources */,
+				8093DD89947CFB33F3673ED7 /* PluginComponents.swift in Sources */,
+				762E0FC0C41941341BD7FF16 /* PluginDetailView.swift in Sources */,
 				71BCE8E10AAFE6B65CC4EE13 /* PluginService.swift in Sources */,
 				F1DF4CF06E8A7C39472CB693 /* PluginStore.swift in Sources */,
 				2265F3977CF475D57E7FB17B /* QuotaService.swift in Sources */,
