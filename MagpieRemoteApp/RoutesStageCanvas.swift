@@ -739,8 +739,9 @@ struct InlineLine: Layout {
             let want = v.sizeThatFits(.unspecified)
             let left = bounds.maxX - x
             if done || left < Self.minPiece && want.width > left {
-                // 放不下：放到框外看不见的地方，宽 0
-                v.place(at: CGPoint(x: bounds.maxX + 10_000, y: bounds.midY), anchor: .leading, proposal: .zero)
+                // 放不下：宽 0，贴着右边放（由外面的 clipped 裁掉）。不能放到框外很远的地方：无障碍框会把整张卡片
+                // 撑到上万点宽（UI 测试里截不了图，VoiceOver 的框也不对）。
+                v.place(at: CGPoint(x: bounds.maxX, y: bounds.midY), anchor: .leading, proposal: .zero)
                 done = true
                 continue
             }

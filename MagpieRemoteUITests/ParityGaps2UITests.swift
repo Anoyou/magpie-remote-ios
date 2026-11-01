@@ -33,10 +33,9 @@ final class ParityGaps2UITests: XCTestCase {
     }
 
     private func waitForStatus(_ text: String, in app: XCUIApplication, timeout: TimeInterval = 10) {
+        // 状态栏只停 4 秒：每 0.25 秒查一次（waitForExistence 每秒才查一次，赶上弹窗收起的动画就可能错过）。
         let status = element(id: "agents.status", in: app)
-        XCTAssertTrue(status.waitForExistence(timeout: timeout), "没有出现状态提示")
-        expectation(for: NSPredicate(format: "label CONTAINS %@", text), evaluatedWith: status)
-        waitForExpectations(timeout: timeout)
+        XCTAssertTrue(status.hasLabel(containing: text, within: timeout), "没有出现状态提示「\(text)」")
     }
 
     /// Agent「更多操作 › 隐藏」：Codex 收进折叠组，提示在「已隐藏」里找回。
@@ -67,10 +66,13 @@ final class ParityGaps2UITests: XCTestCase {
         XCTAssertTrue(entry.waitForExistence(timeout: 15), "Codex 应当有「模型列表」一行")
         entry.tap()
         XCTAssertTrue(app.navigationBars["Codex 的模型列表"].waitForExistence(timeout: 10))
+        // 「只显示我勾选的模型」在最上面：先看它，再往下滑到示例中转的 o3（列表懒加载，屏幕外的行不在无障碍树里）。
+        XCTAssertTrue(element(id: "agentModels.only", in: app).appears(timeout: 10), "应当有「只显示我勾选的模型」")
         let o3 = element(id: "agentModels.model.relay-example/o3", in: app)
-        XCTAssertTrue(o3.waitForExistence(timeout: 10), "列表里应当有示例中转的 o3")
+        _ = o3.appears(timeout: 2)
+        scrollTo(o3, in: app, attempts: 4)
+        XCTAssertTrue(o3.appears(timeout: 10), "列表里应当有示例中转的 o3")
         o3.tap()
-        XCTAssertTrue(element(id: "agentModels.only", in: app).exists, "应当有「只显示我勾选的模型」")
     }
 
     /// 网关密钥「修改限额」：改估算费用后保存，提示已保存。

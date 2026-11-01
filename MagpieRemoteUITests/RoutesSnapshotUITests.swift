@@ -1,3 +1,4 @@
+import UIKit
 import XCTest
 
 /// 「路由」舞台的逐帧截图：和官方 magpie 网页路由页逐帧对比喜鹊的样子与时间（网页那边用 Playwright 的假时钟截）。
@@ -42,18 +43,32 @@ final class RoutesSnapshotUITests: XCTestCase {
         while ms <= last {
             wait(for: clock, toShow: ms)
             if index % every == 0 {
-                let shot = stage.screenshot()
+                let shot = visibleShot(of: stage, in: app)
                 let name = String(format: "ios-%06d", ms)
-                let attachment = XCTAttachment(screenshot: shot)
+                let attachment = XCTAttachment(image: shot)
                 attachment.name = "\(scene)/\(name)"
                 attachment.lifetime = .keepAlways
                 add(attachment)
-                try? shot.pngRepresentation.write(to: directory.appendingPathComponent(name + ".png"))
+                try? shot.pngData()?.write(to: directory.appendingPathComponent(name + ".png"))
             }
             index += 1
             ms += 100
             if ms <= last { step.tap() }
         }
+    }
+
+    /// 舞台卡片在屏幕上看得见的那一块。卡片下面加了「是怎么路由的」之后比屏幕还高，
+    /// `XCUIElement.screenshot()` 对超出屏幕的元素会失败（Rendering screen failed），所以截整屏再裁。
+    private func visibleShot(of element: XCUIElement, in app: XCUIApplication) -> UIImage {
+        let screen = XCUIScreen.main.screenshot().image
+        let bounds = app.windows.firstMatch.frame
+        let rect = element.frame.intersection(bounds)
+        guard let cg = screen.cgImage, !rect.isNull, rect.width > 0, rect.height > 0 else { return screen }
+        let scale = CGFloat(cg.width) / bounds.width
+        let pixels = CGRect(x: (rect.minX - bounds.minX) * scale, y: (rect.minY - bounds.minY) * scale,
+                            width: rect.width * scale, height: rect.height * scale).integral
+        guard let cropped = cg.cropping(to: pixels) else { return screen }
+        return UIImage(cgImage: cropped, scale: screen.scale, orientation: .up)
     }
 
     /// 等「下一帧」的 label 显示这一刻（毫秒）已经画好。直接读 label，比 expectation 的轮询快、失败时也能说出停在哪。

@@ -79,7 +79,8 @@ final class RoutesUITests: XCTestCase {
         mask.tap()
         let masked = element(id: "routes.row.codex#demo", in: app)
         XCTAssertTrue(waitUntil(5) { masked.exists && !masked.label.contains("demo.user@example.com") }, "打码后仍显示账号")
-        XCTAssertTrue(element(containing: "账号已打码", in: app).exists)
+        // 和网页一样按钮文字不变（「账号打码」），打开时值为「开」
+        XCTAssertEqual(element(id: "routes.mask", in: app).value as? String, "开", "打码后「账号打码」应当是打开的")
         element(id: "routes.mask", in: app).tap()
         XCTAssertTrue(element(id: "routes.row.codex#demo", in: app).hasLabel(containing: "demo.user@example.com", within: 5), "取消打码后没有恢复账号")
     }
@@ -101,19 +102,24 @@ final class RoutesUITests: XCTestCase {
     func testReplayTheLastRequest() {
         let app = launchRoutes()
         XCTAssertTrue(element(id: "routes.stage", in: app).waitForExistence(timeout: 10), "没有出现实时路由舞台")
+        // 先等最近一个请求结束（「重放」出现），再滑到能点；不要先滑：还没出现时连滑几下会把舞台滑出屏幕（懒加载）。
         let replay = element(id: "routes.replay.one", in: app)
-        scrollTo(replay, in: app, attempts: 3)
-        XCTAssertTrue(replay.waitForExistence(timeout: 20), "最近一个请求结束后应当有「重放」")
+        XCTAssertTrue(replay.appears(timeout: 20), "最近一个请求结束后应当有「重放」")
+        app.swipeUp(until: replay, max: 2)
         replay.tap()
-        XCTAssertTrue(element(id: "routes.replay", in: app).waitForExistence(timeout: 5), "没有出现重放条")
+        XCTAssertTrue(element(id: "routes.replay", in: app).appears(timeout: 5), "没有出现重放条")
+        // 只重放一个请求一两秒就放完了；换速度、停止用「全部重放」（十几个请求，够长）。
+        let all = element(id: "routes.replay.all", in: app)
+        XCTAssertTrue(all.appears(timeout: 15), "没有「全部重放」")
+        scrollTo(all, in: app, attempts: 4)
+        all.tap()
         let speed = element(id: "routes.replay.speed", in: app)
-        XCTAssertTrue(speed.exists)
+        app.swipeDown(until: speed, max: 4)
+        XCTAssertTrue(speed.appears(timeout: 5), "全部重放时没有出现重放条的速度按钮")
         speed.tap()
-        XCTAssertTrue(speed.label.contains("2×"), "点一下速度变成 2×：\(speed.label)")
+        XCTAssertTrue(speed.hasLabel(containing: "2×", within: 3), "点一下速度变成 2×")
         element(id: "routes.replay.stop", in: app).tap()
-        let gone = NSPredicate(format: "exists == false")
-        expectation(for: gone, evaluatedWith: element(id: "routes.replay", in: app))
-        waitForExpectations(timeout: 5)
+        XCTAssertTrue(element(id: "routes.replay", in: app).disappears(timeout: 5), "停止后重放条应当消失")
     }
 
     /// 请求是舞台下面单独的一张卡片：标题旁有「全部重放」，下面「按请求 / 按会话」。

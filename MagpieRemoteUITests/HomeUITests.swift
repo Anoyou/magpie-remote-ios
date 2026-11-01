@@ -52,9 +52,13 @@ final class HomeUITests: XCTestCase {
         XCTAssertFalse(element(id: "agent.model.gemini", in: app).exists, "隐藏的 Gemini CLI 默认应当折叠")
 
         toggle.tap()
+        // Agent 页现在每个 Agent 行更多（版本、更新、更多操作），折叠组在屏幕底部：展开的行要往下滑才进无障碍树。
+        let caption = element(containing: "未设置", in: app)
+        app.swipeUp(until: caption, max: 3)
+        XCTAssertTrue(caption.appears(timeout: 5), "展开后没有「未设置」小标题")
         let claude = element(id: "agent.model.claude", in: app)
+        app.swipeUp(until: claude, max: 3)
         XCTAssertTrue(claude.appears(timeout: 5), "展开后没有显示 Claude Code")
-        XCTAssertTrue(element(containing: "未设置", in: app).exists, "展开后没有「未设置」小标题")
         let gemini = element(id: "agent.model.gemini", in: app)
         for _ in 0..<4 {
             if gemini.exists { break }
