@@ -139,7 +139,7 @@ final class UsageLedgerTests: XCTestCase {
         let weeks = heat.weeks()
         XCTAssertEqual(weeks.count, 53)
         XCTAssertTrue(weeks.allSatisfy { $0.count == 7 })
-        XCTAssertEqual(weeks.flatMap { $0 }.compactMap { $0 }.first?.date, "2025-11-03")
+        XCTAssertEqual(weeks.flatMap { $0 }.compactMap { $0 }.first?.date, "2025-10-27")
         XCTAssertEqual(weeks.flatMap { $0 }.compactMap { $0 }.last?.date, "2026-11-01")
         let level = UsageHeatmap.levels([0, 10, 20, 40])
         XCTAssertEqual([0, 10, 20, 40].map { level(Double($0)) }, [0, 1, 2, 4])
