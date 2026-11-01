@@ -97,6 +97,37 @@ final class RoutesUITests: XCTestCase {
         XCTAssertTrue(element(id: "routes.requests.more", in: app).label.contains("收起"))
     }
 
+    /// 「重放」：卡片下「最近一个请求是怎么路由的」旁的重放按钮，放的时候舞台上方出现重放条（速度、停止），停止后回到实时。
+    func testReplayTheLastRequest() {
+        let app = launchRoutes()
+        XCTAssertTrue(element(id: "routes.stage", in: app).waitForExistence(timeout: 10), "没有出现实时路由舞台")
+        let replay = element(id: "routes.replay.one", in: app)
+        scrollTo(replay, in: app, attempts: 3)
+        XCTAssertTrue(replay.waitForExistence(timeout: 20), "最近一个请求结束后应当有「重放」")
+        replay.tap()
+        XCTAssertTrue(element(id: "routes.replay", in: app).waitForExistence(timeout: 5), "没有出现重放条")
+        let speed = element(id: "routes.replay.speed", in: app)
+        XCTAssertTrue(speed.exists)
+        speed.tap()
+        XCTAssertTrue(speed.label.contains("2×"), "点一下速度变成 2×：\(speed.label)")
+        element(id: "routes.replay.stop", in: app).tap()
+        let gone = NSPredicate(format: "exists == false")
+        expectation(for: gone, evaluatedWith: element(id: "routes.replay", in: app))
+        waitForExpectations(timeout: 5)
+    }
+
+    /// 请求是舞台下面单独的一张卡片：标题旁有「全部重放」，下面「按请求 / 按会话」。
+    func testRequestsCardHasReplayAllAndGrouping() {
+        let app = launchRoutes()
+        let card = element(id: "routes.requests", in: app)
+        scrollTo(card, in: app, attempts: 3)
+        XCTAssertTrue(card.waitForExistence(timeout: 10), "没有请求卡片")
+        XCTAssertTrue(element(id: "routes.replay.all", in: app).waitForExistence(timeout: 10), "没有「全部重放」")
+        XCTAssertTrue(element(id: "routes.bySession", in: app).exists, "没有「按请求 / 按会话」")
+        XCTAssertTrue(element(id: "routes.steps", in: app).exists, "没有「是怎么路由的」那几步")
+        XCTAssertTrue(element(id: "routes.gogroups", in: app).exists, "标题旁没有跳到路由组的按钮")
+    }
+
     func testChangeRoutingFromGroupCard() {
         let app = launchRoutes()
         let tag = element(id: "group.routing.smart", in: app)

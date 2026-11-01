@@ -11,6 +11,7 @@
 		0467E16AE20ADE425AEFC607 /* UITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2AB522EEAB5ECDDE0BC37F /* UITestSupport.swift */; };
 		081C5121C048F627784522BD /* ParityGaps2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B05A223444B8A29F73817B /* ParityGaps2UITests.swift */; };
 		090B69224BF8F761AF961E19 /* RoutesMagpie.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */; };
+		0AED98D6D16B8513FD672158 /* RoutesRequestList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3616768D4738A9FF9A4022D3 /* RoutesRequestList.swift */; };
 		0C31645EFE7E1AA4A62861B4 /* UsageContextPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B15913582DE6332FF94AE0 /* UsageContextPane.swift */; };
 		0C3D212091FFFBD88D1DEF05 /* QuotaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */; };
 		0D9C6E6AE4891CA0AF3078F1 /* ProviderKeysSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59AD83E4A36A7C989968FEF4 /* ProviderKeysSection.swift */; };
@@ -61,6 +62,7 @@
 		8093DD89947CFB33F3673ED7 /* PluginComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5767857C60806660E639B6 /* PluginComponents.swift */; };
 		868CD4E99FACF3A03D4300D4 /* ProviderDetailUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */; };
 		878A35BAC4EDA886ABCB2A00 /* HostUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA685B0A7948AA062BF1218E /* HostUpdateView.swift */; };
+		8BE60FC59CE56676889668D7 /* RoutesStageCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CB7F2272363A0C04FE5AB75 /* RoutesStageCanvas.swift */; };
 		915FEEF1B6DAAC51D0831145 /* UsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778AD74AE35795A31AAC5EF5 /* UsageService.swift */; };
 		9C3D6FAD32863EB8F27CA822 /* ChatModelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */; };
 		9CA0D4B4A45E20AC77DB4388 /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFEAEA56E0EEF596F412C76F /* WidgetBridge.swift */; };
@@ -144,6 +146,7 @@
 		0F83110DBDE962E7997275A8 /* RoutesSnapshotUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesSnapshotUITests.swift; sourceTree = "<group>"; };
 		14E1E74826ECB04BB8AFAB23 /* AgentSessionsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionsStore.swift; sourceTree = "<group>"; };
 		19FC2DD80AE7DF7087FB1460 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		1CB7F2272363A0C04FE5AB75 /* RoutesStageCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesStageCanvas.swift; sourceTree = "<group>"; };
 		1E1BFA63809ED4BF7D265B80 /* ManageKeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageKeysView.swift; sourceTree = "<group>"; };
 		208906F06A1D3AC98B888F34 /* MagpieRemoteWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MagpieRemoteWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2186BECFDE7592BD0DB2621C /* HostToolsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostToolsSection.swift; sourceTree = "<group>"; };
@@ -156,6 +159,7 @@
 		2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageUITests.swift; sourceTree = "<group>"; };
 		28E0F7A1DD10B13C5F72FFA8 /* OfficialIconViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialIconViews.swift; sourceTree = "<group>"; };
 		2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		3616768D4738A9FF9A4022D3 /* RoutesRequestList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesRequestList.swift; sourceTree = "<group>"; };
 		389C0198DFDDB6F053E5B0F4 /* ManageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageStore.swift; sourceTree = "<group>"; };
 		3A368A41C1D950B939843EED /* UsageLedgerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageLedgerViews.swift; sourceTree = "<group>"; };
 		3F433E0A2B7E68C69ECDB8E5 /* KeyLimitViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyLimitViews.swift; sourceTree = "<group>"; };
@@ -368,6 +372,8 @@
 				ED21306234672F3C88C45E0E /* RoutesFixture.swift */,
 				EFD02FB5DF5AB6DC37E6577F /* RoutesLiveModel.swift */,
 				DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */,
+				3616768D4738A9FF9A4022D3 /* RoutesRequestList.swift */,
+				1CB7F2272363A0C04FE5AB75 /* RoutesStageCanvas.swift */,
 				D735EF3971F23500E9C63F87 /* RoutesStageView.swift */,
 				75A7B1E44949772EBF4800A8 /* SessionTrashView.swift */,
 				DFA9472625D556D20B30C141 /* SetupGuideView.swift */,
@@ -609,6 +615,8 @@
 				29993AA6C81736A24927F80A /* RoutesFixture.swift in Sources */,
 				042B6CDB3B8E20BADBB4A8F5 /* RoutesLiveModel.swift in Sources */,
 				090B69224BF8F761AF961E19 /* RoutesMagpie.swift in Sources */,
+				0AED98D6D16B8513FD672158 /* RoutesRequestList.swift in Sources */,
+				8BE60FC59CE56676889668D7 /* RoutesStageCanvas.swift in Sources */,
 				F6870649F243121EE5F5A4AB /* RoutesStageView.swift in Sources */,
 				C879F70F0330A8659AF8C86D /* SessionTrashView.swift in Sources */,
 				6F993518B8F8F51B4EFE11B7 /* SetupGuideView.swift in Sources */,
@@ -745,7 +753,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MAGPIE_APP_GROUP = group.com.magpieremote.personal;
-				MARKETING_VERSION = 0.4.1;
+				MARKETING_VERSION = 0.5.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -852,7 +860,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MAGPIE_APP_GROUP = group.com.magpieremote.personal;
-				MARKETING_VERSION = 0.4.1;
+				MARKETING_VERSION = 0.5.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
