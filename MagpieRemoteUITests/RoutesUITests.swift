@@ -119,13 +119,17 @@ final class RoutesUITests: XCTestCase {
     /// 请求是舞台下面单独的一张卡片：标题旁有「全部重放」，下面「按请求 / 按会话」。
     func testRequestsCardHasReplayAllAndGrouping() {
         let app = launchRoutes()
+        // 列表是懒加载的：标题（在最上面）和舞台下的「是怎么路由的」要在往下滑到请求卡片之前看，滑走的行不在无障碍树里。
+        XCTAssertTrue(element(id: "routes.gogroups", in: app).appears(timeout: 10), "标题旁没有跳到路由组的按钮")
+        let steps = element(id: "routes.steps", in: app)
+        _ = steps.appears(timeout: 10)
+        scrollTo(steps, in: app, attempts: 3)
+        XCTAssertTrue(steps.appears(timeout: 10), "没有「是怎么路由的」那几步")
         let card = element(id: "routes.requests", in: app)
         scrollTo(card, in: app, attempts: 3)
-        XCTAssertTrue(card.waitForExistence(timeout: 10), "没有请求卡片")
-        XCTAssertTrue(element(id: "routes.replay.all", in: app).waitForExistence(timeout: 10), "没有「全部重放」")
+        XCTAssertTrue(card.appears(timeout: 10), "没有请求卡片")
+        XCTAssertTrue(element(id: "routes.replay.all", in: app).appears(timeout: 10), "没有「全部重放」")
         XCTAssertTrue(element(id: "routes.bySession", in: app).exists, "没有「按请求 / 按会话」")
-        XCTAssertTrue(element(id: "routes.steps", in: app).exists, "没有「是怎么路由的」那几步")
-        XCTAssertTrue(element(id: "routes.gogroups", in: app).exists, "标题旁没有跳到路由组的按钮")
     }
 
     func testChangeRoutingFromGroupCard() {

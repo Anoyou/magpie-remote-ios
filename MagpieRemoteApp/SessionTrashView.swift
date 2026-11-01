@@ -38,6 +38,8 @@ struct SessionTrashView: View {
                         Button { Task { await store.restore(item) } } label: { Label("恢复", systemImage: "arrow.uturn.backward") }
                         Button(role: .destructive) { pendingPurge = item } label: { Label("彻底删除", systemImage: "trash") }
                     }
+                    // 先声明为容器：否则行的 identifier 会盖掉「恢复」按钮自己的 identifier。
+                    .accessibilityElement(children: .contain)
                     .accessibilityIdentifier("trash.row.\(item.sessionID)")
                 }
             } footer: {

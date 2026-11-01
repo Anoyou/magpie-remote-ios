@@ -392,7 +392,10 @@ private struct AgentSection: View {
                 }
             }
         } label: {
+            // 整行都能点开菜单（列表里的 Menu 只认标签本身的大小）。
             Label("更多操作", systemImage: "ellipsis.circle")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
         }
         .disabled(store.busy)
         .accessibilityIdentifier("agent.more.\(agent.id)")

@@ -48,7 +48,12 @@ final class ParityGaps2UITests: XCTestCase {
         XCTAssertTrue(more.waitForExistence(timeout: 15), "Codex 应当有「更多操作」")
         more.tap()
         let hide = app.menuItem(id: "agent.hide", label: "隐藏")
-        XCTAssertTrue(hide.waitForExistence(timeout: 5), "菜单里应当有「隐藏」")
+        // 列表行里的 Menu：菜单的触发区是里面那个按钮；第一下没弹出菜单就点它。
+        if !hide.appears(timeout: 3) {
+            let trigger = more.buttons.firstMatch
+            (trigger.exists ? trigger : more).tap()
+        }
+        XCTAssertTrue(hide.appears(timeout: 5), "菜单里应当有「隐藏」")
         hide.tap()
         waitForStatus("已隐藏 Codex", in: app)
     }
