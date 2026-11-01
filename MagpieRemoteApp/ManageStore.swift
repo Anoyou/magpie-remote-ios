@@ -168,6 +168,33 @@ final class ManageStore {
         await run { service in self.apply(try await service.provider(.models, WebRequests.providerID(id))) }
     }
 
+    // MARK: 供应商的 Key
+
+    /// 一把 Key 的操作（添加、批量添加、设为首选、改名、换值、启用 / 停用、删除）。成功后列表换成主机返回的，
+    /// 并把它交给调用方（批量添加要读 added / had）；失败弹出错误、返回 nil。
+    @discardableResult
+    func providerKeys(_ action: ProviderKeyAction, _ body: WebJSON) async -> WebProviders? {
+        var result: WebProviders?
+        await run { service in
+            let list = try await service.providerKeys(action, body)
+            self.apply(list)
+            result = list
+        }
+        return result
+    }
+
+    /// 按需取一把 Key 的明文（显示 / 复制用）。不经过 busy，不缓存；失败时弹出错误并返回 nil。
+    func providerKeySecret(_ provider: String, key: String?) async -> String? {
+        guard let service else { return nil }
+        do {
+            return try await service.providerKeySecret(provider, account: key)
+        } catch {
+            let error = MagpieError.from(error)
+            if error != .cancelled { actionError = error }
+            return nil
+        }
+    }
+
     /// 列表拖动排序：先在本地挪动，再提交；失败时恢复主机的顺序。
     func moveProviders(from source: IndexSet, to destination: Int) async {
         var order = providers

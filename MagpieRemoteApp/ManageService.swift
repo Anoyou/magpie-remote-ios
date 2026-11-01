@@ -7,6 +7,10 @@ protocol ManageServing: Sendable {
     func providers() async throws -> WebProviders
     func provider(_ action: ProviderAction, _ body: WebJSON) async throws -> WebProviders
     func arrangeProviders(_ order: [String]) async throws -> WebProviders
+    /// 供应商的多把 Key：增删改（`POST /api/keys/{action}`）。
+    func providerKeys(_ action: ProviderKeyAction, _ body: WebJSON) async throws -> WebProviders
+    /// 按需取一把 Key 的明文（`POST /api/provider/key`）。只用于显示 / 复制，不缓存、不记录。
+    func providerKeySecret(_ provider: String, account: String?) async throws -> String
     func groups() async throws -> WebGroups
     func group(_ action: GroupAction, _ body: WebJSON) async throws -> WebGroups
     /// 路由页：各模型近 7 天的速度、网关的实时路由记录。
@@ -38,6 +42,8 @@ struct LiveManageService: ManageServing {
     func providers() async throws -> WebProviders { try await web.providers() }
     func provider(_ action: ProviderAction, _ body: WebJSON) async throws -> WebProviders { try await web.provider(action, body) }
     func arrangeProviders(_ order: [String]) async throws -> WebProviders { try await web.arrangeProviders(order) }
+    func providerKeys(_ action: ProviderKeyAction, _ body: WebJSON) async throws -> WebProviders { try await web.providerKeys(action, body) }
+    func providerKeySecret(_ provider: String, account: String?) async throws -> String { try await web.providerKey(provider, account: account) }
     func groups() async throws -> WebGroups { try await web.groups() }
     func group(_ action: GroupAction, _ body: WebJSON) async throws -> WebGroups { try await web.group(action, body) }
     func modelSpeeds() async throws -> ModelSpeeds { try await web.modelSpeeds() }
@@ -79,6 +85,9 @@ actor FixtureManageService: ManageServing {
     private var issued: [WebJSON] = []
     private var fixturePools: [WebJSON] = RoutesFixture.pools
     private var foundGroups = true
+    /// fixture 里各 Key 的「明文」（全是假值），按 Key 的 id。
+    private var keySecrets: [String: String] = ["fx-key-1": "sk-relay-EXAMPLE-MAIN1", "fx-key-2": "sk-relay-EXAMPLE-BACK2",
+                                                "fx-key-3": "sk-deepseek-EXAMPLE-EXMP"]
     private let traceStart = Date()
     private var counter = 0
 
@@ -87,11 +96,15 @@ actor FixtureManageService: ManageServing {
         let provider1: WebJSON =
             ["id": "relay-example", "name": "示例中转", "preset": "", "host": "relay.example", "chat": "https://relay.example/v1",
              "ready": true, "off": false, "chosen": ["gpt-4.1", "o3"], "fallback": [], "headers": ["X-Org": "org-EXAMPLE"],
-             "key": ["set": true, "masked": "sk-r…EXMP", "optional": false], "account": nil,
+             "key": ["set": true, "masked": "sk-r…AIN1", "optional": false], "account": nil,
+             "responses": "https://relay.example/v1",
+             "keyList": [["id": "fx-key-1", "name": "主力", "masked": "sk-r…AIN1", "active": true, "on": true],
+                         ["id": "fx-key-2", "name": "备用", "masked": "sk-r…ACK2", "active": false, "on": true]],
              "models": [model("gpt-4.1", "GPT 4.1", true), model("gpt-4.1-mini", "GPT 4.1 mini", false), model("o3", "OpenAI o3", true)]]
         let provider2: WebJSON =
             ["id": "deepseek", "name": "示例 DeepSeek", "preset": "deepseek", "host": "api.deepseek.example", "chat": "https://api.deepseek.example/v1",
              "ready": true, "off": false, "chosen": [], "fallback": [], "key": ["set": true, "masked": "sk-d…EXMP", "optional": false],
+             "keyList": [["id": "fx-key-3", "masked": "sk-d…EXMP", "active": true, "on": true]],
              "models": [model("deepseek-chat", "DeepSeek Chat", true), model("deepseek-reasoner", "DeepSeek Reasoner", true)]]
         let provider3: WebJSON =
             ["id": "codex", "name": "示例 Codex 订阅", "preset": "codex", "host": "", "chat": "", "ready": true, "off": true,
@@ -183,6 +196,92 @@ actor FixtureManageService: ManageServing {
     private func update(_ id: String, _ change: (inout WebJSON) -> Void) {
         guard let index = providerList.firstIndex(where: { $0["id"]?.string == id }) else { return }
         change(&providerList[index])
+    }
+
+    // MARK: 供应商的 Key（fixture）
+
+    func providerKeySecret(_ provider: String, account: String?) async throws -> String {
+        try await pause()
+        let keys = providerList.first(where: { $0["id"]?.string == provider })?["keyList"]?.array ?? []
+        let id = account ?? keys.first?["id"]?.string ?? ""
+        guard let secret = keySecrets[id], keys.contains(where: { $0["id"]?.string == id }) else {
+            throw MagpieError.webRejected(message: "no such key", code: nil)
+        }
+        return secret
+    }
+
+    func providerKeys(_ action: ProviderKeyAction, _ body: WebJSON) async throws -> WebProviders {
+        try await pause()
+        let id = body["id"]?.string ?? ""
+        let ref = body["ref"]?.string ?? ""
+        var keys = providerList.first(where: { $0["id"]?.string == id })?["keyList"]?.array ?? []
+        let index = keys.firstIndex { $0["id"]?.string == ref }
+        /// 主机的 promote：第一把让位给后面第一把在用的；没有就报错。
+        func promote() throws -> WebJSON {
+            guard let next = keys.indices.dropFirst().first(where: { keys[$0]["on"]?.bool == true }) else {
+                throw MagpieError.webRejected(message: "that's the only key in use; turn another on first", code: nil)
+            }
+            let old = keys.removeFirst()
+            let promoted = keys.remove(at: next - 1)
+            keys.insert(promoted, at: 0)
+            return old
+        }
+        func masked(_ key: String) -> String { key.count <= 8 ? String(repeating: "•", count: key.count) : "\(key.prefix(4))…\(key.suffix(4))" }
+        func append(_ key: String, name: String) throws {
+            if keys.contains(where: { keySecrets[$0["id"]?.string ?? ""] == key }) {
+                throw MagpieError.webRejected(message: "already has this key", code: nil)
+            }
+            counter += 1
+            let newID = "fx-key-new\(counter)"
+            keySecrets[newID] = key
+            var row: WebJSON = ["id": .string(newID), "masked": .string(masked(key)), "active": .bool(keys.isEmpty), "on": true]
+            if !name.isEmpty { row["name"] = .string(name) }
+            keys.append(row)
+        }
+        switch action {
+        case .add:
+            let key = body["key"]?.string ?? ""
+            guard !key.isEmpty else { throw MagpieError.webRejected(message: "paste the key to add", code: nil) }
+            try append(key, name: body["name"]?.string ?? "")
+        case .import:
+            for key in WebRequests.splitKeys(body["key"]?.string ?? "") { try? append(key, name: "") }
+        case .use:
+            if let index {
+                let row = keys.remove(at: index)
+                keys.insert(row, at: 0)
+            }
+        case .remove:
+            if index == 0 { _ = try promote() } else if let index { keys.remove(at: index) }
+        case .removeMany:
+            let refs = Set(body["refs"]?.strings ?? [])
+            keys.removeAll { refs.contains($0["id"]?.string ?? "") }
+        case .rename:
+            if let index {
+                let name = body["name"]?.string ?? ""
+                keys[index]["name"] = name.isEmpty ? nil : .string(name)
+            }
+        case .replace:
+            if let index, let key = body["key"]?.string, !key.isEmpty {
+                keySecrets[ref] = key
+                keys[index]["masked"] = .string(masked(key))
+            }
+        case .on, .off:
+            if index == 0 && action == .off {
+                var old = try promote()
+                old["on"] = false
+                keys.insert(old, at: 1)
+            } else if let index {
+                keys[index]["on"] = .bool(action == .on)
+            }
+        }
+        // 第一把总是 active、在用（与主机一致）
+        for i in keys.indices { keys[i]["active"] = .bool(i == 0) }
+        if !keys.isEmpty { keys[0]["on"] = true }
+        update(id) { provider in
+            provider["keyList"] = .array(keys)
+            provider["key"] = ["set": .bool(!keys.isEmpty), "masked": keys.first?["masked"] ?? "", "optional": false]
+        }
+        return providersJSON
     }
 
     func arrangeProviders(_ order: [String]) async throws -> WebProviders {

@@ -10,6 +10,7 @@
 		042B6CDB3B8E20BADBB4A8F5 /* RoutesLiveModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD02FB5DF5AB6DC37E6577F /* RoutesLiveModel.swift */; };
 		090B69224BF8F761AF961E19 /* RoutesMagpie.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */; };
 		0C3D212091FFFBD88D1DEF05 /* QuotaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */; };
+		0D9C6E6AE4891CA0AF3078F1 /* ProviderKeysSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59AD83E4A36A7C989968FEF4 /* ProviderKeysSection.swift */; };
 		10CBE185B772E40CBFC3322B /* DockNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 539E56C3200203FA4B1DE6B0 /* DockNavigation.swift */; };
 		11E8AFC6D13D95573FC05019 /* GlassStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */; };
 		12BAE742E07FE831CB20E33F /* RemoteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC159FECE3AE2C80CE293EBA /* RemoteService.swift */; };
@@ -41,6 +42,7 @@
 		71BCE8E10AAFE6B65CC4EE13 /* PluginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90D4267EF9983628F5A705C /* PluginService.swift */; };
 		7992886DB34CB4F2EA75D5AB /* ManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */; };
 		7DA13AE4E57978E415092923 /* AgentSessionsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30475E3A14C3C501962A461 /* AgentSessionsService.swift */; };
+		868CD4E99FACF3A03D4300D4 /* ProviderDetailUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */; };
 		878A35BAC4EDA886ABCB2A00 /* HostUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA685B0A7948AA062BF1218E /* HostUpdateView.swift */; };
 		915FEEF1B6DAAC51D0831145 /* UsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778AD74AE35795A31AAC5EF5 /* UsageService.swift */; };
 		9C3D6FAD32863EB8F27CA822 /* ChatModelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */; };
@@ -94,10 +96,12 @@
 		2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		389C0198DFDDB6F053E5B0F4 /* ManageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageStore.swift; sourceTree = "<group>"; };
 		4276B4618D4C2849903B8C78 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderDetailUITests.swift; sourceTree = "<group>"; };
 		539E56C3200203FA4B1DE6B0 /* DockNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockNavigation.swift; sourceTree = "<group>"; };
 		53B3684D1FBFD9F309DF04EE /* UsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageView.swift; sourceTree = "<group>"; };
 		561B078F07A52896FF08A607 /* ChatController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatController.swift; sourceTree = "<group>"; };
 		58959F16F79E9B000864BC3D /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		59AD83E4A36A7C989968FEF4 /* ProviderKeysSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderKeysSection.swift; sourceTree = "<group>"; };
 		5CDF3F3ED69DBC6AF4B0861E /* AgentSessionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionsUITests.swift; sourceTree = "<group>"; };
 		5DD330AB025C638D38D7F4B2 /* QuotaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaService.swift; sourceTree = "<group>"; };
 		6048AA6534925611CC245088 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
@@ -197,6 +201,7 @@
 				8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */,
 				2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */,
 				0D6DB79AF3E4D0FC04E2BFAD /* PluginsUITests.swift */,
+				48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */,
 				726F02F062C85BC63F1B4072 /* QuotaUITests.swift */,
 				E67EC9FC2AEF26D72DE745B5 /* RoutesUITests.swift */,
 			);
@@ -243,6 +248,7 @@
 				D90D4267EF9983628F5A705C /* PluginService.swift */,
 				8936C3A022E0EA20FD5A9DFE /* PluginStore.swift */,
 				4276B4618D4C2849903B8C78 /* PrivacyInfo.xcprivacy */,
+				59AD83E4A36A7C989968FEF4 /* ProviderKeysSection.swift */,
 				5DD330AB025C638D38D7F4B2 /* QuotaService.swift */,
 				FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */,
 				DC159FECE3AE2C80CE293EBA /* RemoteService.swift */,
@@ -367,6 +373,7 @@
 				FF51B2EAE72A2A70428D3694 /* MagpieRemoteUITests.swift in Sources */,
 				3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */,
 				224F756965E44160F0793E7D /* PluginsUITests.swift in Sources */,
+				868CD4E99FACF3A03D4300D4 /* ProviderDetailUITests.swift in Sources */,
 				B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */,
 				E1520A79C1F021F0116D828E /* RoutesUITests.swift in Sources */,
 			);
@@ -411,6 +418,7 @@
 				BE07FE492CF20ADED83A0B4F /* MoreView.swift in Sources */,
 				71BCE8E10AAFE6B65CC4EE13 /* PluginService.swift in Sources */,
 				F1DF4CF06E8A7C39472CB693 /* PluginStore.swift in Sources */,
+				0D9C6E6AE4891CA0AF3078F1 /* ProviderKeysSection.swift in Sources */,
 				2265F3977CF475D57E7FB17B /* QuotaService.swift in Sources */,
 				0C3D212091FFFBD88D1DEF05 /* QuotaView.swift in Sources */,
 				12BAE742E07FE831CB20E33F /* RemoteService.swift in Sources */,
