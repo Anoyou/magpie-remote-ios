@@ -647,6 +647,34 @@ def t_plugins(errs):
     errs += check_web_fields(("GET", "/api/settings"), r.json or {}, "web POST /api/settings/plugin-option")
     r = web("err-web-plugin-option", "POST", "/api/settings/plugin-option", {"provider": "example", "key": "Not A Key!"})
     expect(r.status == 400, f"web /api/settings/plugin-option: 不合法的 key 应得 400，实际 {r.status}", errs)
+
+    # 插件页对齐官方（feat/plugins-parity）：不需要访问 npm / GitHub 的几个接口
+    r = web("web-plugins-git", "GET", "/api/plugins/git")
+    status_is(r, 200, "application/json", errs, "web GET /api/plugins/git")
+    expect(isinstance((r.json or {}).get("heads"), dict), "web /api/plugins/git: heads 应为对象", errs)
+    r = web("web-plugins-npm-none", "GET", "/api/plugins/npm?names=")
+    status_is(r, 200, "application/json", errs, "web GET /api/plugins/npm（无包名）")
+    expect(isinstance((r.json or {}).get("npm"), dict), "web /api/plugins/npm: npm 应为对象", errs)
+    r = web("web-plugins-search-empty", "GET", "/api/plugins/search?q=")
+    status_is(r, 200, "application/json", errs, "web GET /api/plugins/search（空）")
+    expect((r.json or {}).get("hits") == [], f"web /api/plugins/search: 空搜索应得 hits=[]，实际 {r.text[:80]}", errs)
+    was = bool((web("web-plugins-mirror-before", "GET", "/api/plugins").json or {}).get("mirror"))
+    for on in (not was, was):
+        r = web(f"web-plugins-mirror-{str(on).lower()}", "POST", "/api/plugins/mirror", {"on": on})
+        status_is(r, 200, "application/json", errs, "web POST /api/plugins/mirror")
+        errs += check_web_fields(("POST", "/api/plugins/mirror"), r.json or {}, "web POST /api/plugins/mirror")
+        expect((r.json or {}).get("mirror") is on, f"web /api/plugins/mirror: mirror 应为 {on}", errs)
+    r = web("web-plugins-registry-set", "POST", "/api/plugins/registry", {"url": "https://registry.example.test"})
+    status_is(r, 200, "application/json", errs, "web POST /api/plugins/registry")
+    errs += check_web_fields(("POST", "/api/plugins/registry"), r.json or {}, "web POST /api/plugins/registry")
+    reg = (r.json or {}).get("registry") or {}
+    expect(reg.get("from") == "magpie" and str(reg.get("url", "")).startswith("https://registry.example.test"),
+           f"web /api/plugins/registry: 设置后 from 应为 magpie，实际 {reg}", errs)
+    r = web("err-web-plugins-registry", "POST", "/api/plugins/registry", {"url": "ftp://nope"})
+    expect(r.status == 400, f"web /api/plugins/registry: 非 http(s) 地址应得 400，实际 {r.status}", errs)
+    r = web("web-plugins-registry-reset", "POST", "/api/plugins/registry", {"url": ""})
+    status_is(r, 200, "application/json", errs, "web POST /api/plugins/registry 恢复默认")
+    expect(((r.json or {}).get("registry") or {}).get("from") != "magpie", "web /api/plugins/registry: 清空后不应再是 magpie 设置的", errs)
 GROUP_COMPUTED = ["ready", "memberInfo", "holds", "offers", "shared", "picked", "patterns", "decides", "ref", "classifierFailed", "auto", "matched"]
 
 

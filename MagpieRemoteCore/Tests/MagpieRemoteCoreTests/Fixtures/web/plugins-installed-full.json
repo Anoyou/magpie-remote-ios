@@ -1,0 +1,181 @@
+{
+ "plugins": [
+  {
+   "spec": "@magpie-community/example-auth",
+   "providers": [
+    "Example Cloud",
+    "Example Cloud CN"
+   ],
+   "version": "1.2.0",
+   "latest": "1.3.0",
+   "moved": [
+    "example"
+   ],
+   "serves": [
+    "Example Cloud CN"
+   ],
+   "named": true,
+   "autoUpdated": {
+    "package": "@magpie-community/example-auth",
+    "from": "1.1.0",
+    "to": "1.2.0",
+    "at": "2026-10-31T03:00:00Z"
+   },
+   "clashes": [
+    {
+     "id": "example",
+     "by": "@magpie-community/example-auth",
+     "with": [
+      "./my-example-auth"
+     ],
+     "name": "Example Cloud"
+    }
+   ]
+  },
+  {
+   "spec": "./my-example-auth",
+   "providers": [
+    "Example Cloud"
+   ],
+   "version": "0.0.1",
+   "moved": [],
+   "named": true,
+   "clashes": [
+    {
+     "id": "example",
+     "by": "@magpie-community/example-auth",
+     "with": [
+      "./my-example-auth"
+     ],
+     "name": "Example Cloud"
+    }
+   ]
+  },
+  {
+   "spec": "example-middleware@2",
+   "providers": [],
+   "version": "2.0.0",
+   "moved": [],
+   "isMiddleware": true,
+   "middlewareOnly": true,
+   "optionsExample": {
+    "level": 1
+   },
+   "middleware": {
+    "hooks": [
+     "onRequest",
+     "onResponse"
+    ],
+    "calls": 12345,
+    "avgMicros": 4.25,
+    "failures": 3,
+    "lastError": "boom",
+    "strategies": [
+     "cheapest"
+    ],
+    "orders": 7,
+    "usage": true,
+    "rows": 99,
+    "dropped": 2
+   }
+  },
+  {
+   "spec": "example-context-hook",
+   "providers": [],
+   "version": "0.1.0",
+   "moved": [],
+   "isGateway": true,
+   "gatewayOnly": true,
+   "gateway": {
+    "calls": 10,
+    "failures": 1,
+    "avgMillis": 12.345,
+    "lastOutcome": "ready",
+    "lastBytes": 2048
+   }
+  },
+  {
+   "spec": "example-agent",
+   "providers": [],
+   "version": "1.0.0",
+   "moved": [],
+   "isAgent": true,
+   "inMagpieOnly": true,
+   "agent": {
+    "id": "example",
+    "name": "Example Agent",
+    "icon": "file:abc123.png"
+   }
+  },
+  {
+   "spec": "example-search-tools",
+   "providers": [],
+   "version": "0.2.0",
+   "moved": [],
+   "named": true,
+   "tools": [
+    {
+     "name": "search",
+     "description": "Search the web",
+     "mcp": "example_search"
+    }
+   ]
+  },
+  {
+   "spec": "github:example-owner/magpie-dash",
+   "off": true,
+   "providers": [],
+   "version": "0.4.1",
+   "package": "magpie-dash",
+   "commit": "abc1234",
+   "head": "abc1234def",
+   "moved": [],
+   "inMagpieOnly": true,
+   "page": {
+    "title": "Dash",
+    "replaces": "usage",
+    "reads": [
+     "usage:summary",
+     "providers:list"
+    ]
+   },
+   "panels": [
+    {
+     "slot": "usage",
+     "title": "Spend"
+    },
+    {
+     "slot": "usage",
+     "title": "Spend 2"
+    },
+    {
+     "slot": "provider"
+    }
+   ],
+   "panelReads": [],
+   "actions": [
+    {
+     "menu": "provider",
+     "title": "Open in Dash"
+    }
+   ]
+  }
+ ],
+ "bun": true,
+ "bunVersion": "1.3.0",
+ "picker": true,
+ "movable": [
+  {
+   "id": "other",
+   "name": "Other Cloud",
+   "package": "example-other-auth",
+   "accounts": 2
+  }
+ ],
+ "mirror": true,
+ "registry": {
+  "url": "https://registry.npmjs.org",
+  "from": "bunfig",
+  "path": "~/.bunfig.toml"
+ }
+}

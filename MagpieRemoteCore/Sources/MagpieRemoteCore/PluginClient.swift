@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// 插件操作（`POST /api/plugins/{op}`）。每个都返回整份插件列表。
 public enum PluginAction: String, Sendable {
@@ -12,8 +15,10 @@ public enum PluginAction: String, Sendable {
     case update
     /// 开关：`{spec, off}`。
     case off
-    /// 选项（整份替换）：`{spec, options}`。
+    /// 选项（整份替换）：`{spec, options}`；`options: null` = 清空。
     case options
+    /// 两个插件都登录同一个供应商时，改由这个插件提供：`{spec, provider}`（provider 是 OpenCode 的 id）。
+    case prefer
 }
 
 /// 插件接口的请求体。magpie 用不带 json 标签的 Go 结构体解码（大小写不敏感），这里统一用小写键。
@@ -28,6 +33,20 @@ public enum PluginRequests {
     public static func options(_ spec: String, _ options: [String: WebJSON]) -> WebJSON {
         ["spec": .string(spec), "options": .object(options)]
     }
+
+    /// 清空选项（官方「清空」发的是 null，主机存成没有选项）。
+    public static func clearOptions(_ spec: String) -> WebJSON { ["spec": .string(spec), "options": .null] }
+
+    public static func prefer(_ spec: String, provider: String) -> WebJSON { ["spec": .string(spec), "provider": .string(provider)] }
+
+    /// 「国内镜像」开关：`POST /api/plugins/mirror {on}`。
+    public static func mirror(_ on: Bool) -> WebJSON { ["on": .bool(on)] }
+
+    /// npm 源：`POST /api/plugins/registry {url}`，空 = 使用默认（.npmrc、bunfig、终端环境或 npm 官方源）。
+    public static func registry(_ url: String) -> WebJSON { ["url": .string(url.trimmingCharacters(in: .whitespacesAndNewlines))] }
+
+    /// 把内置订阅的账号迁到它的插件上：`POST /api/provider/move {id}`。
+    public static func move(_ id: String) -> WebJSON { ["id": .string(id)] }
 
     public static func builtin(_ id: String, on: Bool) -> WebJSON { ["id": .string(id), "on": .bool(on)] }
 
@@ -76,6 +95,66 @@ extension WebClient {
     /// 立刻问 npm / 仓库每个插件的最新版本，不安装任何东西。
     public func checkPluginUpdates() async throws -> WebPluginCheck {
         WebPluginCheck(json: try await patient().post("/api/plugins/check", [:]))
+    }
+
+    /// GitHub 上打了 magpie-plugin 标签的仓库；`again` = 让主机立刻重新问 GitHub（「重试」）。
+    public func taggedPlugins(again: Bool = false) async throws -> WebTaggedRepos {
+        WebTaggedRepos(json: try await get("/api/plugins/github", query: again ? [URLQueryItem(name: "again", value: "1")] : []))
+    }
+
+    /// npm 说的这些包（最多 100 个）：最新版本、下载量、发布者、许可证…
+    public func pluginNPM(names: [String]) async throws -> [String: WebPluginNPM] {
+        let list = Array(Set(names.filter { !$0.isEmpty })).sorted().prefix(100)
+        guard !list.isEmpty else { return [:] }
+        return WebPluginNPM.map(try await get("/api/plugins/npm", query: [URLQueryItem(name: "names", value: list.joined(separator: ","))]))
+    }
+
+    /// 每个 git 插件的仓库现在在哪个提交（spec → 短 sha）。
+    public func pluginGitHeads() async throws -> [String: String] {
+        let json = try await patient().get("/api/plugins/git")
+        return (json["heads"]?.object ?? [:]).compactMapValues(\.string)
+    }
+
+    /// 在 npm 上搜索插件（OpenCode 插件与 pi 包）。
+    public func searchPlugins(_ query: String) async throws -> [WebPluginListing] {
+        let json = try await get("/api/plugins/search", query: [URLQueryItem(name: "q", value: query)])
+        return (json["hits"]?.array ?? []).compactMap(WebPluginListing.hit)
+    }
+
+    /// 插件的 README（npm 上的，文件夹 / git 插件读它自己目录里的）。
+    public func pluginReadme(_ name: String) async throws -> WebPluginReadme {
+        WebPluginReadme(json: try await get("/api/plugins/page", query: [URLQueryItem(name: "name", value: name)]))
+    }
+
+    /// 「国内镜像」：返回主机现在的状态。
+    public func setPluginMirror(_ on: Bool) async throws -> Bool {
+        let json = try await post("/api/plugins/mirror", PluginRequests.mirror(on))
+        return json["mirror"]?.bool ?? on
+    }
+
+    /// 设置 npm 源，返回现在用的源。
+    public func setPluginRegistry(_ url: String) async throws -> PluginRegistry {
+        PluginRegistry(json: try await post("/api/plugins/registry", PluginRequests.registry(url))["registry"] ?? .null)
+    }
+
+    /// 把内置订阅（id）的账号迁到它的插件上；插件没装时主机会先装。
+    public func movePluginProvider(_ id: String) async throws {
+        _ = try await patient().post("/api/provider/move", PluginRequests.move(id))
+    }
+
+    /// 插件的供应商（登录状态）与它们声明的开关，都来自 `GET /api/providers`。
+    public func pluginProviders() async throws -> WebPluginProviders { WebPluginProviders(json: try await get("/api/providers")) }
+
+    /// 主机保存的图片（`file:<名字>` → `GET /api/icons/<名字>`）。
+    public func pluginIcon(_ icon: String) async throws -> Data? {
+        guard icon.hasPrefix("file:") else { return nil }
+        let name = String(icon.dropFirst(5))
+        guard !name.isEmpty, !name.contains("/") else { return nil }
+        var request = try makeRequest("/api/icons/" + name)
+        request.setValue("image/*", forHTTPHeaderField: "Accept")
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { return nil }
+        return data
     }
 
     public func builtinPlugins() async throws -> WebBuiltinPlugins { WebBuiltinPlugins(json: try await get("/api/plugins/builtin")) }

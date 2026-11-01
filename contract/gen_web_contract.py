@@ -49,11 +49,27 @@ PM_TAGS = [{"file":G+"privacymodel.go","tags":["on","chosen","minScore","default
  {"file":"internal/pii/pii.go","tags":["model","supported","installed","size","downloading","done","total","error","running","device","via","gpu","loadMs","gpuError","failed","loading","waiting"]}]
 
 PLUGIN_OPS = ["add","remove","update","upgrade","off","options","prefer"]
-PLUGINS_RES = ["plugins[].spec","plugins[].off?","plugins[].options?","plugins[].error?","plugins[].providers","plugins[].version?","plugins[].latest?","plugins[].icon?","plugins[].package?","plugins[].ownName?","plugins[].commit?","plugins[].head?","plugins[].optionsExample?","plugins[].isMiddleware?","plugins[].isGateway?","plugins[].isAgent?","plugins[].page?.title?","plugins[].page?.reads","plugins[].panels[]?.slot","plugins[].tools[]?.name","bun","bunVersion","error?","mirror"]
+PLUGINS_RES = ["plugins[].spec","plugins[].off?","plugins[].options?","plugins[].error?","plugins[].providers","plugins[].version?","plugins[].latest?","plugins[].icon?","plugins[].package?","plugins[].ownName?","plugins[].commit?","plugins[].head?","plugins[].optionsExample?","plugins[].isMiddleware?","plugins[].isGateway?","plugins[].isAgent?","plugins[].page?.title?","plugins[].page?.reads","plugins[].panels[]?.slot","plugins[].tools[]?.name","bun","bunVersion","error?","mirror",
+ # 插件页对齐官方（feat/plugins-parity）
+ "plugins[].page?.replaces?","plugins[].panels[]?.title?","plugins[].panelReads?","plugins[].actions[]?.menu","plugins[].actions[]?.title?","plugins[].tools[]?.description?","plugins[].tools[]?.mcp",
+ "plugins[].moved","plugins[].serves?","plugins[].named?","plugins[].autoUpdated?.from","plugins[].autoUpdated?.to","plugins[].autoUpdated?.at",
+ "plugins[].middleware?.hooks","plugins[].middleware?.calls","plugins[].middleware?.avgMicros","plugins[].middleware?.failures","plugins[].middleware?.error?","plugins[].middleware?.strategies?","plugins[].middleware?.usage?","plugins[].middleware?.rows?","plugins[].middleware?.dropped?",
+ "plugins[].gateway?.calls","plugins[].gateway?.failures","plugins[].gateway?.avgMillis","plugins[].gateway?.lastOutcome","plugins[].gateway?.lastBytes",
+ "plugins[].agent?.name?","plugins[].agent?.error?","plugins[].middlewareOnly?","plugins[].gatewayOnly?","plugins[].inMagpieOnly?",
+ "plugins[].clashes[]?.id","plugins[].clashes[]?.by","plugins[].clashes[]?.with","plugins[].clashes[]?.name",
+ "picker","movable[]?.id","movable[]?.name","movable[]?.package","movable[]?.accounts","registry.url","registry.from","registry.var?","registry.path?"]
 PLUGINS_TAGS = [
- {"file": G+"plugins.go", "tags": ["plugins","bun","bunVersion","error","mirror","providers","version","latest","icon","package","ownName","commit","head","optionsExample","isMiddleware","isGateway","isAgent","page","panels","tools","title","reads","slot","name","listings","npm"]},
+ {"file": G+"plugins.go", "tags": ["plugins","bun","bunVersion","error","mirror","providers","version","latest","icon","package","ownName","commit","head","optionsExample","isMiddleware","isGateway","isAgent","page","panels","tools","title","reads","slot","name","listings","npm",
+   "replaces","panelReads","actions","menu","description","mcp","moved","serves","named","autoUpdated","middleware","gateway","agent","middlewareOnly","gatewayOnly","inMagpieOnly","clashes","picker","movable","registry"]},
  {"file": "internal/plugin/store.go", "tags": ["spec","off","options"]},
+ {"file": "internal/plugin/updates.go", "tags": ["from","to","at"]},
+ {"file": "internal/middleware/middleware.go", "tags": ["hooks","events","error","calls","avgMicros","failures","lastError","strategies","orders","usage","rows","dropped"]},
+ {"file": "internal/plugin/gateway.go", "tags": ["calls","failures","avgMillis","lastOutcome","lastBytes"]},
+ {"file": "internal/plugin/host.go", "tags": ["id","by","with"]},
+ {"file": "internal/provider/migrate.go", "tags": ["id","name","package","accounts"]},
+ {"file": "internal/plugin/registry.go", "tags": ["url","from","var","path"]},
 ]
+NPM_TAGS = {"file": "internal/plugin/market.go", "tags": ["version","description","publisher","license","homepage","repository","weekly","icon"]}
 
 routes = [
  R("GET","/api/settings",G+"api.go", res=["version","gateway","lan?","port?","lanURLs?","lanPublic?","publicURL?","onNetwork?","addrEnv?","allowIPs?","lanKeyId?","disabledModels?","web?","gatewayOn?","dir"],
@@ -133,8 +149,24 @@ routes = [
  R("GET","/api/plugins",G+"plugins.go", res=PLUGINS_RES, tags=PLUGINS_TAGS),
  R("POST","/api/plugins/{op}",G+"plugins.go", actions=PLUGIN_OPS, req=["spec","off?","options?","provider?"], res=["<pluginsJSON>"],
    note="untagged struct{ Spec string; Off bool; Options map[string]any; Provider string }; options replaces the whole map; add/update/upgrade may take minutes (Bun download, npm install)"),
- R("POST","/api/plugins/check",G+"plugins.go", res=["at","plugins[].spec","plugins[].package","plugins[].version","plugins[].status","plugins[].latest?","plugins[].why?","plugins[].error?","state"],
-   tags=[{"file":"internal/plugin/updates.go","tags":["at","plugins","spec","package","version","latest","status","commit","head","why","error","limited","auto"]}], note="asks npm now; installs nothing"),
+ R("POST","/api/plugins/check",G+"plugins.go", res=["at","plugins[].spec","plugins[].package","plugins[].version","plugins[].status","plugins[].latest?","plugins[].why?","plugins[].error?","plugins[].head?","plugins[].limited?.until?","plugins[].limited?.token?","state"],
+   tags=[{"file":"internal/plugin/updates.go","tags":["at","plugins","spec","package","version","latest","status","commit","head","why","error","limited","auto","until","token"]}], note="asks npm now; installs nothing"),
+ # 插件页对齐官方：发现页的 GitHub 区、npm 回答、git 提交、npm 搜索、README、国内镜像、npm 源（feat/plugins-parity）
+ R("GET","/api/plugins/github",G+"plugins.go", req=["?again"], res=["repos[].spec","repos[].repo","repos[].url","repos[].owner","repos[].description?","repos[].stars","repos[].license?","repos[].pkgLicense?","repos[].pushed","repos[].package?","repos[].version?","repos[].kind?","repos[].icon?","topic","error?","missing?","why?"],
+   tags=[{"file":"internal/plugin/github.go","tags":["spec","repo","url","owner","description","stars","license","pkgLicense","pushed","package","version","kind","icon"]}],
+   contains=['r.URL.Query().Get("again")','out := map[string]any{"repos": repos, "topic": plugin.Topic}','out["error"], out["missing"] = m.Why.Error(), m.Missing','out["why"] = w'],
+   note="repositories tagged magpie-plugin (unreviewed); error/why/missing say why the list isn't GitHub's whole answer (why: slow|limited)"),
+ R("GET","/api/plugins/npm",G+"plugins.go", req=["?names"], res=["npm.<package>.version?","npm.<package>.description?","npm.<package>.publisher?","npm.<package>.license?","npm.<package>.homepage?","npm.<package>.repository?","npm.<package>.weekly","npm.<package>.icon?"],
+   tags=[NPM_TAGS], contains=['r.URL.Query().Get("names")','len(names) < 100','writeJSON(rw, map[string]any{"npm": info})'], note="names comma-separated, at most 100; a package npm said nothing of is left out"),
+ R("GET","/api/plugins/git",G+"plugins.go", res=["heads.<spec>"], contains=['writeJSON(rw, map[string]any{"heads": plugin.GitHeads(ctx)})'], note="the commit each installed git plugin's repository is at now (short sha)"),
+ R("GET","/api/plugins/search",G+"plugins.go", req=["?q"], res=["hits[].package","hits[].version?","hits[].description?","hits[].publisher?","hits[].weekly"],
+   tags=[{"file":"internal/plugin/market.go","tags":["package"]}, NPM_TAGS], contains=['plugin.Search(r.Context(), r.URL.Query().Get("q"))','writeJSON(rw, map[string]any{"hits": hits})']),
+ R("GET","/api/plugins/page",G+"plugins.go", req=["?name"], res=["readme","updated"], tags=[{"file":"internal/plugin/market.go","tags":["readme","updated"]}],
+   contains=['plugin.Readme(r.Context(), r.URL.Query().Get("name"))'], note="README as markdown; updated is RFC3339 (0001-... = unknown)"),
+ R("POST","/api/plugins/mirror",G+"plugins.go", req=["on"], res=["mirror"], contains=['var in struct{ On bool }','writeJSON(rw, map[string]bool{"mirror": in.On})'], note="China mirrors switch"),
+ R("POST","/api/plugins/registry",G+"plugins.go", req=["url"], res=["registry.url","registry.from","registry.var?","registry.path?"],
+   tags=[{"file":"internal/plugin/registry.go","tags":["url","from","var","path"]}], contains=['var in struct{ URL string }','plugin.SetRegistry(in.URL)','writeJSON(rw, map[string]any{"registry": registryJSON()})'],
+   note="untagged struct{ URL string }; empty = none of magpie's own; from: magpie|env|shell|bunfig|npmrc|china|default"),
  R("GET","/api/plugins/builtin",G+"builtins.go", res=["<[]builtinJSON>"],
    tags=[{"file":G+"builtins.go","tags":["id","name","sub","on","chosen","source","state","why","inUse","use","parts","schema","config","broken"]},{"file":"internal/pluginrt/schema.go","tags":["type","properties","x-order","title","description","enum","minimum","maximum","default"]}],
    note="a JSON array; each: id, name (English), sub, on, chosen, state (off|pending|active|failed|disposed), inUse, schema?, config?"),
