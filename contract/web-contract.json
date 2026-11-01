@@ -2808,6 +2808,61 @@
   },
   {
    "method": "POST",
+   "path": "/api/sessions/restore",
+   "source": "internal/gui/sessions_manage.go",
+   "anchor": "mux.HandleFunc(\"POST /api/sessions/restore\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "key"
+    ],
+    "response": [
+     "agent",
+     "id",
+     "title"
+    ]
+   },
+   "note": "key = trash[].key from GET /api/sessions/manage (<agent>/<name>)",
+   "contains": [
+    "Key string `json:\"key\"`",
+    "t, err := sessions.Restore(in.Key)",
+    "writeJSON(rw, map[string]string{\"agent\": t.Agent, \"id\": t.ID, \"title\": cmp.Or(t.Title, t.ID)})",
+    {
+     "file": "internal/sessions/manage.go",
+     "contains": [
+      "Key     string    `json:\"key\"`",
+      "Deleted time.Time `json:\"deleted\"`"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/sessions/purge",
+   "source": "internal/gui/sessions_manage.go",
+   "anchor": "mux.HandleFunc(\"POST /api/sessions/purge\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "keys",
+     "all?"
+    ],
+    "response": [
+     "purged",
+     "refused[].key",
+     "refused[].error"
+    ]
+   },
+   "note": "erases trashed sessions for good; all = every one in the trash",
+   "contains": [
+    "Keys []string `json:\"keys\"`",
+    "All  bool     `json:\"all\"`",
+    "Purged  []string  `json:\"purged\"`",
+    "Refused []refused `json:\"refused\"`"
+   ]
+  },
+  {
+   "method": "POST",
    "path": "/api/sessions/reads",
    "source": "internal/gui/sessions_reads.go",
    "anchor": "mux.HandleFunc(\"POST /api/sessions/reads\"",

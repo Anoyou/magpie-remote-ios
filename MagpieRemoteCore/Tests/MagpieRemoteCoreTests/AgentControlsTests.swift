@@ -256,4 +256,40 @@ final class AgentControlsTests: XCTestCase {
         XCTAssertEqual(results[1].summary, "404 · 404 page not found")
         XCTAssertEqual(results[2].summary, "已测试 work@example.com：1.5 s")
     }
+
+    // MARK: 会话回收站
+
+    func testSessionTrash() async throws {
+        let overview = SessionsOverview(json: ["agents": [], "agent": "claude", "sessions": [], "trash": [
+            ["key": "claude/abc", "agent": "claude", "id": "abc", "title": "修登录页", "cwd": "~/code/app", "last": "2026-10-20T09:00:00.123456789Z",
+             "deleted": "2026-10-28T09:00:00Z", "size": 2048, "items": [], "name": "Claude Code", "icon": "claudecode-color"],
+            ["agent": "codex", "id": "no-key"],
+        ]])
+        XCTAssertEqual(overview.trashCount, 2)
+        XCTAssertEqual(overview.trash.map(\.key), ["claude/abc"]) // 没有 key 的不列
+        let item = try XCTUnwrap(overview.trash.first)
+        XCTAssertEqual(item.displayTitle, "修登录页")
+        XCTAssertEqual(item.name, "Claude Code")
+        XCTAssertNotNil(item.last)
+        XCTAssertNotNil(item.deleted)
+        XCTAssertEqual(item.size, 2048)
+
+        StubURLProtocol.handler = { request in
+            if request.url?.path == "/api/sessions/restore" {
+                return (200, ["Content-Type": "application/json"], Data(#"{"agent":"claude","id":"abc","title":"修登录页"}"#.utf8))
+            }
+            return (200, ["Content-Type": "application/json"], Data(#"{"purged":["claude/abc"],"refused":[{"key":"codex/x","error":"not in magpie's trash"}]}"#.utf8))
+        }
+        let title = try await client.restoreSession(key: "claude/abc")
+        XCTAssertEqual(title, "修登录页")
+        XCTAssertEqual(try body(StubURLProtocol.lastRequest)["key"]?.string, "claude/abc")
+        let purged = try await client.purgeSessions(keys: ["claude/abc", "codex/x"])
+        XCTAssertEqual(StubURLProtocol.lastRequest?.url?.path, "/api/sessions/purge")
+        XCTAssertEqual(try body(StubURLProtocol.lastRequest)["keys"]?.strings, ["claude/abc", "codex/x"])
+        XCTAssertNil(try body(StubURLProtocol.lastRequest)["all"])
+        XCTAssertEqual(purged.purged, ["claude/abc"])
+        XCTAssertEqual(purged.failureMessage, "not in magpie's trash")
+        _ = try await client.purgeSessions(keys: [], all: true)
+        XCTAssertEqual(try body(StubURLProtocol.lastRequest)["all"]?.bool, true)
+    }
 }

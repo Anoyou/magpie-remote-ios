@@ -178,6 +178,14 @@ routes = [
  R("POST","/api/sessions/export",G+"sessions.go", req=["?agent","?id"], res=["path"], note="saves the same Markdown into the host's Downloads folder; untagged map {path}"),
  R("POST","/api/sessions/delete",G+"sessions_manage.go", req=["agent","ids"], res=["deleted","refused[].id","refused[].error","refused[].active"],
    tags=[{"file":G+"sessions_manage.go","tags":["agent","ids","deleted","refused","id","error","active"]}], note="moves into magpie's trash; a session written to in the last minute is refused with active=true"),
+ # 会话回收站（feat/parity-gaps）：manage 回答里的 trash[]，恢复与彻底删除
+ R("POST","/api/sessions/restore",G+"sessions_manage.go", req=["key"], res=["agent","id","title"],
+   contains=['Key string `json:"key"`','t, err := sessions.Restore(in.Key)','writeJSON(rw, map[string]string{"agent": t.Agent, "id": t.ID, "title": cmp.Or(t.Title, t.ID)})',
+             {"file":"internal/sessions/manage.go","contains":['Key     string    `json:"key"`','Deleted time.Time `json:"deleted"`']}],
+   note="key = trash[].key from GET /api/sessions/manage (<agent>/<name>)"),
+ R("POST","/api/sessions/purge",G+"sessions_manage.go", req=["keys","all?"], res=["purged","refused[].key","refused[].error"],
+   contains=['Keys []string `json:"keys"`','All  bool     `json:"all"`','Purged  []string  `json:"purged"`','Refused []refused `json:"refused"`'],
+   note="erases trashed sessions for good; all = every one in the trash"),
  R("POST","/api/sessions/reads",G+"sessions_reads.go", req=["all?","agents"], res=["asked","all","found[].agent","found[].name","found[].on"],
    tags=[{"file":G+"sessions_reads.go","tags":["all","agents","asked","found","on"]}]),
 

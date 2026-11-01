@@ -11,6 +11,9 @@ protocol AgentSessionsServing: Sendable {
     /// 存到 Mac 的「下载」文件夹，返回主机上的路径。
     func exportOnHost(agent: String, id: String) async throws -> String
     func allowReads(_ agents: [String: Bool]) async throws -> SessionReads
+    /// 回收站：恢复一个、永久删除（`all` = 清空）。
+    func restore(key: String) async throws -> String
+    func purge(keys: [String], all: Bool) async throws -> SessionPurgeResult
 }
 
 enum AgentSessionsServices {
@@ -37,6 +40,8 @@ struct LiveAgentSessionsService: AgentSessionsServing {
     func markdown(agent: String, id: String) async throws -> SessionMarkdown { try await web.sessionMarkdown(agent: agent, id: id) }
     func exportOnHost(agent: String, id: String) async throws -> String { try await web.exportSessionOnHost(agent: agent, id: id) }
     func allowReads(_ agents: [String: Bool]) async throws -> SessionReads { try await web.setSessionReads(agents) }
+    func restore(key: String) async throws -> String { try await web.restoreSession(key: key) }
+    func purge(keys: [String], all: Bool) async throws -> SessionPurgeResult { try await web.purgeSessions(keys: keys, all: all) }
 }
 
 /// fixture 模式：两个 Agent 的示例会话，删除只在这次运行里生效。
@@ -44,6 +49,12 @@ actor FixtureAgentSessionsService: AgentSessionsServing {
     static let shared = FixtureAgentSessionsService()
 
     private var sessions: [WebJSON]
+    /// 示例回收站：一个早先删掉的会话（恢复后回到列表）。
+    private var trash: [WebJSON] = [
+        ["key": "claude/old-session", "agent": "claude", "id": "old-session", "title": "示例：以前删掉的会话", "cwd": "~/code/example",
+         "last": "2026-10-20T09:00:00Z", "deleted": "2026-10-28T09:00:00Z", "size": 2048, "name": "Claude Code", "icon": "claudecode-color",
+         "start": "2026-10-20T08:30:00Z", "models": ["claude-sonnet-4-5"]],
+    ]
 
     init() {
         func session(_ agent: String, _ id: String, _ title: String, cwd: String, last: String, model: String,
@@ -85,7 +96,7 @@ actor FixtureAgentSessionsService: AgentSessionsServing {
         return SessionsOverview(json: [
             "agents": .array(list), "agent": .string(chosen),
             "sessions": .array(sessions.filter { $0["agent"]?.string == chosen }),
-            "trash": [], "recording": false,
+            "trash": .array(trash), "recording": false,
             "reads": ["asked": true, "all": true, "found": .array(list.map { ["agent": $0["agent"] ?? "", "name": $0["name"] ?? "", "on": true] })],
         ])
     }
@@ -117,6 +128,13 @@ actor FixtureAgentSessionsService: AgentSessionsServing {
 
     func delete(agent: String, ids: [String]) async throws -> SessionDeleteResult {
         try await pause()
+        for session in sessions where session["agent"]?.string == agent && ids.contains(session["id"]?.string ?? "") {
+            var row = session
+            row["key"] = .string("\(agent)/\(session["id"]?.string ?? "")")
+            row["name"] = .string(Self.names[agent] ?? agent)
+            row["deleted"] = "2026-11-01T12:00:00Z"
+            trash.append(row)
+        }
         sessions.removeAll { $0["agent"]?.string == agent && ids.contains($0["id"]?.string ?? "") }
         return SessionDeleteResult(json: ["deleted": .strings(ids), "refused": []])
     }
@@ -131,6 +149,25 @@ actor FixtureAgentSessionsService: AgentSessionsServing {
     func exportOnHost(agent: String, id: String) async throws -> String {
         try await pause()
         return "~/Downloads/" + SessionMarkdown.filename(contentDisposition: nil, agent: agent, id: id)
+    }
+
+    func restore(key: String) async throws -> String {
+        try await pause()
+        guard let index = trash.firstIndex(where: { $0["key"]?.string == key }) else {
+            throw MagpieError.webRejected(message: "not in magpie's trash", code: nil)
+        }
+        var row = trash.remove(at: index)
+        let title = row["title"]?.string ?? ""
+        row["key"] = nil; row["name"] = nil; row["deleted"] = nil
+        sessions.append(row)
+        return title
+    }
+
+    func purge(keys: [String], all: Bool) async throws -> SessionPurgeResult {
+        try await pause()
+        let gone = all ? trash.compactMap { $0["key"]?.string } : keys
+        trash.removeAll { gone.contains($0["key"]?.string ?? "") }
+        return SessionPurgeResult(json: ["purged": .strings(gone), "refused": []])
     }
 
     func allowReads(_ agents: [String: Bool]) async throws -> SessionReads {

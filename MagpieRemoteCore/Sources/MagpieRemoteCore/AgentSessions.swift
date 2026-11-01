@@ -243,6 +243,8 @@ public struct SessionsOverview: Hashable, Sendable {
     public var agent: String
     public var sessions: [AgentSession]
     public var trashCount: Int
+    /// 回收站里的会话（所有 Agent 的）。
+    public var trash: [TrashedSession]
     /// magpie 网关是否在记录对话文本。
     public var recording: Bool
     public var reads: SessionReads
@@ -251,6 +253,7 @@ public struct SessionsOverview: Hashable, Sendable {
         agents = (json["agents"]?.array ?? []).compactMap(SessionAgent.init(json:))
         agent = json["agent"]?.string ?? ""
         sessions = (json["sessions"]?.array ?? []).map(AgentSession.init(json:)).filter { !$0.sessionID.isEmpty }
+        trash = (json["trash"]?.array ?? []).compactMap(TrashedSession.init(json:))
         trashCount = json["trash"]?.array?.count ?? 0
         recording = json["recording"]?.bool ?? false
         reads = SessionReads(json: json["reads"])

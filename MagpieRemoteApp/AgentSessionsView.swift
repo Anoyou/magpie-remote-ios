@@ -31,6 +31,15 @@ struct AgentSessionsView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        SessionTrashView(store: store)
+                    } label: {
+                        Label("回收站", systemImage: store.trash.isEmpty ? "trash" : "trash.fill")
+                    }
+                    .accessibilityValue(store.trash.isEmpty ? "空" : "\(store.trash.count) 个")
+                    .accessibilityIdentifier("sessions.trash")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Picker("排序", selection: $store.sort) {
                             ForEach(SessionSort.allCases) { sort in
@@ -53,7 +62,7 @@ struct AgentSessionsView: View {
                 .accessibilityIdentifier("session.delete.confirm")
                 Button("取消", role: .cancel) {}
             } message: { session in
-                Text("「\(session.displayTitle)」的文件会移到 Mac 上 magpie 的回收站，Agent 里不再列出它；需要时可以在 Mac 上的 magpie「会话」页恢复。")
+                Text("「\(session.displayTitle)」的文件会移到 Mac 上 magpie 的回收站，Agent 里不再列出它；需要时可以在右上角的「回收站」恢复。")
             }
             .sessionAlerts(store: store, id: "list")
     }
@@ -478,7 +487,7 @@ private struct SessionAlerts: ViewModifier {
             } message: {
                 Text(store.actionError.map(AgentSessionDetailView.transcriptMessage) ?? "")
             }
-            .alert("已导出", isPresented: Binding(get: { active && store.notice != nil }, set: { if !$0 { store.notice = nil } })) {
+            .alert(store.notice?.hasPrefix("已保存到 Mac") == true ? "已导出" : "完成", isPresented: Binding(get: { active && store.notice != nil }, set: { if !$0 { store.notice = nil } })) {
                 Button("好") { store.notice = nil }
             } message: {
                 Text(store.notice ?? "")
