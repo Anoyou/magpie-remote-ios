@@ -9,15 +9,19 @@
 /* Begin PBXBuildFile section */
 		042B6CDB3B8E20BADBB4A8F5 /* RoutesLiveModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD02FB5DF5AB6DC37E6577F /* RoutesLiveModel.swift */; };
 		0467E16AE20ADE425AEFC607 /* UITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2AB522EEAB5ECDDE0BC37F /* UITestSupport.swift */; };
+		081C5121C048F627784522BD /* ParityGaps2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B05A223444B8A29F73817B /* ParityGaps2UITests.swift */; };
 		090B69224BF8F761AF961E19 /* RoutesMagpie.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */; };
+		0AED98D6D16B8513FD672158 /* RoutesRequestList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3616768D4738A9FF9A4022D3 /* RoutesRequestList.swift */; };
 		0C31645EFE7E1AA4A62861B4 /* UsageContextPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B15913582DE6332FF94AE0 /* UsageContextPane.swift */; };
 		0C3D212091FFFBD88D1DEF05 /* QuotaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */; };
 		0D9C6E6AE4891CA0AF3078F1 /* ProviderKeysSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59AD83E4A36A7C989968FEF4 /* ProviderKeysSection.swift */; };
 		10CBE185B772E40CBFC3322B /* DockNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 539E56C3200203FA4B1DE6B0 /* DockNavigation.swift */; };
+		11A328D93CA9A61D8FE0072A /* OfficialIconViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E0F7A1DD10B13C5F72FFA8 /* OfficialIconViews.swift */; };
 		11E8AFC6D13D95573FC05019 /* GlassStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */; };
 		12BAE742E07FE831CB20E33F /* RemoteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC159FECE3AE2C80CE293EBA /* RemoteService.swift */; };
 		224F756965E44160F0793E7D /* PluginsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6DB79AF3E4D0FC04E2BFAD /* PluginsUITests.swift */; };
 		2265F3977CF475D57E7FB17B /* QuotaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DD330AB025C638D38D7F4B2 /* QuotaService.swift */; };
+		22F148676AA0230F5F98098F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C638097B82CFCE192E68F6B3 /* Assets.xcassets */; };
 		23D6E8399F69EA559F9B8DD0 /* HostTuneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE8F1E3AAD18758C5FF55CC /* HostTuneView.swift */; };
 		298128C57ACF592661E2CC68 /* UsageOverviewParts.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECC4F395A8BC0A879C2D2133 /* UsageOverviewParts.swift */; };
 		29993AA6C81736A24927F80A /* RoutesFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED21306234672F3C88C45E0E /* RoutesFixture.swift */; };
@@ -26,6 +30,7 @@
 		3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */; };
 		35D255575382D36B60E6A361 /* ManageGroupsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 068941B029A4B89038CE9F9F /* ManageGroupsView.swift */; };
 		402156A6F7C67024BC8CEA17 /* OfficialIconViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E0F7A1DD10B13C5F72FFA8 /* OfficialIconViews.swift */; };
+		409B60F2ACE070CCD695A300 /* MagpieRemoteWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 208906F06A1D3AC98B888F34 /* MagpieRemoteWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		40D92CDAFCDD28C4919D472B /* DockUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3FC619A941C0D64DF0F8A56 /* DockUITests.swift */; };
 		4461AAA05215104827D8F5CB /* UsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B3684D1FBFD9F309DF04EE /* UsageView.swift */; };
 		46691A0663D2E79200332052 /* OfficialIconsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55952D448E60FDA0346ED597 /* OfficialIconsUITests.swift */; };
@@ -41,12 +46,15 @@
 		5C0AC2052468A97ECF8620BB /* ManageWebPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D0018F229A70CBA54BFECD /* ManageWebPageView.swift */; };
 		5EC564D854E790E1ECC5BC92 /* ManageAgentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A354639D6D9E50E5C0A09EA /* ManageAgentsView.swift */; };
 		6192FC374175FDDD000BC5CB /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6048AA6534925611CC245088 /* ChatView.swift */; };
+		638E38E784C93FBC54C152DF /* MagpieRemoteWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5922FB5FC38812014352977 /* MagpieRemoteWidgetsBundle.swift */; };
 		64D2DF28351B5E08473EC9C9 /* AgentSessionsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14E1E74826ECB04BB8AFAB23 /* AgentSessionsStore.swift */; };
 		69142301CA8F2F563180E40F /* ManageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 389C0198DFDDB6F053E5B0F4 /* ManageStore.swift */; };
 		6AFFC387E5857BDA8B302AEB /* RoutesClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = D305F1E97CE0AEB24C9D712E /* RoutesClock.swift */; };
+		6DAAB07DEAD6BF70CDA1594F /* AgentModelListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F45D43DD13632E4D4BE2225B /* AgentModelListView.swift */; };
 		6F993518B8F8F51B4EFE11B7 /* SetupGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA9472625D556D20B30C141 /* SetupGuideView.swift */; };
 		71900D884DFFCAE7E0F16F92 /* ManagePluginsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 956776CE0C93C73B96065EF2 /* ManagePluginsView.swift */; };
 		71BCE8E10AAFE6B65CC4EE13 /* PluginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90D4267EF9983628F5A705C /* PluginService.swift */; };
+		7466E9BCD166947682AF68E5 /* KeyLimitViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F433E0A2B7E68C69ECDB8E5 /* KeyLimitViews.swift */; };
 		74C9670F243518177245F839 /* RoutesSnapshotUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F83110DBDE962E7997275A8 /* RoutesSnapshotUITests.swift */; };
 		762E0FC0C41941341BD7FF16 /* PluginDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA773FD5DA6B3DB82F02868D /* PluginDetailView.swift */; };
 		7992886DB34CB4F2EA75D5AB /* ManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */; };
@@ -54,21 +62,34 @@
 		8093DD89947CFB33F3673ED7 /* PluginComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5767857C60806660E639B6 /* PluginComponents.swift */; };
 		868CD4E99FACF3A03D4300D4 /* ProviderDetailUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */; };
 		878A35BAC4EDA886ABCB2A00 /* HostUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA685B0A7948AA062BF1218E /* HostUpdateView.swift */; };
+		8BE60FC59CE56676889668D7 /* RoutesStageCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CB7F2272363A0C04FE5AB75 /* RoutesStageCanvas.swift */; };
 		915FEEF1B6DAAC51D0831145 /* UsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778AD74AE35795A31AAC5EF5 /* UsageService.swift */; };
 		9C3D6FAD32863EB8F27CA822 /* ChatModelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */; };
+		9CA0D4B4A45E20AC77DB4388 /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFEAEA56E0EEF596F412C76F /* WidgetBridge.swift */; };
 		9E46AEEF517478038D7944C7 /* UsageWebService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1A9B6D72257B22637228D9 /* UsageWebService.swift */; };
 		9E7415EC73D396F9C776BFB7 /* ChatController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B078F07A52896FF08A607 /* ChatController.swift */; };
 		A68F99FCE8F4A672FEEB0E14 /* ManageKeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1BFA63809ED4BF7D265B80 /* ManageKeysView.swift */; };
 		ACB33B7408218952BAB7DCEA /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */; };
+		AF5A351B63781ABD368C4EE6 /* WidgetsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB846BC95EF9F98069F65F4 /* WidgetsUITests.swift */; };
 		B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 726F02F062C85BC63F1B4072 /* QuotaUITests.swift */; };
+		B4E4D4C8F764510B8B77C96C /* DisabledModelsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 055DF5AD87593974351D583C /* DisabledModelsView.swift */; };
+		B88A7A879E326108B19B78CA /* WidgetProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A522998429764710306A89D9 /* WidgetProvider.swift */; };
 		BE07FE492CF20ADED83A0B4F /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 793F539829F0FF3C2E4C218C /* MoreView.swift */; };
 		C6DE229BF1A03CDAF48362D1 /* StateViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE47489B641118574213CF4B /* StateViews.swift */; };
+		C6E2BC49D4FAAE8475E7A0DA /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76D5D99F297DE0AEB9BE09DB /* WidgetViews.swift */; };
+		C879F70F0330A8659AF8C86D /* SessionTrashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75A7B1E44949772EBF4800A8 /* SessionTrashView.swift */; };
+		C880CE04FA7F5390C076AA87 /* UsageWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E16E3C7335936EDF415CEDFD /* UsageWidget.swift */; };
+		C988F48C34193D3960DBDBF1 /* QuotaWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C14CFBE50A3F7C11EE0F973 /* QuotaWidget.swift */; };
 		CA28EE580CBDB8410AAC842B /* HostPrivacyModelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A671F154A4F44DCB5F605A5B /* HostPrivacyModelView.swift */; };
+		CD8BEF78520530C98D1CD40C /* ProviderModelTestRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24348292E0203F581FA0B9CC /* ProviderModelTestRows.swift */; };
 		D58791F6C244414CFED4609B /* UsageTabsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 251C3B145D0B03072705F992 /* UsageTabsView.swift */; };
+		D612A19F2E38D15856EE234B /* MagpieRemoteCore in Frameworks */ = {isa = PBXBuildFile; productRef = F884CB60160E60AF48476191 /* MagpieRemoteCore */; };
 		D7C5EBC022010B9B427677A5 /* ChatFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920C3FE60DF8536524B583C5 /* ChatFixture.swift */; };
 		D8E6995FA7D89D319E92A6D5 /* UsageLedgerViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A368A41C1D950B939843EED /* UsageLedgerViews.swift */; };
 		D9FD6CCBC2A131D4E2930432 /* HostToolsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2186BECFDE7592BD0DB2621C /* HostToolsSection.swift */; };
+		DB9DBC95492B16C0DF5F25D8 /* AgentsParityUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04394898097C9CCAFBFB1A7 /* AgentsParityUITests.swift */; };
 		DD521DD87C92F1A377CCCDE9 /* CHANGELOG.md in Resources */ = {isa = PBXBuildFile; fileRef = 788E39132F8D99761903C1B9 /* CHANGELOG.md */; };
+		DE52048A9E9658158C351237 /* ProviderTestSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5234E96F7A47B3D758B204EB /* ProviderTestSection.swift */; };
 		E0DE28411F1D0527282CEBE1 /* HomeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE62C8F309D9EBA62A434C4E /* HomeUITests.swift */; };
 		E1520A79C1F021F0116D828E /* RoutesUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E67EC9FC2AEF26D72DE745B5 /* RoutesUITests.swift */; };
 		E3C6FAF172F6557A75951F84 /* UsageSessionsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 891E6589B99AB9D53CA8F23B /* UsageSessionsPane.swift */; };
@@ -94,28 +115,57 @@
 			remoteGlobalIDString = C88660F188DE86735633FE3C;
 			remoteInfo = MagpieRemote;
 		};
+		E3325823C597E5929D8BE0DB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C1A3B4ED5D9A92449716F5F0;
+			remoteInfo = MagpieRemoteWidgets;
+		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		CCB22D22B8FB556098277BC8 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				409B60F2ACE070CCD695A300 /* MagpieRemoteWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		055DF5AD87593974351D583C /* DisabledModelsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisabledModelsView.swift; sourceTree = "<group>"; };
 		068941B029A4B89038CE9F9F /* ManageGroupsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageGroupsView.swift; sourceTree = "<group>"; };
 		0D6DB79AF3E4D0FC04E2BFAD /* PluginsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginsUITests.swift; sourceTree = "<group>"; };
 		0E63161272BA6285AB49CEDD /* MagpieRemoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagpieRemoteApp.swift; sourceTree = "<group>"; };
 		0F83110DBDE962E7997275A8 /* RoutesSnapshotUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesSnapshotUITests.swift; sourceTree = "<group>"; };
 		14E1E74826ECB04BB8AFAB23 /* AgentSessionsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionsStore.swift; sourceTree = "<group>"; };
 		19FC2DD80AE7DF7087FB1460 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		1CB7F2272363A0C04FE5AB75 /* RoutesStageCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesStageCanvas.swift; sourceTree = "<group>"; };
 		1E1BFA63809ED4BF7D265B80 /* ManageKeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageKeysView.swift; sourceTree = "<group>"; };
+		208906F06A1D3AC98B888F34 /* MagpieRemoteWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MagpieRemoteWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2186BECFDE7592BD0DB2621C /* HostToolsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostToolsSection.swift; sourceTree = "<group>"; };
 		21B15913582DE6332FF94AE0 /* UsageContextPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageContextPane.swift; sourceTree = "<group>"; };
 		21B2D092F7FDAB32A6B31E82 /* ManageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageService.swift; sourceTree = "<group>"; };
+		23B05A223444B8A29F73817B /* ParityGaps2UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParityGaps2UITests.swift; sourceTree = "<group>"; };
+		24348292E0203F581FA0B9CC /* ProviderModelTestRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderModelTestRows.swift; sourceTree = "<group>"; };
 		251C3B145D0B03072705F992 /* UsageTabsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageTabsView.swift; sourceTree = "<group>"; };
 		266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageView.swift; sourceTree = "<group>"; };
 		2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageUITests.swift; sourceTree = "<group>"; };
 		28E0F7A1DD10B13C5F72FFA8 /* OfficialIconViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialIconViews.swift; sourceTree = "<group>"; };
 		2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		3616768D4738A9FF9A4022D3 /* RoutesRequestList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesRequestList.swift; sourceTree = "<group>"; };
 		389C0198DFDDB6F053E5B0F4 /* ManageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageStore.swift; sourceTree = "<group>"; };
 		3A368A41C1D950B939843EED /* UsageLedgerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageLedgerViews.swift; sourceTree = "<group>"; };
+		3F433E0A2B7E68C69ECDB8E5 /* KeyLimitViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyLimitViews.swift; sourceTree = "<group>"; };
 		4276B4618D4C2849903B8C78 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderDetailUITests.swift; sourceTree = "<group>"; };
+		5234E96F7A47B3D758B204EB /* ProviderTestSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderTestSection.swift; sourceTree = "<group>"; };
 		539E56C3200203FA4B1DE6B0 /* DockNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockNavigation.swift; sourceTree = "<group>"; };
 		53B3684D1FBFD9F309DF04EE /* UsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageView.swift; sourceTree = "<group>"; };
 		55952D448E60FDA0346ED597 /* OfficialIconsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialIconsUITests.swift; sourceTree = "<group>"; };
@@ -125,28 +175,36 @@
 		5CDF3F3ED69DBC6AF4B0861E /* AgentSessionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionsUITests.swift; sourceTree = "<group>"; };
 		5DD330AB025C638D38D7F4B2 /* QuotaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaService.swift; sourceTree = "<group>"; };
 		6048AA6534925611CC245088 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		6549804158CA90AE4F21FEB8 /* MagpieRemoteWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MagpieRemoteWidgets.entitlements; sourceTree = "<group>"; };
 		6B9F55FC75D9D3F7BFDD1FC3 /* HostToolsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostToolsService.swift; sourceTree = "<group>"; };
 		6E6139AF65D4C71F91D0F709 /* AgentSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionsView.swift; sourceTree = "<group>"; };
 		726F02F062C85BC63F1B4072 /* QuotaUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaUITests.swift; sourceTree = "<group>"; };
 		74E7401B70153C04ECA16C7A /* HostToolsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostToolsUITests.swift; sourceTree = "<group>"; };
+		75A7B1E44949772EBF4800A8 /* SessionTrashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTrashView.swift; sourceTree = "<group>"; };
+		76D5D99F297DE0AEB9BE09DB /* WidgetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetViews.swift; sourceTree = "<group>"; };
 		778AD74AE35795A31AAC5EF5 /* UsageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageService.swift; sourceTree = "<group>"; };
 		788E39132F8D99761903C1B9 /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
 		78C3B92FB2353A6F4894F947 /* MainTabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabs.swift; sourceTree = "<group>"; };
 		78FA878BBA76AA7F8933F959 /* MagpieRemote.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MagpieRemote.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		793F539829F0FF3C2E4C218C /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
+		7C14CFBE50A3F7C11EE0F973 /* QuotaWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaWidget.swift; sourceTree = "<group>"; };
 		8557DBC761BFF4F7F4FD457B /* ChatSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSessionsView.swift; sourceTree = "<group>"; };
 		86AA82BDA306FEE58D7F8194 /* ChatEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatEntryView.swift; sourceTree = "<group>"; };
 		891E6589B99AB9D53CA8F23B /* UsageSessionsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageSessionsPane.swift; sourceTree = "<group>"; };
 		8936C3A022E0EA20FD5A9DFE /* PluginStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginStore.swift; sourceTree = "<group>"; };
 		8A354639D6D9E50E5C0A09EA /* ManageAgentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageAgentsView.swift; sourceTree = "<group>"; };
 		8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagpieRemoteUITests.swift; sourceTree = "<group>"; };
+		8EE4369A26D958415F43833E /* MagpieRemote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MagpieRemote.entitlements; sourceTree = "<group>"; };
 		920C3FE60DF8536524B583C5 /* ChatFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatFixture.swift; sourceTree = "<group>"; };
 		956776CE0C93C73B96065EF2 /* ManagePluginsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagePluginsView.swift; sourceTree = "<group>"; };
+		9AB846BC95EF9F98069F65F4 /* WidgetsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetsUITests.swift; sourceTree = "<group>"; };
 		A22DB1B3CA4B1806EC581871 /* HostSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostSettingsView.swift; sourceTree = "<group>"; };
 		A3FC619A941C0D64DF0F8A56 /* DockUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockUITests.swift; sourceTree = "<group>"; };
+		A522998429764710306A89D9 /* WidgetProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetProvider.swift; sourceTree = "<group>"; };
 		A671F154A4F44DCB5F605A5B /* HostPrivacyModelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostPrivacyModelView.swift; sourceTree = "<group>"; };
 		A9D47C7DA414F1BE4697C6DA /* ManageProvidersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageProvidersView.swift; sourceTree = "<group>"; };
 		AA94709041B2267F5A16D011 /* MagpieRemoteCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MagpieRemoteCore; path = MagpieRemoteCore; sourceTree = SOURCE_ROOT; };
+		B04394898097C9CCAFBFB1A7 /* AgentsParityUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsParityUITests.swift; sourceTree = "<group>"; };
 		B7CCE5AB6E8CB53877120CC9 /* MagpieRemoteUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MagpieRemoteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModelPicker.swift; sourceTree = "<group>"; };
 		C30475E3A14C3C501962A461 /* AgentSessionsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionsService.swift; sourceTree = "<group>"; };
@@ -164,13 +222,17 @@
 		DC1A9B6D72257B22637228D9 /* UsageWebService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageWebService.swift; sourceTree = "<group>"; };
 		DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesMagpie.swift; sourceTree = "<group>"; };
 		DFA9472625D556D20B30C141 /* SetupGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupGuideView.swift; sourceTree = "<group>"; };
+		E16E3C7335936EDF415CEDFD /* UsageWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageWidget.swift; sourceTree = "<group>"; };
 		E4F2981ECFC5419AD87AB50B /* UsageRequestsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRequestsView.swift; sourceTree = "<group>"; };
 		E67EC9FC2AEF26D72DE745B5 /* RoutesUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesUITests.swift; sourceTree = "<group>"; };
 		ECC4F395A8BC0A879C2D2133 /* UsageOverviewParts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageOverviewParts.swift; sourceTree = "<group>"; };
 		ECE8F1E3AAD18758C5FF55CC /* HostTuneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostTuneView.swift; sourceTree = "<group>"; };
 		ED21306234672F3C88C45E0E /* RoutesFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesFixture.swift; sourceTree = "<group>"; };
 		EFD02FB5DF5AB6DC37E6577F /* RoutesLiveModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesLiveModel.swift; sourceTree = "<group>"; };
+		EFEAEA56E0EEF596F412C76F /* WidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetBridge.swift; sourceTree = "<group>"; };
 		F3E878152FDB5534070169FA /* UsageTabsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageTabsUITests.swift; sourceTree = "<group>"; };
+		F45D43DD13632E4D4BE2225B /* AgentModelListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentModelListView.swift; sourceTree = "<group>"; };
+		F5922FB5FC38812014352977 /* MagpieRemoteWidgetsBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagpieRemoteWidgetsBundle.swift; sourceTree = "<group>"; };
 		FA5767857C60806660E639B6 /* PluginComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginComponents.swift; sourceTree = "<group>"; };
 		FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassStyle.swift; sourceTree = "<group>"; };
 		FB2AB522EEAB5ECDDE0BC37F /* UITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestSupport.swift; sourceTree = "<group>"; };
@@ -179,6 +241,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		644EC709AA0FC4FA9C3681B6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D612A19F2E38D15856EE234B /* MagpieRemoteCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7298DE2284E06521474E447E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -195,6 +265,7 @@
 			children = (
 				78FA878BBA76AA7F8933F959 /* MagpieRemote.app */,
 				B7CCE5AB6E8CB53877120CC9 /* MagpieRemoteUITests.xctest */,
+				208906F06A1D3AC98B888F34 /* MagpieRemoteWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -205,6 +276,7 @@
 				788E39132F8D99761903C1B9 /* CHANGELOG.md */,
 				DDD4AAC3BDE41B9F5EC43781 /* MagpieRemoteApp */,
 				C62FC932859A024338961F60 /* MagpieRemoteUITests */,
+				FACA80BDA3B5F12AB179B2F2 /* MagpieRemoteWidgets */,
 				9B1D0F866AC7250CA9E2BCB2 /* Packages */,
 				2AC8BA37DAC32D5437812408 /* Products */,
 			);
@@ -222,6 +294,7 @@
 			isa = PBXGroup;
 			children = (
 				5CDF3F3ED69DBC6AF4B0861E /* AgentSessionsUITests.swift */,
+				B04394898097C9CCAFBFB1A7 /* AgentsParityUITests.swift */,
 				539E56C3200203FA4B1DE6B0 /* DockNavigation.swift */,
 				A3FC619A941C0D64DF0F8A56 /* DockUITests.swift */,
 				FE62C8F309D9EBA62A434C4E /* HomeUITests.swift */,
@@ -229,6 +302,7 @@
 				8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */,
 				2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */,
 				55952D448E60FDA0346ED597 /* OfficialIconsUITests.swift */,
+				23B05A223444B8A29F73817B /* ParityGaps2UITests.swift */,
 				0D6DB79AF3E4D0FC04E2BFAD /* PluginsUITests.swift */,
 				48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */,
 				726F02F062C85BC63F1B4072 /* QuotaUITests.swift */,
@@ -236,6 +310,7 @@
 				E67EC9FC2AEF26D72DE745B5 /* RoutesUITests.swift */,
 				FB2AB522EEAB5ECDDE0BC37F /* UITestSupport.swift */,
 				F3E878152FDB5534070169FA /* UsageTabsUITests.swift */,
+				9AB846BC95EF9F98069F65F4 /* WidgetsUITests.swift */,
 			);
 			path = MagpieRemoteUITests;
 			sourceTree = "<group>";
@@ -244,6 +319,7 @@
 			isa = PBXGroup;
 			children = (
 				19FC2DD80AE7DF7087FB1460 /* AboutView.swift */,
+				F45D43DD13632E4D4BE2225B /* AgentModelListView.swift */,
 				C30475E3A14C3C501962A461 /* AgentSessionsService.swift */,
 				14E1E74826ECB04BB8AFAB23 /* AgentSessionsStore.swift */,
 				6E6139AF65D4C71F91D0F709 /* AgentSessionsView.swift */,
@@ -256,6 +332,7 @@
 				BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */,
 				8557DBC761BFF4F7F4FD457B /* ChatSessionsView.swift */,
 				6048AA6534925611CC245088 /* ChatView.swift */,
+				055DF5AD87593974351D583C /* DisabledModelsView.swift */,
 				D8FF93AA7A2D9498A020FDE3 /* DockCustomizeView.swift */,
 				FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */,
 				C6569D84F259F6DD1DA32A31 /* HomeView.swift */,
@@ -265,6 +342,8 @@
 				6B9F55FC75D9D3F7BFDD1FC3 /* HostToolsService.swift */,
 				ECE8F1E3AAD18758C5FF55CC /* HostTuneView.swift */,
 				CA685B0A7948AA062BF1218E /* HostUpdateView.swift */,
+				3F433E0A2B7E68C69ECDB8E5 /* KeyLimitViews.swift */,
+				8EE4369A26D958415F43833E /* MagpieRemote.entitlements */,
 				0E63161272BA6285AB49CEDD /* MagpieRemoteApp.swift */,
 				78C3B92FB2353A6F4894F947 /* MainTabs.swift */,
 				8A354639D6D9E50E5C0A09EA /* ManageAgentsView.swift */,
@@ -284,6 +363,8 @@
 				8936C3A022E0EA20FD5A9DFE /* PluginStore.swift */,
 				4276B4618D4C2849903B8C78 /* PrivacyInfo.xcprivacy */,
 				59AD83E4A36A7C989968FEF4 /* ProviderKeysSection.swift */,
+				24348292E0203F581FA0B9CC /* ProviderModelTestRows.swift */,
+				5234E96F7A47B3D758B204EB /* ProviderTestSection.swift */,
 				5DD330AB025C638D38D7F4B2 /* QuotaService.swift */,
 				FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */,
 				DC159FECE3AE2C80CE293EBA /* RemoteService.swift */,
@@ -291,7 +372,10 @@
 				ED21306234672F3C88C45E0E /* RoutesFixture.swift */,
 				EFD02FB5DF5AB6DC37E6577F /* RoutesLiveModel.swift */,
 				DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */,
+				3616768D4738A9FF9A4022D3 /* RoutesRequestList.swift */,
+				1CB7F2272363A0C04FE5AB75 /* RoutesStageCanvas.swift */,
 				D735EF3971F23500E9C63F87 /* RoutesStageView.swift */,
+				75A7B1E44949772EBF4800A8 /* SessionTrashView.swift */,
 				DFA9472625D556D20B30C141 /* SetupGuideView.swift */,
 				CE47489B641118574213CF4B /* StateViews.swift */,
 				21B15913582DE6332FF94AE0 /* UsageContextPane.swift */,
@@ -303,8 +387,22 @@
 				251C3B145D0B03072705F992 /* UsageTabsView.swift */,
 				53B3684D1FBFD9F309DF04EE /* UsageView.swift */,
 				DC1A9B6D72257B22637228D9 /* UsageWebService.swift */,
+				EFEAEA56E0EEF596F412C76F /* WidgetBridge.swift */,
 			);
 			path = MagpieRemoteApp;
+			sourceTree = "<group>";
+		};
+		FACA80BDA3B5F12AB179B2F2 /* MagpieRemoteWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				6549804158CA90AE4F21FEB8 /* MagpieRemoteWidgets.entitlements */,
+				F5922FB5FC38812014352977 /* MagpieRemoteWidgetsBundle.swift */,
+				7C14CFBE50A3F7C11EE0F973 /* QuotaWidget.swift */,
+				E16E3C7335936EDF415CEDFD /* UsageWidget.swift */,
+				A522998429764710306A89D9 /* WidgetProvider.swift */,
+				76D5D99F297DE0AEB9BE09DB /* WidgetViews.swift */,
+			);
+			path = MagpieRemoteWidgets;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -317,10 +415,12 @@
 				95DCE8D1C763515A51EE2EF6 /* Sources */,
 				4E3F3BCE683624A3E5887AD7 /* Resources */,
 				7298DE2284E06521474E447E /* Frameworks */,
+				CCB22D22B8FB556098277BC8 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				EC2C75705557ACEF7C5739C3 /* PBXTargetDependency */,
 			);
 			name = MagpieRemote;
 			packageProductDependencies = (
@@ -348,6 +448,26 @@
 			productReference = B7CCE5AB6E8CB53877120CC9 /* MagpieRemoteUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		C1A3B4ED5D9A92449716F5F0 /* MagpieRemoteWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9AEB203A83F06D58FD674DD4 /* Build configuration list for PBXNativeTarget "MagpieRemoteWidgets" */;
+			buildPhases = (
+				9F63830FB4EF2DD610403AFD /* Sources */,
+				1E92A31DD3C400127A1BE674 /* Resources */,
+				644EC709AA0FC4FA9C3681B6 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MagpieRemoteWidgets;
+			packageProductDependencies = (
+				F884CB60160E60AF48476191 /* MagpieRemoteCore */,
+			);
+			productName = MagpieRemoteWidgets;
+			productReference = 208906F06A1D3AC98B888F34 /* MagpieRemoteWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -363,6 +483,9 @@
 					C3B3EF4B91BF3C1C814AF9F1 = {
 						ProvisioningStyle = Automatic;
 						TestTargetID = C88660F188DE86735633FE3C;
+					};
+					C1A3B4ED5D9A92449716F5F0 = {
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -385,11 +508,20 @@
 			targets = (
 				C88660F188DE86735633FE3C /* MagpieRemote */,
 				C3B3EF4B91BF3C1C814AF9F1 /* MagpieRemoteUITests */,
+				C1A3B4ED5D9A92449716F5F0 /* MagpieRemoteWidgets */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		1E92A31DD3C400127A1BE674 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22F148676AA0230F5F98098F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4E3F3BCE683624A3E5887AD7 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -408,6 +540,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				48C06B76D88866821E061143 /* AgentSessionsUITests.swift in Sources */,
+				DB9DBC95492B16C0DF5F25D8 /* AgentsParityUITests.swift in Sources */,
 				10CBE185B772E40CBFC3322B /* DockNavigation.swift in Sources */,
 				40D92CDAFCDD28C4919D472B /* DockUITests.swift in Sources */,
 				E0DE28411F1D0527282CEBE1 /* HomeUITests.swift in Sources */,
@@ -415,6 +548,7 @@
 				FF51B2EAE72A2A70428D3694 /* MagpieRemoteUITests.swift in Sources */,
 				3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */,
 				46691A0663D2E79200332052 /* OfficialIconsUITests.swift in Sources */,
+				081C5121C048F627784522BD /* ParityGaps2UITests.swift in Sources */,
 				224F756965E44160F0793E7D /* PluginsUITests.swift in Sources */,
 				868CD4E99FACF3A03D4300D4 /* ProviderDetailUITests.swift in Sources */,
 				B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */,
@@ -422,6 +556,7 @@
 				E1520A79C1F021F0116D828E /* RoutesUITests.swift in Sources */,
 				0467E16AE20ADE425AEFC607 /* UITestSupport.swift in Sources */,
 				520E04DFFAD8676BAA5F5F78 /* UsageTabsUITests.swift in Sources */,
+				AF5A351B63781ABD368C4EE6 /* WidgetsUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -430,6 +565,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				50E72EACFE9D1C8D82D2138A /* AboutView.swift in Sources */,
+				6DAAB07DEAD6BF70CDA1594F /* AgentModelListView.swift in Sources */,
 				7DA13AE4E57978E415092923 /* AgentSessionsService.swift in Sources */,
 				64D2DF28351B5E08473EC9C9 /* AgentSessionsStore.swift in Sources */,
 				2E7598833243DB9AF1306F4A /* AgentSessionsView.swift in Sources */,
@@ -441,6 +577,7 @@
 				9C3D6FAD32863EB8F27CA822 /* ChatModelPicker.swift in Sources */,
 				F9AB72B1384D0F39D65D4857 /* ChatSessionsView.swift in Sources */,
 				6192FC374175FDDD000BC5CB /* ChatView.swift in Sources */,
+				B4E4D4C8F764510B8B77C96C /* DisabledModelsView.swift in Sources */,
 				530FA5C87029EB1BDE65B37D /* DockCustomizeView.swift in Sources */,
 				11E8AFC6D13D95573FC05019 /* GlassStyle.swift in Sources */,
 				F46FB0A1861ABD57CF948CDE /* HomeView.swift in Sources */,
@@ -450,6 +587,7 @@
 				F32B9BE6865E41627EA988A8 /* HostToolsService.swift in Sources */,
 				23D6E8399F69EA559F9B8DD0 /* HostTuneView.swift in Sources */,
 				878A35BAC4EDA886ABCB2A00 /* HostUpdateView.swift in Sources */,
+				7466E9BCD166947682AF68E5 /* KeyLimitViews.swift in Sources */,
 				FAAB278A01FFEDFE162E560D /* MagpieRemoteApp.swift in Sources */,
 				54705930CAB370F66C589891 /* MainTabs.swift in Sources */,
 				5EC564D854E790E1ECC5BC92 /* ManageAgentsView.swift in Sources */,
@@ -468,6 +606,8 @@
 				71BCE8E10AAFE6B65CC4EE13 /* PluginService.swift in Sources */,
 				F1DF4CF06E8A7C39472CB693 /* PluginStore.swift in Sources */,
 				0D9C6E6AE4891CA0AF3078F1 /* ProviderKeysSection.swift in Sources */,
+				CD8BEF78520530C98D1CD40C /* ProviderModelTestRows.swift in Sources */,
+				DE52048A9E9658158C351237 /* ProviderTestSection.swift in Sources */,
 				2265F3977CF475D57E7FB17B /* QuotaService.swift in Sources */,
 				0C3D212091FFFBD88D1DEF05 /* QuotaView.swift in Sources */,
 				12BAE742E07FE831CB20E33F /* RemoteService.swift in Sources */,
@@ -475,7 +615,10 @@
 				29993AA6C81736A24927F80A /* RoutesFixture.swift in Sources */,
 				042B6CDB3B8E20BADBB4A8F5 /* RoutesLiveModel.swift in Sources */,
 				090B69224BF8F761AF961E19 /* RoutesMagpie.swift in Sources */,
+				0AED98D6D16B8513FD672158 /* RoutesRequestList.swift in Sources */,
+				8BE60FC59CE56676889668D7 /* RoutesStageCanvas.swift in Sources */,
 				F6870649F243121EE5F5A4AB /* RoutesStageView.swift in Sources */,
+				C879F70F0330A8659AF8C86D /* SessionTrashView.swift in Sources */,
 				6F993518B8F8F51B4EFE11B7 /* SetupGuideView.swift in Sources */,
 				C6DE229BF1A03CDAF48362D1 /* StateViews.swift in Sources */,
 				0C31645EFE7E1AA4A62861B4 /* UsageContextPane.swift in Sources */,
@@ -487,6 +630,20 @@
 				D58791F6C244414CFED4609B /* UsageTabsView.swift in Sources */,
 				4461AAA05215104827D8F5CB /* UsageView.swift in Sources */,
 				9E46AEEF517478038D7944C7 /* UsageWebService.swift in Sources */,
+				9CA0D4B4A45E20AC77DB4388 /* WidgetBridge.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9F63830FB4EF2DD610403AFD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				638E38E784C93FBC54C152DF /* MagpieRemoteWidgetsBundle.swift in Sources */,
+				11A328D93CA9A61D8FE0072A /* OfficialIconViews.swift in Sources */,
+				C988F48C34193D3960DBDBF1 /* QuotaWidget.swift in Sources */,
+				C880CE04FA7F5390C076AA87 /* UsageWidget.swift in Sources */,
+				B88A7A879E326108B19B78CA /* WidgetProvider.swift in Sources */,
+				C6E2BC49D4FAAE8475E7A0DA /* WidgetViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -497,6 +654,11 @@
 			isa = PBXTargetDependency;
 			target = C88660F188DE86735633FE3C /* MagpieRemote */;
 			targetProxy = 431387EB7262E1CFC79B125E /* PBXContainerItemProxy */;
+		};
+		EC2C75705557ACEF7C5739C3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C1A3B4ED5D9A92449716F5F0 /* MagpieRemoteWidgets */;
+			targetProxy = E3325823C597E5929D8BE0DB /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -523,6 +685,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MagpieRemoteApp/MagpieRemote.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MagpieRemoteApp/Info.plist;
@@ -589,7 +752,8 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.4.1;
+				MAGPIE_APP_GROUP = group.com.magpieremote.personal;
+				MARKETING_VERSION = 0.5.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -622,6 +786,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MagpieRemoteApp/MagpieRemote.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MagpieRemoteApp/Info.plist;
@@ -694,7 +859,8 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.4.1;
+				MAGPIE_APP_GROUP = group.com.magpieremote.personal;
+				MARKETING_VERSION = 0.5.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -706,6 +872,50 @@
 			};
 			name = Debug;
 		};
+		FCA4F712C33049295EBB3C9C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MagpieRemoteWidgets/MagpieRemoteWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MagpieRemoteWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.magpieremote.personal.widgets;
+				PRODUCT_NAME = MagpieRemoteWidgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FFE27E4D23718A7EE2B2A770 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MagpieRemoteWidgets/MagpieRemoteWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MagpieRemoteWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.magpieremote.personal.widgets;
+				PRODUCT_NAME = MagpieRemoteWidgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -714,6 +924,15 @@
 			buildConfigurations = (
 				5A1D523ACEC5339F04A215C0 /* Debug */,
 				9C814529BBB46F3672A77C63 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9AEB203A83F06D58FD674DD4 /* Build configuration list for PBXNativeTarget "MagpieRemoteWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FCA4F712C33049295EBB3C9C /* Debug */,
+				FFE27E4D23718A7EE2B2A770 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -747,6 +966,10 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		99141DF8C9D127E968BBFCA4 /* MagpieRemoteCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MagpieRemoteCore;
+		};
+		F884CB60160E60AF48476191 /* MagpieRemoteCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MagpieRemoteCore;
 		};

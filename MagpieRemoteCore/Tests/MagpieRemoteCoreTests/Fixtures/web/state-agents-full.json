@@ -1,0 +1,32 @@
+{
+  "agents": [
+    {"id": "codex", "name": "Codex", "icon": "codex-color", "path": "~/.codex/config.toml", "wired": true,
+     "models": {"shown": 3, "listed": 3},
+     "drift": {"kind": "replaced", "field": "model", "want": "relay-example/gpt-4.1", "now": "gpt-5", "detail": "Codex's config names gpt-5 now"},
+     "fields": [
+       {"key": "model", "label": "model", "value": "gpt-5", "options": [
+         {"value": "relay-example/gpt-4.1", "label": "GPT 4.1", "note": "Relay · via magpie", "group": "Relay", "ref": "relay-example/gpt-4.1"},
+         {"value": "group/smart", "label": "smart", "note": "routing group · via magpie", "group": "Routing groups", "ref": "group/smart"}]},
+       {"key": "effort", "label": "effort", "value": "high", "options": [{"value": "low", "note": ""}, {"value": "medium", "note": ""}, {"value": "high", "note": ""}, {"value": "xhigh", "note": ""}]},
+       {"key": "subagent", "label": "subagents", "value": "", "options": []},
+       {"key": "login", "label": "sign-in", "value": "api", "options": [{"value": "", "label": "ChatGPT", "note": ""}, {"value": "api", "label": "magpie API", "note": ""}]}
+     ]},
+    {"id": "claude", "name": "Claude Code", "icon": "claudecode-color", "path": "~/.claude/settings.json",
+     "drift": {"kind": "unreachable", "field": "model", "want": "group/smart", "detail": "nothing answers at http://100.64.0.1:3425", "move": "http://127.0.0.1:3425"},
+     "fields": [{"key": "model", "label": "model", "value": "", "options": [{"value": "group/smart", "label": "smart", "note": "", "group": "Routing groups", "ref": "group/smart"}]}]},
+    {"id": "cursor", "name": "Cursor", "icon": "cursor", "path": "~/.cursor/cli-config.json", "fields": [{"key": "model", "label": "model", "value": "", "options": [{"value": "auto", "label": "Auto", "note": ""}]}]}
+  ],
+  "profiles": [
+    {"name": "Work", "summary": "Codex: GPT 4.1", "inUse": true, "agents": [
+      {"id": "codex", "name": "Codex", "icon": "codex-color", "fields": [
+        {"key": "model", "label": "model", "value": "relay-example/gpt-4.1"},
+        {"key": "effort", "label": "effort", "value": "xhigh"},
+        {"key": "subagent_model", "label": "subagent model", "value": "", "follows": "model"},
+        {"key": "token", "label": "token", "value": "", "hidden": true}]}]},
+    {"name": "Cheap", "summary": "", "agents": []}
+  ],
+  "connected": {"how": "again"},
+  "changed": 2,
+  "notice": "Restart Codex to use it",
+  "settings": {}, "clients": [], "catalog": "", "served": 3, "fx": {}
+}

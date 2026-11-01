@@ -282,7 +282,8 @@ final class RouteTraceTests: XCTestCase {
         let stage = RouteStageBuilder.build(current: trace.routes[0], staged: [trace.routes[1]], now: now) { names[$0] ?? $0 }
         XCTAssertEqual(stage.agents.map(\.id), ["codex", "claude"])
         XCTAssertEqual(stage.agents.map(\.busy), [false, true])
-        XCTAssertEqual(stage.agents[0].hue, "#6366f1")
+        XCTAssertTrue(RouteWords.palette.contains(stage.agents[0].hue))
+        XCTAssertNotEqual(stage.agents[0].hue, stage.agents[1].hue, "同时在台上的 Agent 颜色不同")
         XCTAssertEqual(stage.name, "Smart group")
         XCTAssertEqual(stage.tail, " · 路由组 · 启用 3 个 · 2 个 Agent 同时在发")
         XCTAssertEqual(stage.chip, "按顺序")
@@ -297,11 +298,11 @@ final class RouteTraceTests: XCTestCase {
         // 订阅账号回答了，额度条 72.5%
         let second = stage.rows[1]
         XCTAssertEqual(second.state, .answered)
-        XCTAssertEqual(second.status, "回答了 Codex")
+        XCTAssertEqual(second.status, "回答了 Codex · 2 小时后重置", "网页：已知额度何时重置一直写在行上")
         XCTAssertEqual(second.bar, 72.5)
         XCTAssertEqual(second.agent, "codex")
         XCTAssertEqual(stage.rows[2].state, .passedOver)
-        XCTAssertEqual(stage.rows[2].status, "套餐不含这个模型 · 已跳过")
+        XCTAssertEqual(stage.rows[2].status, "DeepSeek 为此 key 列出的模型中没有 deepseek-chat")
         XCTAssertTrue(stage.caption.contains("Codex · someone@example.com 回答了 Codex 的 group/smart"))
         XCTAssertTrue(stage.caption.contains("改道 1 次"))
     }
@@ -348,11 +349,20 @@ final class RouteTraceTests: XCTestCase {
     }
 
     func testHuesNeverRedAndStable() {
-        XCTAssertEqual(RouteStageBuilder.hue("claude"), "#d97757")
-        XCTAssertEqual(RouteStageBuilder.hue("my-tool"), RouteStageBuilder.hue("my-tool"))
-        XCTAssertTrue(RouteStageBuilder.spare.contains(RouteStageBuilder.hue("my-tool")))
+        // 网页 hueOf()：厂商的颜色在 PALETTE 里的位置；用过的颜色往后找下一个；同一页里不变
+        let hues = AgentHues()
+        XCTAssertEqual(hues.hue("claude"), "#d97757")
+        XCTAssertEqual(hues.hue("codex"), "#858ad7")
+        XCTAssertEqual(hues.hue("deveco"), "#2e9fc9", "gemini 的位置（7）还空着")
+        XCTAssertEqual(hues.hue("gemini"), "#5e95d7", "7 被 deveco 用了，往后一个")
+        XCTAssertEqual(hues.hue("my-tool"), hues.hue("my-tool"))
+        XCTAssertTrue(RouteWords.palette.contains(hues.hue("my-tool")))
+        for c in RouteWords.palette { XCTAssertFalse(c.lowercased().hasPrefix("#d6") || c.lowercased().hasPrefix("#f2"), c) }
         XCTAssertEqual(RouteStageBuilder.failWord("quota"), "额度用尽")
+        XCTAssertEqual(RouteStageBuilder.failWord("slow"), "迟迟未开始")
         XCTAssertEqual(RouteStageBuilder.duration(39), "39 秒")
-        XCTAssertEqual(RouteStageBuilder.duration(3 * 3600 + 120), "3 小时 2 分")
+        XCTAssertEqual(RouteStageBuilder.duration(3 * 3600 + 120), "3 小时 2 分钟")
+        XCTAssertEqual(RouteWords.took(380), "380 毫秒")
+        XCTAssertEqual(RouteWords.took(2100), "2.1 秒")
     }
 }

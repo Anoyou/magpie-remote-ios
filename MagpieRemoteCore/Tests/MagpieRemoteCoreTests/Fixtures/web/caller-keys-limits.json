@@ -1,0 +1,14 @@
+{"accountNames": {"codex/acct-01": "Codex · someone@example.com", "relay-one/k-01": "relay-one/sk-r…AIN1"},
+ "keys": [
+  {"id": "key-two-limits", "name": "iPhone", "masked": "sk-magpie-key-…EXMP01",
+   "limit": {"period": "hours", "hours": 5, "tokens": 2000000, "since": "2026-11-01T10:00:00+08:00"},
+   "moreLimits": [{"period": "week", "cost": 20, "cacheReads": true}],
+   "models": ["relay-one/gpt-4.1", "group/smart"], "quotas": true,
+   "used": {"period": "hours", "hours": 5, "start": "2026-11-01T10:00:00+08:00", "reset": "2026-11-01T15:00:00+08:00", "calls": 40, "tokens": 2000000, "cost": 1.2, "tokenLimit": 2000000, "tokensLeft": 0, "costLeft": 0, "spent": true, "inFlight": 1},
+   "usedAll": [
+    {"period": "hours", "hours": 5, "start": "2026-11-01T10:00:00+08:00", "reset": "2026-11-01T15:00:00+08:00", "calls": 40, "tokens": 2000000, "cost": 1.2, "tokenLimit": 2000000, "tokensLeft": 0, "costLeft": 0, "spent": true, "inFlight": 1},
+    {"period": "week", "start": "2026-10-26T00:00:00+08:00", "reset": "2026-11-02T00:00:00+08:00", "calls": 300, "tokens": 9000000, "cost": 7.5, "costLimit": 20, "tokensLeft": 0, "costLeft": 12.5, "spent": false, "unpriced": 3, "cacheReads": true}
+   ]},
+  {"id": "key-accounts", "name": "Codex", "masked": "sk-magpie-key-…EXMP02", "accounts": ["codex/acct-01"]},
+  {"id": "key-plain", "name": "旧电脑", "masked": "sk-magpie-key-…EXMP03", "off": true}
+ ], "secret": ""}

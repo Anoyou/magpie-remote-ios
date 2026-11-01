@@ -27,6 +27,10 @@ struct QuotaView: View {
         .background(Color(.systemGroupedBackground))
         .refreshable { await refreshAll() }
         .task(id: model.connection) { await reload() }
+        // 读到 / 刷新出新额度时同步给小组件。
+        .onChange(of: snapshot) { _, new in
+            if let new { model.widgetQuotaChanged(new) }
+        }
         .task(id: notice) {
             guard notice != nil else { return }
             try? await Task.sleep(for: .seconds(6))

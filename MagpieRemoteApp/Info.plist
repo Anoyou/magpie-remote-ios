@@ -20,6 +20,21 @@
     <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
+    <!-- 点小组件打开 App：magpieremote://widget/quota、magpieremote://widget/usage。 -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.magpieremote.personal.widget</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>magpieremote</string>
+            </array>
+        </dict>
+    </array>
+    <!-- 构建时写入的 App Group 原名；自签改名后运行时另找（见 Core 的 WidgetAppGroup）。 -->
+    <key>MagpieAppGroup</key>
+    <string>$(MAGPIE_APP_GROUP)</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSLocalNetworkUsageDescription</key>

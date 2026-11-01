@@ -3,6 +3,7 @@ import UIKit
 import MagpieRemoteCore
 
 struct AboutView: View {
+    @Environment(AppModel.self) private var model
     static let repositoryURL = URL(string: "https://github.com/Anoyou/magpie-remote-ios")!
     static var version: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "未知" }
     static var build: String { Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "未知" }
@@ -17,6 +18,14 @@ struct AboutView: View {
                 LabeledContent("系统", value: UIDevice.current.systemName + " " + UIDevice.current.systemVersion)
             }
             Section {
+                LabeledContent("小组件数据", value: model.widgets.statusText)
+                    .accessibilityIdentifier("about.widgets")
+            } header: {
+                Text("小组件")
+            } footer: {
+                Text(widgetFooter)
+            }
+            Section {
                 NavigationLink("更新日志") { ChangelogView() }
                     .accessibilityIdentifier("about.changelog")
                 Link("项目主页（GitHub）", destination: Self.repositoryURL)
@@ -25,6 +34,19 @@ struct AboutView: View {
             }
         }
         .navigationTitle("关于")
+    }
+
+    private var widgetFooter: String {
+        let widgets = model.widgets
+        if model.isFixture { return "主屏与锁屏小组件显示 App 上次读到的额度与今日用量。" }
+        if widgets.groups.isEmpty {
+            return "小组件读不到 App 的数据：这次签名没有开通 App Group（或签名时去掉了扩展）。小组件会一直显示「打开 App 刷新」；换用会保留扩展与 App Group 的签名方式重新安装即可。"
+        }
+        var text = "主屏与锁屏小组件显示 App 上次读到的额度与今日用量（不含任何密钥）。"
+        if let last = widgets.last {
+            text += "快照" + WidgetDisplay.updatedText(last.generatedAt, now: Date()) + "。"
+        }
+        return text
     }
 }
 

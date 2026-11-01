@@ -14,12 +14,21 @@ public struct TraceRest: Hashable, Sendable {
     public var status: Int
     public var until: Date?
     public var error: String
+    /// 是什么定的休息多久（gateway.Rest.By）：retry-after / credit / window / resets / quota / backoff / cooldown …
+    public var by: String = ""
+    /// 连续失败了几次（backoff）。
+    public var failures: Int = 0
+    /// 只是这一个模型在休息时是它的名字。
+    public var model: String = ""
 
     init(_ json: WebJSON) {
         why = json["why"]?.string ?? ""
         status = json["status"]?.int ?? 0
         until = json["until"]?.string.flatMap(UsageTimestamp.parse)
         error = json["error"]?.string ?? ""
+        by = json["by"]?.string ?? ""
+        failures = json["failures"]?.int ?? 0
+        model = json["model"]?.string ?? ""
     }
 }
 
@@ -57,6 +66,10 @@ public struct TraceSeat: Hashable, Sendable {
     public var credits: Bool
     public var renews: Date?
     public var tokens: Double
+    /// 它在组里的哪个子组下（gateway.Weighed.Via：由外到内的组 id）。
+    public var via: [String] = []
+    /// 只用某个 API、排在其他之后。
+    public var aside = false
 
     init(_ json: WebJSON) {
         id = json["id"]?.string ?? ""
@@ -84,6 +97,8 @@ public struct TraceSeat: Hashable, Sendable {
         let renewal = json["usedRenews"]?.string ?? json["renews"]?.array?.first?.string
         renews = renewal.flatMap(UsageTimestamp.parse)
         tokens = json["tokens"]?.double ?? 0
+        via = json["via"]?.strings ?? []
+        aside = json["aside"]?.bool ?? false
     }
 
     /// 网页的 `seat`：同一个账号上的两个模型是两个座位。
@@ -99,6 +114,23 @@ public struct TraceSeat: Hashable, Sendable {
         return plan
     }
     public var modelLabel: String { fixed.isEmpty ? model : "\(model):\(fixed)" }
+}
+
+/// 组里的一个子组（gateway.SubGroup）。
+public struct TraceSubGroup: Hashable, Sendable {
+    public var id: String
+    public var ref: String
+    public var name: String
+    public var routing: String
+    public var rules: Int
+
+    init(_ json: WebJSON) {
+        id = json["id"]?.string ?? ""
+        ref = json["ref"]?.string ?? ""
+        name = json["name"]?.string ?? ""
+        routing = json["routing"]?.string ?? ""
+        rules = json["rules"]?.int ?? 0
+    }
 }
 
 /// 一次尝试（gateway.Try）。
@@ -118,6 +150,8 @@ public struct TraceTry: Hashable, Sendable {
     public var credits: Bool
     /// 再试之前 Agent 已经走了。
     public var gone: Bool
+    /// 最后一个额度用完、Agent 拿到的是更早一次的错误。
+    public var earlier = false
 
     init(_ json: WebJSON) {
         id = json["id"]?.string ?? ""
@@ -134,6 +168,7 @@ public struct TraceTry: Hashable, Sendable {
         again = json["again"]?.int ?? (json["again"]?.bool == true ? 1 : 0)
         credits = json["credits"]?.bool ?? false
         gone = json["gone"]?.bool ?? false
+        earlier = json["earlier"]?.bool ?? false
     }
 
     /// 网页的 `tryOk`：状态码 < 400 且没有中途断开。
@@ -151,6 +186,10 @@ public struct TraceRoute: Hashable, Sendable, Identifiable {
     public var groupID: String?
     public var groupName: String?
     public var groupRouting: String
+    /// Agent 选它用的名字（group/<id> 或 auto/<model>）。
+    public var groupRef: String = ""
+    /// 组里的子组（由外到内）。
+    public var groupSubs: [TraceSubGroup] = []
     public var kind: String
     public var order: [TraceSeat]
     public var tries: [TraceTry]
@@ -180,6 +219,8 @@ public struct TraceRoute: Hashable, Sendable, Identifiable {
             groupID = group["id"]?.string
             groupName = group["name"]?.string ?? group["id"]?.string
             groupRouting = group["routing"]?.string ?? ""
+            groupRef = group["ref"]?.string ?? ""
+            groupSubs = (group["subs"]?.array ?? []).map(TraceSubGroup.init)
         } else {
             groupID = nil
             groupName = nil
@@ -455,6 +496,14 @@ public struct StageAgent: Hashable, Sendable, Identifiable {
     public var hue: String
     /// 卡片上的小字（网页 a.sub）：它最近一个请求的模型；同时在几个文件夹里干活时是这些文件夹的最后一级。
     public var sub: String = ""
+
+    public init(id: String, name: String, busy: Bool, hue: String, sub: String = "") {
+        self.id = id
+        self.name = name
+        self.busy = busy
+        self.hue = hue
+        self.sub = sub
+    }
 }
 
 /// 一次舞台画面：左边的 Agent、中间的 magpie、下面的账号行、上方的标题和说明、底部的计数。
@@ -475,60 +524,15 @@ public struct RouteStage: Hashable, Sendable {
 }
 
 public enum RouteStageBuilder {
-    /// 网页 HUES / SPARE：每个 Agent 一个颜色（都不是红色：红色只表示失败）。
-    public static let hues: [String: String] = [
-        "claude": "#d97757", "codex": "#6366f1", "gemini": "#0ea5e9", "copilot": "#a855f7", "cursor": "#14b8a6", "opencode": "#eab308",
-        "crush": "#ec4899", "goose": "#84cc16", "pi": "#10b981", "omp": "#d946ef", "omo": "#7c3aed", "dsh": "#06b6d4", "commandcode": "#f97316",
-        "mimocode": "#3b82f6", "deveco": "#3c99cc",
-    ]
-    public static let spare = ["#8b5cf6", "#22c55e", "#0d9488", "#0891b2", "#ca8a04", "#db2777", "#2563eb", "#65a30d"]
-
-    public static func hue(_ agent: String) -> String {
-        if let hue = hues[agent] { return hue }
-        var h: UInt32 = 0
-        for scalar in agent.unicodeScalars { h = h &* 31 &+ scalar.value }
-        return spare[Int(h % UInt32(spare.count))]
-    }
+    /// 网页 hueOf()：见 AgentHues。
+    public static func hue(_ agent: String) -> String { AgentHues.shared.hue(agent) }
 
     /// 网页 FAIL 的中文。
-    public static func failWord(_ why: String) -> String {
-        switch why {
-        case "rate": "限流"
-        case "credit": "余额不足"
-        case "quota": "额度用尽"
-        case "auth": "需要重新登录"
-        case "canceled": "已取消"
-        case "foreign": "别的账号的推理"
-        case "floor": "回答太短"
-        case "verify": "需要验证"
-        case "refused": "被拒绝（安全过滤）"
-        case "shape": "请求无法识别"
-        case "sight": "不接受图片"
-        case "proxy": "连不上代理"
-        case "offline": "网络断开"
-        case "effort": "套餐不含这个推理强度"
-        case "overflow": "超出模型上下文"
-        case "room": "回答超出剩余上下文"
-        case "slow": "迟迟不出字"
-        case "prompt": "Agent 的提示词被拒"
-        case "restricted": "账号被厂商限制"
-        default: "失败"
-        }
-    }
+    public static func failWord(_ why: String) -> String { RouteWords.failWord(why) }
 
-    public static func duration(_ seconds: TimeInterval) -> String {
-        let s = max(0, Int(seconds.rounded()))
-        if s < 60 { return "\(s) 秒" }
-        if s < 3600 { return "\(s / 60) 分钟" }
-        if s < 86400 { let h = s / 3600, m = (s % 3600) / 60; return m > 0 && h < 10 ? "\(h) 小时 \(m) 分" : "\(h) 小时" }
-        return "\(s / 86400) 天"
-    }
+    public static func duration(_ seconds: TimeInterval) -> String { RouteWords.dur(seconds) }
 
-    static func restSay(_ rest: TraceRest, now: Date) -> String {
-        let prefix = rest.why.isEmpty || rest.why == "other" ? (rest.status > 0 ? "\(rest.status) · " : "") : ""
-        let left = (rest.until ?? now).timeIntervalSince(now)
-        return prefix + failWord(rest.why) + " · " + duration(left) + "后恢复"
-    }
+    static func restSay(_ rest: TraceRest, now: Date) -> String { RouteStory.restSay(rest, now: now) }
 
     static func percent(_ value: Double) -> String { "\(Int(value.rounded()))%" }
 
@@ -551,6 +555,7 @@ public enum RouteStageBuilder {
         for route in routes where !agentIDs.contains(route.agent) { agentIDs.append(route.agent) }
         if let order { agentIDs = agentOrder(previous: order, routes: routes) }
         let busy = Set(routes.filter { $0.tries.contains { !$0.done } }.map(\.agent))
+        AgentHues.shared.spread(agentIDs)
         let byID = routes.sorted { $0.id < $1.id }
         let agents = agentIDs.map { id -> StageAgent in
             let mine = byID.filter { $0.agent == id }
@@ -591,7 +596,10 @@ public enum RouteStageBuilder {
             let otherAgents = agents.count > 1
 
             var status: String
-            if seat.unlisted { status = "套餐不含这个模型 · 已跳过" }
+            if seat.unlisted {
+                status = seat.kind == "key" ? rt("{name}'s list for this key has no {model}", ["name": seat.name, "model": seat.model])
+                    : rt("its plan doesn't list {model}", ["model": seat.model])
+            }
             else if resting, let rest { status = restSay(rest, now: now) }
             else if seat.window > 0 { status = "请求超出其 \(UsageFormat.tokens(seat.window)) 上下文 · 已跳过" }
             else if let other = trying[key] { status = other.id != current.id && !otherAgents ? "在回答另一个请求…" : "回答中…" }
@@ -601,13 +609,18 @@ public enum RouteStageBuilder {
             else if seat.free { status = "免费 · 不花额度" }
             else if seat.known {
                 let used = seat.balance.map { String(format: "剩余 %.0f %@", $0, seat.unit).trimmingCharacters(in: .whitespaces) } ?? "已用 \(percent(seat.used))"
-                if seat.routing.isEmpty, seat.used >= 98, seat.balance == nil { status = used + (seat.credits ? " · 用积分" : " · 几乎用尽") }
+                if seat.routing.isEmpty, seat.used >= 98, seat.balance == nil { status = used + (seat.credits ? " · 使用 Credits" : " · 几乎用尽") }
                 else if seat.routing.isEmpty, seat.used >= 90, seat.balance == nil { status = used + " · 留到最后" }
                 else if let renews = seat.renews, renews > now { status = used + " · " + duration(renews.timeIntervalSince(now)) + "后重置" }
                 else { status = used }
             } else if seat.kind == "account" { status = "剩余额度未知" }
             else if seat.routing == "usage" { status = "最近 \(UsageFormat.tokens(Int(seat.tokens))) token" }
             else { status = seat.kind == "key" ? "API 密钥" : "一个 Key" }
+            // 网页 render()：已知额度何时重置一直写在行上（回答中、留到最后、被跳过时也写），休息中的写何时恢复
+            if !resting, !seat.unlisted, seat.known, !seat.free, let renews = seat.renews, renews > now {
+                let renew = rt("renews in {d}", ["d": duration(renews.timeIntervalSince(now))])
+                if !status.contains(renew) { status += " · " + renew }
+            }
 
             let flying = !resting && trying[key] != nil
             let on = flying || (!resting && answered.contains(key))
@@ -843,6 +856,15 @@ public struct FlightTick: Hashable, Sendable {
     public var at: TimeInterval
 }
 
+/// 舞台下那句话要说的一句（网页 play() 里的 say）：开演时讲路由为什么这样排（lead），一次失败落下时讲那次尝试，
+/// 回答到了时（不重要地）讲回答。
+public struct FlightSay: Hashable, Sendable {
+    public var at: TimeInterval
+    /// nil = 开演时的那句（firstWhy）；否则是第几次尝试。
+    public var attempt: Int?
+    public var lo: Bool
+}
+
 /// 一只喜鹊：出现（rtcome 0.3 秒），松开点后向上飞走（.away 0.45 秒）。
 public struct FlightBird: Hashable, Sendable {
     public var id: Int
@@ -865,6 +887,9 @@ public struct RoutePlay: Hashable, Sendable {
     public static let bounceTime: TimeInterval = 0.62
     /// 喜鹊松开点后飞走用的时间。
     public static let awayTime: TimeInterval = 0.45
+    /// 网页的一段飞行在它走完后的第一帧才算到（requestAnimationFrame 里 k ≥ 1 时 resolve），下一步才开始：
+    /// 实测（fake clock、16 毫秒一帧）每段平均晚 9 毫秒左右；一段一段累起来，回程比网页早出发。
+    public static let frameLag: TimeInterval = 0.01
 
     private enum Step: Hashable, Sendable {
         case begin
@@ -882,6 +907,7 @@ public struct RoutePlay: Hashable, Sendable {
     public private(set) var birds: [FlightBird] = []
     public private(set) var hits: [FlightHit] = []
     public private(set) var ticks: [FlightTick] = []
+    public private(set) var says: [FlightSay] = []
     /// 减弱动态效果（网页 still()）：每段飞行瞬间完成，点直接出现在终点；没有喜鹊（界面不画）。
     public let still: Bool
     private var step = Step.begin
@@ -921,8 +947,10 @@ public struct RoutePlay: Hashable, Sendable {
     private mutating func fly(_ leg: FlightLeg, _ duration: TimeInterval, dot: FlightDot, bird: Int?, now: TimeInterval) {
         let duration = still ? 0 : duration
         let start = max(cursor, now)
-        segments.append(FlightSegment(kind: .fly(leg, duration: duration), start: start, end: start + duration, dot: dot, bird: bird))
-        cursor = start + duration
+        // 点停在终点直到这段「到了」的那一帧（frameLag），下一段从那时开始
+        let lag = still ? 0 : Self.frameLag
+        segments.append(FlightSegment(kind: .fly(leg, duration: duration), start: start, end: start + duration + lag, dot: dot, bird: bird))
+        cursor = start + duration + lag
     }
 
     private mutating func hold(_ kind: FlightSegment.Kind, dot: FlightDot, bird: Int?, now: TimeInterval) {
@@ -954,6 +982,7 @@ public struct RoutePlay: Hashable, Sendable {
             case .begin:
                 carrier = bird(at: max(cursor, now))
                 ticks.append(FlightTick(node: .agent, at: max(cursor, now)))
+                says.append(FlightSay(at: max(cursor, now), attempt: nil, lo: false))
                 if route.tries.isEmpty {
                     fly(.toHub, Self.toHubTime, dot: .request, bird: carrier, now: now)
                     ticks.append(FlightTick(node: .hub, at: cursor))
@@ -994,6 +1023,7 @@ public struct RoutePlay: Hashable, Sendable {
                     continue
                 }
                 hits.append(FlightHit(seat: seat, at: cursor, status: attempt.status, fail: attempt.fail))
+                says.append(FlightSay(at: cursor, attempt: i, lo: false))
                 let back = bird(at: cursor)
                 if attempt.rest == nil && !attempt.credits && (attempt.again == 0 || attempt.gone) {
                     // 那就是回答：Agent 拿到错误
@@ -1012,6 +1042,7 @@ public struct RoutePlay: Hashable, Sendable {
                 guard route.done else { return }
                 close(now: now)
                 let seat = route.seatKey(of: route.tries[i])
+                says.append(FlightSay(at: cursor, attempt: i, lo: true))
                 let back = bird(at: cursor)
                 fly(.home(seat: seat), Self.homeTime, dot: .answer, bird: back, now: now)
                 release(back, at: cursor)

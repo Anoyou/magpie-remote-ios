@@ -1,0 +1,10 @@
+{"version": "v0.1.2629", "gateway": "http://127.0.0.1:3425", "dir": "~/.magpie",
+ "agentOrder": ["claude", "codex"], "agentsHidden": ["gemini"], "agentsShown": [],
+ "disabledModels": ["*preview*", "relay-one/o3"],
+ "disabledHits": {"*preview*": ["relay-one/gpt-5-preview", "deepseek/r2-preview", "kimi/k3-preview", "glm/glm-5-preview", "qwen/qwen4-preview"]},
+ "titleModels": [
+  {"id": "group/smart", "name": "聪明组", "provider": "", "providerName": "聪明组"},
+  {"id": "relay-one/gpt-4.1", "name": "GPT 4.1", "provider": "relay-one", "providerName": "Relay One"},
+  {"id": "relay-one/o3", "name": "", "provider": "relay-one", "providerName": "Relay One"},
+  {"id": "deepseek/deepseek-chat", "name": "DeepSeek Chat", "provider": "deepseek", "providerName": "DeepSeek"}
+ ]}

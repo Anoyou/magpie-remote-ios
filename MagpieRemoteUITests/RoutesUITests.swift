@@ -79,7 +79,8 @@ final class RoutesUITests: XCTestCase {
         mask.tap()
         let masked = element(id: "routes.row.codex#demo", in: app)
         XCTAssertTrue(waitUntil(5) { masked.exists && !masked.label.contains("demo.user@example.com") }, "打码后仍显示账号")
-        XCTAssertTrue(element(containing: "账号已打码", in: app).exists)
+        // 和网页一样按钮文字不变（「账号打码」），打开时值为「开」
+        XCTAssertEqual(element(id: "routes.mask", in: app).value as? String, "开", "打码后「账号打码」应当是打开的")
         element(id: "routes.mask", in: app).tap()
         XCTAssertTrue(element(id: "routes.row.codex#demo", in: app).hasLabel(containing: "demo.user@example.com", within: 5), "取消打码后没有恢复账号")
     }
@@ -95,6 +96,61 @@ final class RoutesUITests: XCTestCase {
         more.tap()
         XCTAssertTrue(waitUntil(5) { requests.count > 10 }, "点「显示全部」后请求没有超过 10 个：\(requests.count)")
         XCTAssertTrue(element(id: "routes.requests.more", in: app).label.contains("收起"))
+    }
+
+    /// 「重放」：卡片下「最近一个请求是怎么路由的」旁的重放按钮，放的时候舞台上方出现重放条（速度、停止），停止后回到实时。
+    func testReplayTheLastRequest() {
+        let app = launchRoutes()
+        XCTAssertTrue(element(id: "routes.stage", in: app).waitForExistence(timeout: 10), "没有出现实时路由舞台")
+        // 先等最近一个请求结束（「重放」出现），再滑到能点；不要先滑：还没出现时连滑几下会把舞台滑出屏幕（懒加载）。
+        // 「重放」只在最近一个请求已结束时出现；fixture 每 6 秒来一个新请求，按钮会一隐一现。
+        // 所以看到它就按坐标点（元素刚好消失也不会让点击本身失败），没进重放就等下一次再点。
+        let replay = element(id: "routes.replay.one", in: app)
+        let bar = element(id: "routes.replay", in: app)
+        XCTAssertTrue(replay.appears(timeout: 20), "最近一个请求结束后应当有「重放」")
+        app.swipeUp(until: replay, max: 2)
+        var started = false
+        let window = app.windows.firstMatch.frame
+        for _ in 0..<6 where !started {
+            // snapshot() 在元素刚好消失时只是抛错（不算测试失败）；拿到框后按整个 App 的坐标点，不再去找元素。
+            guard replay.appears(timeout: 15), let snap = try? replay.snapshot() else { continue }
+            let f = snap.frame
+            guard !f.isEmpty, window.contains(CGPoint(x: f.midX, y: f.midY)) else {
+                if f.midY > window.midY { app.swipeUp() } else { app.swipeDown() }
+                continue
+            }
+            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
+            started = bar.appears(timeout: 2)
+        }
+        XCTAssertTrue(started, "没有出现重放条")
+        // 只重放一个请求一两秒就放完了；换速度、停止用「全部重放」（十几个请求，够长）。
+        let all = element(id: "routes.replay.all", in: app)
+        XCTAssertTrue(all.appears(timeout: 15), "没有「全部重放」")
+        scrollTo(all, in: app, attempts: 4)
+        all.tap()
+        let speed = element(id: "routes.replay.speed", in: app)
+        app.swipeDown(until: speed, max: 4)
+        XCTAssertTrue(speed.appears(timeout: 5), "全部重放时没有出现重放条的速度按钮")
+        speed.tap()
+        XCTAssertTrue(speed.hasLabel(containing: "2×", within: 3), "点一下速度变成 2×")
+        element(id: "routes.replay.stop", in: app).tap()
+        XCTAssertTrue(element(id: "routes.replay", in: app).disappears(timeout: 5), "停止后重放条应当消失")
+    }
+
+    /// 请求是舞台下面单独的一张卡片：标题旁有「全部重放」，下面「按请求 / 按会话」。
+    func testRequestsCardHasReplayAllAndGrouping() {
+        let app = launchRoutes()
+        // 列表是懒加载的：标题（在最上面）和舞台下的「是怎么路由的」要在往下滑到请求卡片之前看，滑走的行不在无障碍树里。
+        XCTAssertTrue(element(id: "routes.gogroups", in: app).appears(timeout: 10), "标题旁没有跳到路由组的按钮")
+        let steps = element(id: "routes.steps", in: app)
+        _ = steps.appears(timeout: 10)
+        scrollTo(steps, in: app, attempts: 3)
+        XCTAssertTrue(steps.appears(timeout: 10), "没有「是怎么路由的」那几步")
+        let card = element(id: "routes.requests", in: app)
+        scrollTo(card, in: app, attempts: 3)
+        XCTAssertTrue(card.appears(timeout: 10), "没有请求卡片")
+        XCTAssertTrue(element(id: "routes.replay.all", in: app).appears(timeout: 10), "没有「全部重放」")
+        XCTAssertTrue(element(id: "routes.bySession", in: app).exists, "没有「按请求 / 按会话」")
     }
 
     func testChangeRoutingFromGroupCard() {

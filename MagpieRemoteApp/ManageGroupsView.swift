@@ -9,33 +9,77 @@ struct ManageGroupsView: View {
     @State private var pendingDelete: WebGroup?
     @State private var editing: WebGroup?
     @State private var creating = false
+    @State private var viewingUsage = false
+    @Environment(AppModel.self) private var app
 
     private var groups: [WebGroup] { store.groups?.visible ?? [] }
 
     private func agentName(_ id: String) -> String {
         if let agent = store.agents.first(where: { $0.id == id }) { return agent.name }
-        return id.isEmpty || id == "other" ? "你的 Agent" : id
+        return id.isEmpty || id == "other" ? RouteWords.t("your agent") : id
+    }
+
+    /// magpie 方框里的小字：网关地址（网页 hubText：providers.gateway.url 去掉 http://）。
+    private var gateway: String {
+        guard let url = app.activeHost?.gatewayURL else { return "" }
+        var text = url.absoluteString
+        for scheme in ["https://", "http://"] where text.hasPrefix(scheme) { text.removeFirst(scheme.count) }
+        while text.hasSuffix("/") { text.removeLast() }
+        return text
     }
 
     var body: some View {
+        ScrollViewReader { scroller in
         List {
             Section {
-                RoutesStageView(model: live, agentName: agentName) { route in
+                // 打码时不写主机地址（网页在本机，写的是 127.0.0.1；手机上是远处主机的地址，截图分享时不该露出来）
+                RoutesStageView(model: live, agentName: agentName, gateway: live.masked ? "" : gateway, onPickRouting: { route in
                     if let id = route.groupID, let group = store.groups?[group: id] { editing = group }
-                }
+                }, onViewUsage: { _ in viewingUsage = true })
                 .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 8, trailing: 12))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
-                RoutesRequestList(model: live, agentName: agentName)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14))
+                // 网页 #rtMore：舞台下面单独的一块（看不了路由时和舞台一起藏起来，网页 offline()）
+                if live.phase == .live {
+                    RoutesRequestList(model: live, agentName: agentName)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
             } header: {
-                HStack(spacing: 6) {
+                // 网页 .row-head：「路由」· 绿点 · 实时 · 网关正在做的决定 …… 路由组 ↓、账号打码
+                HStack(spacing: 0) {
                     Text("路由")
-                    LiveDot(on: live.phase == .live)
-                    Text("实时 · 网关正在做的决定").font(.caption2).foregroundStyle(.tertiary).textCase(nil)
+                    LiveDot(on: live.book.underWay.isEmpty == false).padding(.leading, 7)
+                    Text("实时 · 网关正在做的决定").font(.system(size: 11)).foregroundStyle(RT.faint).textCase(nil)
+                        .lineLimit(1).padding(.leading, 8)
+                    Spacer(minLength: 6)
                     if RoutesClock.frozen {
-                        Spacer(minLength: 4)
                         RoutesSnapshotStep().textCase(nil)
+                    } else {
+                        Button {
+                            // 网页 rt-gogroups：跳到请求下方的路由组
+                            if let first = groups.first { withAnimation { scroller.scrollTo(first.id, anchor: .top) } }
+                        } label: {
+                            Image(systemName: "arrow.down").font(.system(size: 12, weight: .semibold))
+                        }
+                        .buttonStyle(TextButtonStyle())
+                        .accessibilityLabel(RouteWords.t("Routing groups"))
+                        .accessibilityHint(RouteWords.t("Go to the routing groups, below the requests"))
+                        .accessibilityIdentifier("routes.gogroups")
+                        Button {
+                            live.masked.toggle()
+                        } label: {
+                            Label(RouteWords.t("Hide accounts"), systemImage: "eye.slash")
+                                .labelStyle(.titleAndIcon)
+                                .foregroundStyle(live.masked ? RT.fg2 : RT.ctlFg)
+                        }
+                        .buttonStyle(TextButtonStyle())
+                        .textCase(nil)
+                        .accessibilityValue(live.masked ? "开" : "关")
+                        .accessibilityAddTraits(live.masked ? .isSelected : [])
+                        .accessibilityHint(RouteWords.t("Mask the accounts on this page — email addresses and account names — for a screenshot to share"))
+                        .accessibilityIdentifier("routes.mask")
                     }
                 }
             }
@@ -91,6 +135,7 @@ struct ManageGroupsView: View {
             }
         }
         .navigationTitle("路由")
+        .navigationDestination(isPresented: $viewingUsage) { UsageView().navigationTitle("用量") }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { creating = true } label: { Label("新建路由组", systemImage: "plus") }
@@ -112,19 +157,28 @@ struct ManageGroupsView: View {
             Text("Agent 将不能再选这个路由组；正在用它的 Agent 需要另选模型。")
         }
         .manageAlerts(store: store, id: "groups")
+        }
     }
 }
 
-/// 标题旁的小绿点：在读实时路由时亮（routing.css .rt-livedot）。
+/// 标题旁的小绿点（routing.css .rt-livedot）：一直是绿的；有请求在路上时向外扩散（rtlive 1.8 秒），没有时不动。
 private struct LiveDot: View {
     let on: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var pulse = false
 
     var body: some View {
-        Circle().fill(on ? RT.green : RT.muted).frame(width: 6, height: 6)
-            .opacity(on && pulse && !reduceMotion ? 0.35 : 1)
-            .onAppear { if !reduceMotion && !RT.uiTesting { withAnimation(.easeInOut(duration: 1.2).repeatForever()) { pulse = true } } }
+        let pulsing = on && !reduceMotion && !RT.uiTesting
+        Circle().fill(RT.green).frame(width: 6, height: 6)
+            .background {
+                if pulsing {
+                    TimelineView(.animation) { context in
+                        // @keyframes rtlive { 0% { box-shadow: 0 0 0 0 40% } 70%, 100% { 0 0 0 6px transparent } }
+                        let q = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.8) / 1.8
+                        let k = min(1, q / 0.7)
+                        Circle().fill(RT.green.opacity(0.4 * (1 - k))).frame(width: 6 + 12 * k, height: 6 + 12 * k)
+                    }
+                }
+            }
             .accessibilityHidden(true)
     }
 }

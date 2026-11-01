@@ -189,6 +189,39 @@ final class AgentSessionsStore {
         }
     }
 
+    // MARK: 回收站（官方会话页的 Trash）
+
+    var trash: [TrashedSession] { overview?.trash ?? [] }
+
+    /// 把回收站里的一个会话放回原处。
+    func restore(_ item: TrashedSession) async {
+        busy = true
+        defer { busy = false }
+        do {
+            let title = try await service.restore(key: item.key)
+            notice = "已恢复「\(title.isEmpty ? item.displayTitle : title)」"
+            await load()
+        } catch {
+            let error = MagpieError.from(error)
+            if error != .cancelled { actionError = error }
+        }
+    }
+
+    /// 彻底删除（`items` 为空 = 清空回收站）。调用方先确认。
+    func purge(_ items: [TrashedSession]) async {
+        busy = true
+        defer { busy = false }
+        do {
+            let result = try await service.purge(keys: items.map(\.key), all: items.isEmpty)
+            if let message = result.failureMessage { actionError = .webRejected(message: message, code: nil) }
+            else { notice = result.purged.count == 1 ? "已彻底删除" : "已彻底删除 \(result.purged.count) 个会话" }
+            await load()
+        } catch {
+            let error = MagpieError.from(error)
+            if error != .cancelled { actionError = error }
+        }
+    }
+
     func transcript(for session: AgentSession, sub: String? = nil) async throws -> SessionTranscript {
         try await service.transcript(agent: session.agent, id: session.sessionID, sub: sub)
     }

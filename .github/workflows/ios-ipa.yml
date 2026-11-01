@@ -113,6 +113,7 @@ jobs:
             echo "此 IPA 未签名，不能直接安装，需要用你自己的 Apple ID 自签（例如 Sideloadly、AltStore）。"
             echo "Bundle ID 默认 com.magpieremote.personal，可在签名时改成你自己的。"
             echo "免费 Apple ID 签名的 App 7 天后失效，到期前重新签名安装即可。详见仓库 README。"
+            echo "包里含主屏 / 锁屏小组件扩展：签名时不要勾选「移除扩展 / Remove app extensions」；小组件说明见 docs/widgets.md。"
           } > dist/README.txt
           echo "name=${NAME}" >> "$GITHUB_OUTPUT"
           echo "reused=true" >> "$GITHUB_OUTPUT"
@@ -183,6 +184,7 @@ jobs:
             echo "此 IPA 未签名，不能直接安装，需要用你自己的 Apple ID 自签（例如 Sideloadly、AltStore）。"
             echo "Bundle ID 默认 com.magpieremote.personal，可在签名时改成你自己的。"
             echo "免费 Apple ID 签名的 App 7 天后失效，到期前重新签名安装即可。详见仓库 README。"
+            echo "包里含主屏 / 锁屏小组件扩展：签名时不要勾选「移除扩展 / Remove app extensions」；小组件说明见 docs/widgets.md。"
           } > dist/README.txt
           echo "name=${NAME}" >> "$GITHUB_OUTPUT"
           {
