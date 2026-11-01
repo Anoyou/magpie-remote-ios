@@ -77,8 +77,12 @@ final class QuotaUITests: XCTestCase {
         XCTAssertTrue(work.waitForExistence(timeout: 15))
         work.tap()
         XCTAssertTrue(cards(app).firstMatch.waitForExistence(timeout: 5))
-        app.tabBars.buttons["用量"].tap()
-        app.tabBars.buttons["额度"].tap()
+        // 额度在「更多」里：切到底栏「路由」，再回「更多」（停在额度页，或回到列表后重新进入）。
+        app.tabBars.buttons["路由"].tap()
+        app.tabBars.buttons["更多"].tap()
+        if !header("工作 Claude", in: app).waitForExistence(timeout: 5) {
+            app.openFromMore("more.quota", title: "额度")
+        }
         XCTAssertTrue(header("工作 Claude", in: app).waitForExistence(timeout: 10))
         XCTAssertTrue(cards(app).firstMatch.waitForExistence(timeout: 5), "切换标签后展开状态没有保留")
     }
