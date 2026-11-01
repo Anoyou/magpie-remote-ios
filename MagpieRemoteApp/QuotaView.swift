@@ -245,11 +245,6 @@ private struct QuotaAccountView: View {
         .accessibilityValue(expanded ? "已展开" : "已收起")
         .accessibilityHint(expanded ? "点按收起明细" : "点按展开明细")
         .accessibilityIdentifier("quota.account.header")
-        .contextMenu {
-            if account.canRefresh {
-                Button("重新读取这个账号", systemImage: "arrow.clockwise", action: refresh)
-            }
-        }
     }
 
     private var detail: some View {
@@ -266,7 +261,8 @@ private struct QuotaAccountView: View {
                     Label(refreshing ? "正在重新读取…" : "重新读取这个账号", systemImage: "arrow.clockwise")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.glass)
+                // 不用 .glass：玻璃按钮放进玻璃卡片里会和卡片的玻璃合并，抢走折叠行的点按。
+                .buttonStyle(.bordered)
                 .disabled(refreshing)
                 .accessibilityIdentifier("quota.account.refresh")
             }
