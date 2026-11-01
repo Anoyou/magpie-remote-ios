@@ -54,13 +54,12 @@ final class MagpieRemoteUITests: XCTestCase {
         XCTAssertTrue(element(containing: "工作 Claude", in: app).waitForExistence(timeout: 15))
     }
 
+    /// 切换主机只在「更多 › 当前主机」：右上角不再有「主机」按钮。
     func testHostSheetOpensAndAddForm() {
         let app = launch()
-        let open = app.buttons["hosts.open"].firstMatch
-        XCTAssertTrue(open.waitForExistence(timeout: 10))
-        open.tap()
-        XCTAssertTrue(app.navigationBars["主机"].waitForExistence(timeout: 10))
-        XCTAssertTrue(element(containing: "示例 Mac", in: app).exists)
+        XCTAssertFalse(app.buttons["hosts.open"].exists, "右上角不应再有「主机」按钮")
+        app.openFromMore("manage.hosts", title: "主机")
+        XCTAssertTrue(element(containing: "示例 Mac", in: app).waitForExistence(timeout: 10))
         app.buttons["hosts.add"].tap()
         XCTAssertTrue(app.navigationBars["添加主机"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.textFields["host.address"].exists)

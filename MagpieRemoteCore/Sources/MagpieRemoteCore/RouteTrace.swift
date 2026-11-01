@@ -93,10 +93,10 @@ public struct TraceSeat: Hashable, Sendable {
     public var title: String { kind == "provider" || who.isEmpty ? name : who }
     /// 行上灰色的补充：备用时是供应商名，账号时是套餐。
     public var detail: String {
+        // 网页 makeRow()：`w.fallback ? w.name : w.kind === "provider" ? "" : w.plan || ""`
         if fallback { return name }
         if kind == "provider" { return "" }
-        if !plan.isEmpty { return plan }
-        return title == name ? "" : name
+        return plan
     }
     public var modelLabel: String { fixed.isEmpty ? model : "\(model):\(fixed)" }
 }
@@ -453,6 +453,8 @@ public struct StageAgent: Hashable, Sendable, Identifiable {
     /// 有请求在路上：它到 magpie 的线在流动。
     public var busy: Bool
     public var hue: String
+    /// 卡片上的小字（网页 a.sub）：它最近一个请求的模型；同时在几个文件夹里干活时是这些文件夹的最后一级。
+    public var sub: String = ""
 }
 
 /// 一次舞台画面：左边的 Agent、中间的 magpie、下面的账号行、上方的标题和说明、底部的计数。
@@ -530,15 +532,34 @@ public enum RouteStageBuilder {
 
     static func percent(_ value: Double) -> String { "\(Int(value.rounded()))%" }
 
+    /// 网页 rebuild() 里 Agent 卡片的先后：已经在台上的保持原来的位置，新来的按请求先后排在后面
+    /// （`[...keep, ...ags.filter((a) => !keep.includes(a))]`，ags 按请求 id 排）。
+    public static func agentOrder(previous: [String], routes: [TraceRoute]) -> [String] {
+        var present: [String] = []
+        for route in routes.sorted(by: { $0.id < $1.id }) where !present.contains(route.agent) { present.append(route.agent) }
+        let keep = previous.filter(present.contains)
+        return keep + present.filter { !keep.contains($0) }
+    }
+
     /// 把要显示的请求（第一个是选中的）画成舞台。`agentName` 把 Agent id 换成名字。
-    public static func build(current: TraceRoute, staged: [TraceRoute], now: Date = Date(),
+    /// `order`：Agent 卡片的先后（见 agentOrder）；nil 时选中的请求的 Agent 在最前。
+    public static func build(current: TraceRoute, staged: [TraceRoute], now: Date = Date(), order: [String]? = nil,
                              agentName: (String) -> String = { $0 }) -> RouteStage {
         let routes = [current] + staged.filter { $0.id != current.id }
         // 左边的 Agent：按出现顺序
         var agentIDs: [String] = []
         for route in routes where !agentIDs.contains(route.agent) { agentIDs.append(route.agent) }
+        if let order { agentIDs = agentOrder(previous: order, routes: routes) }
         let busy = Set(routes.filter { $0.tries.contains { !$0.done } }.map(\.agent))
-        let agents = agentIDs.map { StageAgent(id: $0, name: agentName($0), busy: busy.contains($0), hue: hue($0)) }
+        let byID = routes.sorted { $0.id < $1.id }
+        let agents = agentIDs.map { id -> StageAgent in
+            let mine = byID.filter { $0.agent == id }
+            var folders: [String] = []
+            for route in mine where !route.folder.isEmpty && !folders.contains(route.folder) { folders.append(route.folder) }
+            let sub = folders.count > 1 ? folders.map { $0.split(separator: "/").last.map(String.init) ?? $0 }.joined(separator: ", ")
+                : mine.last?.model ?? ""
+            return StageAgent(id: id, name: agentName(id), busy: busy.contains(id), hue: hue(id), sub: sub)
+        }
 
         // 每个座位：最近一个排到它的请求说了算（选中的请求优先）
         var seats: [(TraceSeat, TraceRoute)] = []
@@ -806,6 +827,22 @@ public struct FlightSegment: Hashable, Sendable {
     public var bird: Int?
 }
 
+/// 一次失败落在座位上（网页 play() 里的 `rerun(row.li, "hit")` 与红色标签）：那一行抖一下（rthit 0.45 秒），
+/// 右上角显示「状态码 · 原因」1.8 秒。
+public struct FlightHit: Hashable, Sendable {
+    public var seat: String
+    public var at: TimeInterval
+    public var status: Int
+    public var fail: String
+}
+
+/// 卡片跳一下（网页 `tick()`，rttick 0.4 秒）：Agent 在请求出发、回答到达时，magpie 在喜鹊到达、从它这里再出发时。
+public struct FlightTick: Hashable, Sendable {
+    public enum Node: Hashable, Sendable { case agent, hub }
+    public var node: Node
+    public var at: TimeInterval
+}
+
 /// 一只喜鹊：出现（rtcome 0.3 秒），松开点后向上飞走（.away 0.45 秒）。
 public struct FlightBird: Hashable, Sendable {
     public var id: Int
@@ -843,16 +880,21 @@ public struct RoutePlay: Hashable, Sendable {
     public let agent: String
     public private(set) var segments: [FlightSegment] = []
     public private(set) var birds: [FlightBird] = []
+    public private(set) var hits: [FlightHit] = []
+    public private(set) var ticks: [FlightTick] = []
+    /// 减弱动态效果（网页 still()）：每段飞行瞬间完成，点直接出现在终点；没有喜鹊（界面不画）。
+    public let still: Bool
     private var step = Step.begin
     private var index = 0
     private var origin = FlightOrigin.agent
     private var carrier: Int?
     private var cursor: TimeInterval
 
-    public init(route: TraceRoute, now: TimeInterval) {
+    public init(route: TraceRoute, now: TimeInterval, still: Bool = false) {
         self.route = route.id
         agent = route.agent
         cursor = now
+        self.still = still
     }
 
     /// 演完了（最后一段已经排好结束时间）。
@@ -877,6 +919,7 @@ public struct RoutePlay: Hashable, Sendable {
     }
 
     private mutating func fly(_ leg: FlightLeg, _ duration: TimeInterval, dot: FlightDot, bird: Int?, now: TimeInterval) {
+        let duration = still ? 0 : duration
         let start = max(cursor, now)
         segments.append(FlightSegment(kind: .fly(leg, duration: duration), start: start, end: start + duration, dot: dot, bird: bird))
         cursor = start + duration
@@ -910,8 +953,10 @@ public struct RoutePlay: Hashable, Sendable {
             switch step {
             case .begin:
                 carrier = bird(at: max(cursor, now))
+                ticks.append(FlightTick(node: .agent, at: max(cursor, now)))
                 if route.tries.isEmpty {
                     fly(.toHub, Self.toHubTime, dot: .request, bird: carrier, now: now)
+                    ticks.append(FlightTick(node: .hub, at: cursor))
                     hold(.holdHub, dot: .request, bird: carrier, now: now)
                     origin = .hubFromAgent
                 }
@@ -931,6 +976,7 @@ public struct RoutePlay: Hashable, Sendable {
                 guard route.seat(of: attempt) != nil, seated(seat) else { index += 1; continue }
                 close(now: now) // 在 magpie 等的那一段
                 if carrier == nil { carrier = bird(at: max(cursor, now)) }
+                if origin != .agent { ticks.append(FlightTick(node: .hub, at: max(cursor, now))) }
                 fly(.out(seat: seat, from: origin), origin == .agent ? Self.outTime : Self.onTime, dot: .request, bird: carrier, now: now)
                 // 放下点：它在那里等回答
                 release(carrier, at: cursor)
@@ -947,11 +993,13 @@ public struct RoutePlay: Hashable, Sendable {
                     step = .answered(i)
                     continue
                 }
+                hits.append(FlightHit(seat: seat, at: cursor, status: attempt.status, fail: attempt.fail))
                 let back = bird(at: cursor)
                 if attempt.rest == nil && !attempt.credits && (attempt.again == 0 || attempt.gone) {
                     // 那就是回答：Agent 拿到错误
                     fly(.home(seat: seat), Self.failHomeTime, dot: .error, bird: back, now: now)
                     release(back, at: cursor)
+                    ticks.append(FlightTick(node: .agent, at: cursor))
                     step = .ended
                     return
                 }
@@ -967,6 +1015,7 @@ public struct RoutePlay: Hashable, Sendable {
                 let back = bird(at: cursor)
                 fly(.home(seat: seat), Self.homeTime, dot: .answer, bird: back, now: now)
                 release(back, at: cursor)
+                ticks.append(FlightTick(node: .agent, at: cursor))
                 step = .ended
                 return
             case .ended:

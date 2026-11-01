@@ -105,6 +105,37 @@ final class RoutePlayTests: XCTestCase {
         XCTAssertTrue(play.ended)
     }
 
+    /// 网页 tick()：Agent 卡片在请求出发、回答到达时跳一下，magpie 在喜鹊到达、从它这里再出发时跳一下；
+    /// 失败落在座位上时那一行抖一下、显示「状态码 · 原因」（rerun(row.li, "hit")）。
+    func testTicksAndHitsFollowTheFlight() {
+        let r = route(tries: [attempt("a#k1", "gpt-4.1", done: true, status: 429, rest: true, fail: "rate"),
+                              attempt("b#k1", "deepseek-chat", done: true, status: 200)], done: true, status: 200)
+        var play = RoutePlay(route: r, now: 0)
+        play.advance(r, now: 0)
+        XCTAssertEqual(play.ticks.map(\.node), [.agent, .hub, .agent])
+        XCTAssertEqual(play.ticks[0].at, 0)
+        XCTAssertEqual(play.ticks[1].at, 1.4 + 0.62, accuracy: 1e-9, "从 magpie 再出发时 magpie 跳一下")
+        XCTAssertEqual(play.ticks[2].at, 1.4 + 0.62 + 0.9 + 1.4, accuracy: 1e-9, "回答到 Agent 时 Agent 跳一下")
+        XCTAssertEqual(play.hits.count, 1)
+        XCTAssertEqual(play.hits[0].status, 429)
+        XCTAssertEqual(play.hits[0].fail, "rate")
+        XCTAssertEqual(play.hits[0].at, 1.4, accuracy: 1e-9)
+
+        var waiting = RoutePlay(route: route(tries: [], done: false), now: 0)
+        waiting.advance(route(tries: [], done: false), now: 0)
+        XCTAssertEqual(waiting.ticks.map(\.node), [.agent, .hub])
+        XCTAssertEqual(waiting.ticks[1].at, 0.62, accuracy: 1e-9, "喜鹊到 magpie 时 magpie 跳一下")
+    }
+
+    /// 减弱动态效果：每段飞行瞬间完成（网页 still() 时 fly 的 ms 为 0），点直接停在座位上。
+    func testStillPlaysWithoutFlightTime() {
+        let r = route(tries: [attempt("a#k1", "gpt-4.1", done: false)], done: false)
+        var play = RoutePlay(route: r, now: 5, still: true)
+        play.advance(r, now: 5)
+        XCTAssertEqual(legs(play), ["out a#k1 agent 0.0", "hold a#k1 pulsing"])
+        XCTAssertEqual(play.segments[1].start, 5)
+    }
+
     func testSeatNotOnStageIsSkippedAndGoneRouteEnds() {
         let r = route(tries: [attempt("a#k1", "gpt-4.1", done: false)], done: false)
         var play = RoutePlay(route: r, now: 0)

@@ -58,6 +58,15 @@ final class RoutesUITests: XCTestCase {
         let app = launchRoutes(["--routes-fliers"])
         XCTAssertTrue(element(id: "routes.stage", in: app).waitForExistence(timeout: 10), "没有出现实时路由舞台")
         XCTAssertTrue(element(id: "routes.flier", in: app).waitForExistence(timeout: 20), "舞台上没有画出喜鹊")
+        // Agent 卡片的位置都量到了（以前外层把它们盖掉，Agent → magpie 的线和这段路上的喜鹊都画不出来）
+        let wires = element(id: "routes.wires", in: app)
+        XCTAssertTrue(wires.waitForExistence(timeout: 5), "没有线的测量元素")
+        let measured = NSPredicate(format: "value BEGINSWITH 'agents=all rows=' AND NOT (value ENDSWITH 'rows=0')")
+        expectation(for: measured, evaluatedWith: wires)
+        waitForExpectations(timeout: 10)
+        // 正常成功的一次：喜鹊从 Agent 沿它的线飞向 magpie
+        let fromAgent = app.descendants(matching: .any).matching(NSPredicate(format: "identifier == 'routes.flier' AND value == 'toHub'")).firstMatch
+        XCTAssertTrue(fromAgent.waitForExistence(timeout: 20), "没有喜鹊沿 Agent → magpie 的线飞（只见：\(String(describing: wires.value))）")
     }
 
     /// 「账号打码」：账号（这里是备用订阅账号的邮箱）换成模糊的替身字母，再点一次恢复。

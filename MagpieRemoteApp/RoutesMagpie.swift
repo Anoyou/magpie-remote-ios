@@ -214,6 +214,7 @@ struct CubicTiming {
 
     static let ease = CubicTiming(x1: 0.25, y1: 0.1, x2: 0.25, y2: 1)
     static let easeOut = CubicTiming(x1: 0, y1: 0, x2: 0.58, y2: 1)
+    static let easeInOut = CubicTiming(x1: 0.42, y1: 0, x2: 0.58, y2: 1)
     /// rtflap：cubic-bezier(.45, 0, .3, 1)
     static let flap = CubicTiming(x1: 0.45, y1: 0, x2: 0.3, y2: 1)
     /// .rt-lift 的 transition：cubic-bezier(.3, 0, .2, 1)
@@ -300,6 +301,42 @@ enum MagpieMotion {
         }
         return Lift(dx: 0, dy: 0, scale: 1, opacity: 1)
     }
+
+    /// 关键帧动画在 t（0…1）时的值：每段之间用 timing 缓动（CSS 的 animation-timing-function 作用在每一段上）。
+    static func keyframes(_ frames: [(at: Double, value: Double)], _ t: Double, timing: CubicTiming) -> Double {
+        guard let first = frames.first else { return 0 }
+        if t <= first.at { return first.value }
+        for i in 1..<frames.count where t <= frames[i].at {
+            let a = frames[i - 1], b = frames[i]
+            let u = timing((t - a.at) / (b.at - a.at))
+            return a.value + (b.value - a.value) * u
+        }
+        return frames.last?.value ?? 0
+    }
+
+    /// 卡片跳一下（.rt-hub.tick / .rt-src.tick：rttick .4s ease-out，40% 时 scale(1.04)）。多次叠在一起时取最新的那次。
+    static func tickScale(_ times: [TimeInterval], at now: TimeInterval) -> Double {
+        guard let at = times.last(where: { $0 <= now }), now - at < tick else { return 1 }
+        return keyframes([(0, 1), (0.4, 1.04), (1, 1)], (now - at) / tick, timing: .easeOut)
+    }
+    static let tick: TimeInterval = 0.4
+
+    /// 失败落在座位上那一行抖一下（.rt-accts li.hit：rthit .45s，默认 ease）：20% −5、40% 4、60% −2、80% 1 点。
+    static func hitOffset(_ elapsed: TimeInterval) -> Double {
+        guard elapsed >= 0, elapsed < hit else { return 0 }
+        return keyframes([(0, 0), (0.2, -5), (0.4, 4), (0.6, -2), (0.8, 1), (1, 0)], elapsed / hit, timing: .ease)
+    }
+    static let hit: TimeInterval = 0.45
+
+    /// 失败的红色标签（.rt-accts .tag，li.tagged 1.8 秒）：opacity 与 transform .25s（ease）进出，
+    /// 没显示时 translateY(4px) scale(.9)。返回 0…1 的「显示了多少」，nil = 不在。
+    static func tagShown(_ elapsed: TimeInterval) -> Double? {
+        guard elapsed >= 0, elapsed < tagFor + tagFade else { return nil }
+        if elapsed < tagFor { return CubicTiming.ease(min(1, elapsed / tagFade)) }
+        return 1 - CubicTiming.ease((elapsed - tagFor) / tagFade)
+    }
+    static let tagFor: TimeInterval = 1.8
+    static let tagFade: TimeInterval = 0.25
 
     /// 网页 frame()：每段飞行先慢后快再慢，像鸟滑翔着落下。
     static func glide(_ k: Double) -> Double {
@@ -553,9 +590,11 @@ enum MagpieFlier {
     static let body = Path(ellipseIn: MagpieArt.body)
     static let belly = Path(ellipseIn: MagpieArt.belly)
     static let head = Path(ellipseIn: MagpieArt.head)
-    /// transform-box: fill-box; transform-origin: 50% 100%：翅膀从肩膀（自身外框的底边中点）扇。
-    static var farShoulder: CGPoint { CGPoint(x: farWing.boundingRect.midX, y: farWing.boundingRect.maxY) }
-    static var nearShoulder: CGPoint { CGPoint(x: nearWing.boundingRect.midX, y: nearWing.boundingRect.maxY) }
+    /// transform-box: fill-box; transform-origin: 50% 100%：翅膀从肩膀（自身几何外框的底边中点）扇。
+    /// 数值是 Chromium 里量的（getBBox：远侧 x −15.2108…−8.6、y −18.6…−3.2；近侧那一组 x −16.3636…−8.4、y −20.4…−2.8），
+    /// 不依赖 Path.boundingRect 怎么算曲线的外框。
+    static let farShoulder = CGPoint(x: -15.210792 + 6.610791 / 2, y: -3.2)
+    static let nearShoulder = CGPoint(x: -16.363630 + 7.963631 / 2, y: -2.8)
 
     static func draw(in gc: GraphicsContext, pose: MagpiePose, lift: MagpieMotion.Lift, flapTime: TimeInterval, ink: Color, card: Color) {
         var layer = gc

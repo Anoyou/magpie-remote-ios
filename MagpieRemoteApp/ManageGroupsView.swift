@@ -33,6 +33,10 @@ struct ManageGroupsView: View {
                     Text("路由")
                     LiveDot(on: live.phase == .live)
                     Text("实时 · 网关正在做的决定").font(.caption2).foregroundStyle(.tertiary).textCase(nil)
+                    if RoutesClock.frozen {
+                        Spacer(minLength: 4)
+                        RoutesSnapshotStep().textCase(nil)
+                    }
                 }
             }
 
