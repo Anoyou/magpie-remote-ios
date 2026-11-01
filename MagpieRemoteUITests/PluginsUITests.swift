@@ -37,14 +37,14 @@ final class PluginsUITests: XCTestCase {
     /// 顶部分页（「已安装」带数量，按开头匹配）。
     private func selectTab(_ title: String, in app: XCUIApplication) {
         let segment = app.segmentedControls.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
-        XCTAssertTrue(segment.waitForExistence(timeout: 10), "没有分页「\(title)」")
+        XCTAssertTrue(segment.appears(timeout: 10), "没有分页「\(title)」")
         segment.tap()
     }
 
     func testListShowsInstalledAndBuiltinPlugins() {
         let app = launchPlugins()
         selectTab("已安装", in: app)
-        XCTAssertTrue(element(id: "plugins.row.@magpie-community/example-auth", in: app).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(id: "plugins.row.@magpie-community/example-auth", in: app).appears(timeout: 10))
         XCTAssertTrue(element(containing: "示例云", in: app).exists, "市场里的名字优先")
         XCTAssertTrue(element(containing: "示例仪表盘", in: app).exists)
         XCTAssertTrue(element(containing: "v1.3.0 可用", in: app).exists, "有新版本的插件标出可更新的版本")
@@ -52,7 +52,7 @@ final class PluginsUITests: XCTestCase {
 
         selectTab("内置", in: app)
         let builtin = element(id: "plugins.builtin.sessions", in: app)
-        XCTAssertTrue(builtin.waitForExistence(timeout: 10), "应列出内置插件")
+        XCTAssertTrue(builtin.appears(timeout: 10), "应列出内置插件")
         XCTAssertTrue(element(containing: "会话", in: app).exists, "内置插件应显示中文名称")
         let setting = element(id: "builtin.setting.sample", in: app)
         scrollTo(setting, in: app)
@@ -62,8 +62,8 @@ final class PluginsUITests: XCTestCase {
     func testDiscoverShowsCommunitySectionsGitHubAndSearch() {
         let app = launchPlugins()
         selectTab("发现", in: app)
-        XCTAssertTrue(element(id: "plugins.intro", in: app).waitForExistence(timeout: 10), "发现页顶部是介绍")
-        XCTAssertTrue(element(id: "plugins.card.@magpie-community/example-auth", in: app).waitForExistence(timeout: 10), "社区插件按种类分区")
+        XCTAssertTrue(element(id: "plugins.intro", in: app).appears(timeout: 10), "发现页顶部是介绍")
+        XCTAssertTrue(element(id: "plugins.card.@magpie-community/example-auth", in: app).appears(timeout: 10), "社区插件按种类分区")
         let guardCard = element(id: "plugins.card.@magpie-community/example-guard", in: app)
         scrollTo(guardCard, in: app)
         XCTAssertTrue(guardCard.exists, "网关中间件单独一区")
@@ -73,16 +73,16 @@ final class PluginsUITests: XCTestCase {
 
         // 打开卡片：详情里有 README
         github.tap()
-        XCTAssertTrue(element(containing: "这是示例插件的说明", in: app).waitForExistence(timeout: 10), "详情应显示 README")
+        XCTAssertTrue(element(containing: "这是示例插件的说明", in: app).appears(timeout: 10), "详情应显示 README")
         app.buttons["关闭"].firstMatch.tap()
 
         // 搜索：推荐里匹配的，加上 npm 的结果
         let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 10))
+        XCTAssertTrue(search.appears(timeout: 10))
         search.tap()
         search.typeText("example")
         let hit = element(id: "plugins.card.opencode-example-auth", in: app)
-        _ = hit.waitForExistence(timeout: 5)
+        _ = hit.appears(timeout: 5)
         scrollTo(hit, in: app, attempts: 12)
         XCTAssertTrue(hit.exists, "应显示 npm 上的搜索结果")
     }
@@ -92,41 +92,39 @@ final class PluginsUITests: XCTestCase {
         selectTab("已安装", in: app)
         element(id: "plugins.add", in: app).tap()
         let field = app.textFields["plugin.add.spec"]
-        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        XCTAssertTrue(field.appears(timeout: 10))
         field.tap()
         field.typeText("example-new-plugin")
         element(id: "plugin.add.submit", in: app).tap()
         let confirm = app.buttons["安装"].firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "安装前应当先弹出确认")
+        XCTAssertTrue(confirm.appears(timeout: 5), "安装前应当先弹出确认")
         confirm.tap()
         // 安装后表单关闭，转到「已安装」，新插件出现在列表里
-        XCTAssertTrue(app.navigationBars["插件"].waitForExistence(timeout: 10))
-        XCTAssertTrue(element(id: "plugins.row.example-new-plugin", in: app).waitForExistence(timeout: 10), "新插件应出现在列表里")
+        XCTAssertTrue(app.navigationBars["插件"].appears(timeout: 10))
+        XCTAssertTrue(element(id: "plugins.row.example-new-plugin", in: app).appears(timeout: 10), "新插件应出现在列表里")
     }
 
     func testRemovePluginAsksForConfirmationAndTogglesWork() {
         let app = launchPlugins()
         selectTab("已安装", in: app)
         let row = element(id: "plugins.row.github:example-owner/magpie-dash", in: app)
-        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        XCTAssertTrue(row.appears(timeout: 10))
         row.tap()
         let toggle = element(id: "plugin.toggle", in: app)
-        XCTAssertTrue(toggle.waitForExistence(timeout: 10))
+        XCTAssertTrue(toggle.appears(timeout: 10))
         XCTAssertEqual(toggle.value as? String, "1")
         // 点开关本身（右侧），点中间的标签不会切换
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
-        expectation(for: NSPredicate(format: "value == '0'"), evaluatedWith: toggle)
-        waitForExpectations(timeout: 10)
+        XCTAssertTrue(waitUntil(10) { (toggle.value as? String) == "0" }, "点开关后插件没有停用")
 
         let remove = element(id: "plugin.remove", in: app)
         scrollTo(remove, in: app)
         remove.tap()
         let confirm = app.buttons["移除"].firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "移除前应当先弹出确认")
+        XCTAssertTrue(confirm.appears(timeout: 5), "移除前应当先弹出确认")
         confirm.tap()
-        XCTAssertTrue(app.navigationBars["插件"].waitForExistence(timeout: 10))
-        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element(id: "plugins.row.github:example-owner/magpie-dash", in: app))
-        waitForExpectations(timeout: 10)
+        XCTAssertTrue(app.navigationBars["插件"].appears(timeout: 10))
+        XCTAssertTrue(element(id: "plugins.row.github:example-owner/magpie-dash", in: app).disappears(timeout: 10), "移除后插件不应还在列表里")
         XCTAssertTrue(element(id: "plugins.row.@magpie-community/example-auth", in: app).exists)
     }
 }

@@ -33,7 +33,7 @@ final class ProviderDetailUITests: XCTestCase {
         XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "没有出现底栏「更多」")
         openProviders(app)
         let row = element(id: "provider.row.relay-example", in: app)
-        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        XCTAssertTrue(row.appears(timeout: 10))
         row.tap()
         return app
     }
@@ -41,38 +41,34 @@ final class ProviderDetailUITests: XCTestCase {
     func testSavedBaseURLAndKeyRevealToggle() {
         let app = openRelay()
         let chat = app.textFields["provider.chat"]
-        XCTAssertTrue(chat.waitForExistence(timeout: 10))
+        XCTAssertTrue(chat.appears(timeout: 10))
         XCTAssertEqual(chat.value as? String, "https://relay.example/v1", "应当显示已保存的 Base URL")
 
         let value = element(id: "provider.key.value.fx-key-1", in: app)
         scrollTo(value, in: app)
-        XCTAssertTrue(value.waitForExistence(timeout: 10))
+        XCTAssertTrue(value.appears(timeout: 10))
         XCTAssertFalse(value.label.contains("EXAMPLE"), "默认不应显示明文：\(value.label)")
 
         let eye = element(id: "provider.key.reveal.fx-key-1", in: app)
         XCTAssertTrue(eye.exists)
         eye.tap()
-        let shown = NSPredicate(format: "label CONTAINS %@", "sk-relay-EXAMPLE-MAIN1")
-        expectation(for: shown, evaluatedWith: value)
-        waitForExpectations(timeout: 10)
+        XCTAssertTrue(value.hasLabel(containing: "sk-relay-EXAMPLE-MAIN1", within: 10), "点眼睛后没有显示明文")
         // 另一把仍然是隐藏的
         XCTAssertFalse(element(id: "provider.key.value.fx-key-2", in: app).label.contains("EXAMPLE"))
 
         element(id: "provider.key.reveal.fx-key-1", in: app).tap()
-        let hidden = NSPredicate(format: "NOT (label CONTAINS %@)", "EXAMPLE")
-        expectation(for: hidden, evaluatedWith: value)
-        waitForExpectations(timeout: 10)
+        XCTAssertTrue(waitUntil(10) { value.exists && !value.label.contains("EXAMPLE") }, "再点眼睛后没有隐藏明文")
     }
 
     func testAddAnotherKey() {
         let app = openRelay()
         let add = element(id: "provider.key.add", in: app)
-        _ = add.waitForExistence(timeout: 10)
+        _ = add.appears(timeout: 10)
         scrollTo(add, in: app)
         XCTAssertTrue(add.exists)
         add.tap()
         let name = app.textFields["provider.key.new.name"]
-        XCTAssertTrue(name.waitForExistence(timeout: 10))
+        XCTAssertTrue(name.appears(timeout: 10))
         name.tap()
         name.typeText("团队")
         let key = app.secureTextFields["provider.key.new.value"]
@@ -82,7 +78,7 @@ final class ProviderDetailUITests: XCTestCase {
         element(id: "provider.key.new.save", in: app).tap()
         // 新的一把出现在列表里，同样默认隐藏
         let row = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "provider.key.row.fx-key-new")).firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "添加后应当出现新的 Key")
+        XCTAssertTrue(row.appears(timeout: 10), "添加后应当出现新的 Key")
         let value = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "provider.key.value.fx-key-new")).firstMatch
         XCTAssertFalse(value.label.contains("EXAMPLE"))
     }

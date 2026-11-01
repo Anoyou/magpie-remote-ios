@@ -27,7 +27,7 @@ final class OfficialIconsUITests: XCTestCase {
         let app = launch()
         for title in ["主页", "会话", "路由", "用量", "更多"] {
             let tab = app.tabBars.buttons[title]
-            XCTAssertTrue(tab.waitForExistence(timeout: 10), "底栏里没有「\(title)」")
+            XCTAssertTrue(tab.appears(timeout: 10), "底栏里没有「\(title)」")
             assertNoAssetName(tab.label, "底栏「\(title)」")
         }
     }
@@ -37,11 +37,11 @@ final class OfficialIconsUITests: XCTestCase {
         let app = launch()
         app.openHome("供应商")
         let row = app.descendants(matching: .any).matching(identifier: "provider.row.deepseek").firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 15), "没有示例供应商「示例 DeepSeek」")
+        XCTAssertTrue(row.appears(timeout: 15), "没有示例供应商「示例 DeepSeek」")
         XCTAssertTrue(row.label.contains("示例 DeepSeek"), "供应商行应当读出名字：\(row.label)")
         assertNoAssetName(row.label, "供应商行")
         row.tap()
-        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "provider.name").firstMatch.waitForExistence(timeout: 10),
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "provider.name").firstMatch.appears(timeout: 10),
                       "点供应商行没有打开详情")
     }
 }

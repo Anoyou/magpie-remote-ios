@@ -30,7 +30,7 @@ final class RoutesSnapshotUITests: XCTestCase {
         XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "没有出现底栏「更多」")
         app.openDockTab("路由")
         let stage = app.descendants(matching: .any).matching(identifier: "routes.stage").firstMatch
-        XCTAssertTrue(stage.waitForExistence(timeout: 15), "没有出现实时路由舞台")
+        XCTAssertTrue(stage.appears(timeout: 15), "没有出现实时路由舞台")
         let step = app.buttons["routes.snapshot.step"].firstMatch
         let clock = step
         let directory = outputDirectory.appendingPathComponent(scene, isDirectory: true)

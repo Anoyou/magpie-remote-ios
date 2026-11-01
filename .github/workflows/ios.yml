@@ -1,17 +1,17 @@
 name: iOS
 
-# 结构（目标：PR 反馈 ≤ 8 分钟）：
+# 结构（目标：整条 PR 反馈 ≤ 15 分钟）：
 #   判定（Ubuntu：隐私 / 工程 / 版本校验 + 改动判定 + 同树已全绿则跳过）
 #     ├─ Core 单元测试（Ubuntu，swift 官方容器，缓存 .build）—— 与 macOS 并行
-#     └─ 编译与 UI 测试（macOS 单 job；runner 并发为 1，不分片）：恢复模拟器 dyld 缓存 → build-for-testing（有缓存时模拟器并行启动）
-#          → 预热（顺带跑完本片最短的用例）
-#          → UI 测试（本片其余用例，失败的才重跑一次）；第 1 片额外打未签名 IPA 并按文件树命名上传，
-#          供 main push 时「未签名 IPA」直接复用（scripts/ui-test-shards.py 按预计耗时给第 1 片少分一些用例）
+#     ├─ 编译与打包（macOS）：恢复 dyld 缓存与 Xcode 编译缓存 → build-for-testing → 上传测试产物
+#     │     → 打未签名 IPA 并按文件树命名上传（与 UI 测试同时进行），供 main push 时「未签名 IPA」直接复用
+#     └─ UI 测试 ×UI_JOBS（macOS，与编译同时开始）：启动模拟器 → 等测试产物 → 用本片最短的用例预热
+#           → 跑本片其余用例（失败的才重跑一次）；逐帧截图（build/results/routes-frames）随结果包上传
 #   → 汇总「iOS 构建与测试」（Ubuntu：记录已全绿的文件树）
 # - 改动判定（scripts/ci-changes.py）：只改文档 / 契约 → 都跳过；只改 Core 测试 → 只跑 Core；
 #   CHANGELOG.md 随 App 打包、UI 测试会检查，仍跑 macOS。
 # - push main：若该提交的文件树与某个已全绿 run 的被测树完全相同（PR 在最新 main 上合并即如此），跳过重复测试。
-# - UI 用例按 scripts/ui-test-shards.py 自动分片：新增用例不用改配置；分片数改 UI_SHARDS 与 matrix 即可。
+# - UI 用例按 scripts/ui-test-shards.py 的预计耗时分给各 UI 测试 job：新增用例不用改配置；片数改 UI_JOBS 与 matrix.shard。
 on:
   pull_request:
     branches: [main]
@@ -53,11 +53,12 @@ env:
   DERIVED_DATA: ${{ github.workspace }}/build/DerivedData
   RESULTS_DIR: ${{ github.workspace }}/build/results
   GREEN_TREE_PREFIX: ios-green-tree-
-  # UI 测试分片数（与 build-test 的 matrix.shard 保持一致）。
-  # xcode-27 runner 实测同一时间只跑 1 个 job：分片只会让排队翻倍，所以默认 1 片。
-  # 只有 runner 并发 ≥2 时才改回 2（同时把 matrix.shard 改成 [1, 2]）。
-  UI_SHARDS: "1"
-  UI_SHARD_EXTRA: "0=60"
+  # UI 测试分几个 macOS job 并行（与 ui-test job 的 matrix.shard 保持一致）。
+  # 标准 xcode-27 runner 只有 3 核 / 7 GB，同一台上跑 2 台模拟器总吞吐不变（run 41297581636），所以按 job 拆分。
+  UI_JOBS: "4"
+  # Xcode 编译缓存（CAS）目录与 actions/cache key 前缀（「模拟器缓存预热」里用同样的值）。
+  CAS_DIR: ${{ github.workspace }}/build/CompilationCache
+  CAS_PREFIX: xcode-cas-v1-
 
 jobs:
   plan:
@@ -91,8 +92,8 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           python3 scripts/ci-changes.py
-          echo "UI 测试分片："
-          python3 scripts/ui-test-shards.py --shards "$UI_SHARDS" --extra "$UI_SHARD_EXTRA" --summary
+          echo "UI 测试按 $UI_JOBS 个 job 的分配："
+          python3 scripts/ui-test-shards.py --shards "$UI_JOBS" --summary
 
       - name: 对比已全绿的被测文件树
         id: decide
@@ -153,19 +154,13 @@ jobs:
       - name: MagpieRemoteCore 单元测试
         run: swift test --package-path MagpieRemoteCore --skip-build --parallel
 
-  build-test:
-    name: 编译与 UI 测试
+  build:
+    name: 编译与打包
     needs: plan
     if: needs.plan.outputs.skip != 'true' && needs.plan.outputs.ios == 'true'
     runs-on: xcode-27
-    # 34+ 个 UI 用例约 30 分钟，模拟器冷启动最长可到 9 分钟，再加编译与打 IPA。
-    timeout-minutes: 75
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1]
-    env:
-      SHARD: ${{ matrix.shard }}
+    # build-for-testing → 立刻把测试产物上传给各 UI 测试 job → 再打未签名 IPA（与 UI 测试同时进行）。
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -173,11 +168,18 @@ jobs:
         id: xcode
         run: |
           sudo xcode-select -s "$XCODE_APP/Contents/Developer"
+          # 关掉 Spotlight 索引：否则它会去索引 DerivedData，跟编译抢 3 个核。
+          sudo mdutil -a -i off > /dev/null 2>&1 || true
           xcodebuild -version
+          echo "机器：$(sysctl -n hw.ncpu) 核，内存 $(( $(sysctl -n hw.memsize) / 1073741824 )) GB"
+          # 编译缓存通过 XCODE_XCCONFIG_FILE 交给本 job 里所有 xcodebuild（含打 IPA 的 build-unsigned.sh，脚本本身不用改）。
+          printf 'COMPILATION_CACHE_ENABLE_CACHING = YES\nCOMPILATION_CACHE_CAS_PATH = %s\n' "$CAS_DIR" > "$RUNNER_TEMP/ci-cache.xcconfig"
+          echo "XCODE_XCCONFIG_FILE=$RUNNER_TEMP/ci-cache.xcconfig" >> "$GITHUB_ENV"
           echo "dyld_key=$(bash scripts/ci-sim-dyld-cache.sh key)" >> "$GITHUB_OUTPUT"
+          echo "xcode_build=$(xcodebuild -version | awk '/Build version/ {print $3}')" >> "$GITHUB_OUTPUT"
+          if command -v xcbeautify >/dev/null; then echo "beautify=xcbeautify --renderer github-actions" >> "$GITHUB_OUTPUT"; else echo "beautify=cat" >> "$GITHUB_OUTPUT"; fi
 
-      # 镜像里没有预生成的模拟器 dyld 共享缓存：第一次调用 simctl 会现场生成好几分钟（3 核机器上编译、
-      # 模拟器启动和 UI 测试都被拖慢）。在第一次调用 simctl 之前把缓存放回去（见 scripts/ci-sim-dyld-cache.sh）。
+      # xcodebuild 即使用通用模拟器目标也会拉起 CoreSimulator；没有预生成的 dyld 共享缓存时会现场生成好几分钟。
       - name: 恢复模拟器 dyld 缓存
         id: dyld
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
@@ -185,116 +187,72 @@ jobs:
           path: ${{ runner.temp }}/sim-dyld
           key: ${{ steps.xcode.outputs.dyld_key }}
 
-      - name: 选择模拟器
-        id: simulator
-        env:
-          DYLD_HIT: ${{ steps.dyld.outputs.cache-hit }}
-        run: |
-          bash scripts/ci-sim-dyld-cache.sh restore "$RUNNER_TEMP/sim-dyld"
-          UDID=$(python3 scripts/ci-select-simulator.py)
-          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
-          mkdir -p "$RESULTS_DIR"
-          echo "SIM_T0=$(date +%s)" >> "$GITHUB_ENV"
-          if [ "$DYLD_HIT" = "true" ]; then
-            # 有缓存时模拟器启动很轻，和编译并行；没有缓存时并行会让编译从约 50 秒拖到 4–8 分钟，所以编译完再启动。
-            nohup xcrun simctl boot "$UDID" > "$RUNNER_TEMP/boot.log" 2>&1 &
-            echo "模拟器已在后台启动"
-          fi
-          if command -v xcbeautify >/dev/null; then echo "beautify=xcbeautify --renderer github-actions" >> "$GITHUB_OUTPUT"; else echo "beautify=cat" >> "$GITHUB_OUTPUT"; fi
-
-      - name: 本片用例
-        run: |
-          python3 scripts/ui-test-shards.py --shards "$UI_SHARDS" --extra "$UI_SHARD_EXTRA" --index $((SHARD - 1)) --list > "$RUNNER_TEMP/shard-tests.txt"
-          python3 scripts/ui-test-shards.py --shards "$UI_SHARDS" --extra "$UI_SHARD_EXTRA" --index $((SHARD - 1)) --warmup > "$RUNNER_TEMP/warmup-test.txt"
-          echo "第 $SHARD/$UI_SHARDS 片，$(wc -l < "$RUNNER_TEMP/shard-tests.txt" | tr -d ' ') 个用例（预热用 $(cat "$RUNNER_TEMP/warmup-test.txt")）："
-          cat "$RUNNER_TEMP/shard-tests.txt"
+      # Xcode 26+ 的编译缓存（COMPILATION_CACHE_ENABLE_CACHING）：按输入内容寻址，源码没变的文件直接取缓存结果，
+      # 恢复旧版本的缓存也不会用错（内容变了就重新编译），所以可以放心用 restore-keys 取最近一份。
+      # 缓存 key 跟 Xcode build 号走；main 上每天由「模拟器缓存预热」存一份干净的，PR 在此基础上补存自己的。
+      - name: 恢复编译缓存
+        id: cas
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.CAS_DIR }}
+          key: ${{ env.CAS_PREFIX }}${{ steps.xcode.outputs.xcode_build }}-${{ hashFiles('MagpieRemoteApp/**', 'MagpieRemoteUITests/**', 'MagpieRemoteCore/Sources/**', 'MagpieRemoteCore/Package.swift', 'MagpieRemote.xcodeproj/project.pbxproj', 'CHANGELOG.md') }}
+          restore-keys: ${{ env.CAS_PREFIX }}${{ steps.xcode.outputs.xcode_build }}-
 
       - name: 编译（build-for-testing）
+        # 用通用的「iOS Simulator」目标编译（只编 arm64）：不用等任何模拟器启动。
+        id: build
+        timeout-minutes: 20
         run: |
           set -o pipefail
+          bash scripts/ci-sim-dyld-cache.sh restore "$RUNNER_TEMP/sim-dyld" || true
+          mkdir -p "$RESULTS_DIR"
+          START=$(date +%s)
           xcodebuild build-for-testing \
             -project MagpieRemote.xcodeproj \
             -scheme MagpieRemote \
             -configuration Debug \
-            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -destination "generic/platform=iOS Simulator" \
+            ARCHS=arm64 \
             -derivedDataPath "$DERIVED_DATA" \
             -resultBundlePath "$RESULTS_DIR/Build.xcresult" \
             CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee "$RESULTS_DIR/build.log" | ${{ steps.simulator.outputs.beautify }}
+            -showBuildTimingSummary \
+            2>&1 | tee "$RESULTS_DIR/build.log" | ${{ steps.xcode.outputs.beautify }}
+          echo "编译用时 $(( $(date +%s) - START )) 秒（编译缓存 $(du -sh "$CAS_DIR" 2>/dev/null | cut -f1)）"
+          # 用 tar 保留可执行权限与符号链接（artifact 本身不保留权限）。
+          mkdir -p "$RUNNER_TEMP/products"
+          # zstd 压缩（约为原大小的三分之一），各 UI 测试 job 下载更快。
+          if command -v zstd >/dev/null; then
+            tar -cf - -C "$DERIVED_DATA/Build" Products | zstd -q -T0 -3 -o "$RUNNER_TEMP/products/products.tar.zst"
+          else
+            tar -cf "$RUNNER_TEMP/products/products.tar" -C "$DERIVED_DATA/Build" Products
+          fi
+          ls -lh "$RUNNER_TEMP/products"
 
-      - name: 启动模拟器并预热
-        # 没有 dyld 缓存时编译完才启动模拟器（见「选择模拟器」）；有缓存时这里只是等后台启动完成。
-        # 刚启动的模拟器前几次冷启动 App 很慢：用本片预计最短的用例预热（首屏等待放宽到 240 秒），
-        # 同时完成 App 与测试运行器的安装。预热通过 = 该用例已通过，后面不再重复跑；最多 2 次，
-        # 都没通过就把它留在正式测试里（以正式测试结果为准）。
-        env:
-          TEST_RUNNER_MAGPIE_REMOTE_WARMUP_TIMEOUT: "240"
-        run: |
-          UDID="${{ steps.simulator.outputs.udid }}"
-          T0=$(date +%s)
-          xcrun simctl boot "$UDID" 2>/dev/null || true
-          xcrun simctl bootstatus "$UDID" -b > "$RUNNER_TEMP/bootstatus.log" 2>&1 || { cat "$RUNNER_TEMP/boot.log" "$RUNNER_TEMP/bootstatus.log" 2>/dev/null; exit 1; }
-          echo "模拟器就绪：本步等待 $(( $(date +%s) - T0 )) 秒（距开始启动 $(( $(date +%s) - SIM_T0 )) 秒）"
-          XCTESTRUN=$(ls "$DERIVED_DATA"/Build/Products/*.xctestrun | head -n 1)
-          echo "XCTESTRUN=$XCTESTRUN" >> "$GITHUB_ENV"
-          WARMUP=$(cat "$RUNNER_TEMP/warmup-test.txt")
-          echo "WARMUP_PASSED=" >> "$GITHUB_ENV"
-          [ -n "$WARMUP" ] || exit 0
-          for i in 1 2; do
-            START=$(date +%s)
-            if xcodebuild test-without-building \
-                -xctestrun "$XCTESTRUN" \
-                -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
-                -resultBundlePath "$RUNNER_TEMP/warmup-$i.xcresult" \
-                -parallel-testing-enabled NO \
-                -collect-test-diagnostics never \
-                "-only-testing:MagpieRemoteUITests/$WARMUP" > "$RUNNER_TEMP/warmup-$i.log" 2>&1; then
-              echo "第 $i 次预热通过（$(( $(date +%s) - START )) 秒）：$WARMUP 已通过，正式测试不再重复"
-              mv "$RUNNER_TEMP/warmup-$i.xcresult" "$RESULTS_DIR/Warmup.xcresult"
-              echo "WARMUP_PASSED=$WARMUP" >> "$GITHUB_ENV"
-              exit 0
-            fi
-            echo "第 $i 次预热未通过（$(( $(date +%s) - START )) 秒），继续预热"
-            grep -E "error:|failed" "$RUNNER_TEMP/warmup-$i.log" | head -n 5 || true
-          done
-          echo "::warning::预热 2 次仍未通过，$WARMUP 留在正式测试里（以测试结果为准）"
-
-      - name: UI 测试（fixture 模式）
-        # 失败的用例自动重跑一次（-retry-tests-on-failure 只重跑失败的那个，通过的不会再跑），两次都失败才判失败。
-        run: |
-          set -o pipefail
-          ARGS=()
-          while IFS= read -r t; do
-            [ -n "$t" ] || continue
-            [ "$t" = "$WARMUP_PASSED" ] && continue
-            ARGS+=("-only-testing:MagpieRemoteUITests/$t")
-          done < "$RUNNER_TEMP/shard-tests.txt"
-          if [ ${#ARGS[@]} -eq 0 ]; then echo "本片没有剩余用例"; exit 0; fi
-          echo "正式测试 ${#ARGS[@]} 个用例"
-          xcodebuild test-without-building \
-            -xctestrun "$XCTESTRUN" \
-            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
-            -resultBundlePath "$RESULTS_DIR/UITests.xcresult" \
-            -parallel-testing-enabled NO \
-            -collect-test-diagnostics never \
-            -retry-tests-on-failure \
-            -test-iterations 2 \
-            "${ARGS[@]}" \
-            2>&1 | tee "$RESULTS_DIR/test.log" | ${{ steps.simulator.outputs.beautify }}
+      - name: 上传测试产物（给各 UI 测试 job）
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ios-test-products-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/products
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
 
       - name: 打包未签名 IPA（供 main push 同树复用）
-        # 只在第 1 片打包。与「未签名 IPA」同一脚本、同一 Release 配置；build 号用工程默认值，复用时由 ios-ipa.yml 改写为它的 run_number。
-        if: matrix.shard == 1
+        # 与「未签名 IPA」同一脚本、同一 Release 配置；build 号用工程默认值，复用时由 ios-ipa.yml 改写为它的 run_number。
+        # 与各 UI 测试 job 同时进行，不占 PR 的等待时间。
+        timeout-minutes: 15
         run: |
           set -o pipefail
-          bash scripts/build-unsigned.sh "$GITHUB_WORKSPACE/build/ipa" 2>&1 | tee "$RESULTS_DIR/build-unsigned.log" | ${{ steps.simulator.outputs.beautify }}
+          START=$(date +%s)
+          bash scripts/build-unsigned.sh "$GITHUB_WORKSPACE/build/ipa" 2>&1 | tee "$RESULTS_DIR/build-unsigned.log" | ${{ steps.xcode.outputs.beautify }}
+          echo "打包用时 $(( $(date +%s) - START )) 秒"
           mkdir -p ipa-reuse
           cp build/ipa/MagpieRemote-unsigned.ipa ipa-reuse/
           { echo "tree=${{ needs.plan.outputs.tree }}"; echo "sha=${{ github.sha }}"; echo "run=${{ github.run_id }}"; } > ipa-reuse/source.txt
           ls -lh ipa-reuse
 
       - name: 上传未签名 IPA（按文件树命名）
-        if: matrix.shard == 1
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ios-unsigned-ipa-${{ needs.plan.outputs.tree }}
@@ -304,8 +262,124 @@ jobs:
           overwrite: true
           if-no-files-found: error
 
+      - name: 检查编译缓存大小
+        # 只在编译成功、缓存没有完全命中时保存；超过 2 GB 不存（下次从 main 的干净缓存起步），免得越滚越大。
+        id: cas-size
+        if: always() && steps.build.outcome == 'success' && steps.cas.outputs.cache-hit != 'true'
+        run: |
+          MB=$(du -sm "$CAS_DIR" 2>/dev/null | cut -f1)
+          echo "编译缓存 ${MB:-0} MB"
+          if [ -n "$MB" ] && [ "$MB" -gt 0 ] && [ "$MB" -le 2048 ]; then echo "save=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: 保存编译缓存
+        if: always() && steps.cas-size.outputs.save == 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.CAS_DIR }}
+          key: ${{ steps.cas.outputs.cache-primary-key }}
+
+      - name: 上传编译日志
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ios-results-${{ github.run_id }}-${{ github.run_attempt }}-build
+          path: build/results
+          retention-days: 7
+          if-no-files-found: ignore
+
+  ui-test:
+    name: UI 测试
+    needs: plan
+    # 与「编译与打包」同时开始：先启动模拟器（冷启动后几分钟后台服务很忙，正好和编译重叠），再等测试产物。
+    if: needs.plan.outputs.skip != 'true' && needs.plan.outputs.ios == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # 台数与 env.UI_JOBS 保持一致。用例按预计耗时均分（scripts/ui-test-shards.py），新增用例不用改配置。
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: 选择 Xcode
+        id: xcode
+        run: |
+          sudo xcode-select -s "$XCODE_APP/Contents/Developer"
+          sudo mdutil -a -i off > /dev/null 2>&1 || true
+          xcodebuild -version
+          echo "dyld_key=$(bash scripts/ci-sim-dyld-cache.sh key)" >> "$GITHUB_OUTPUT"
+
+      # 镜像里没有预生成的模拟器 dyld 共享缓存：第一次调用 simctl 会现场生成好几分钟。
+      # 在第一次调用 simctl 之前把缓存放回去（见 scripts/ci-sim-dyld-cache.sh）。
+      - name: 恢复模拟器 dyld 缓存
+        id: dyld
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/sim-dyld
+          key: ${{ steps.xcode.outputs.dyld_key }}
+
+      - name: 选择并启动模拟器
+        run: |
+          bash scripts/ci-sim-dyld-cache.sh restore "$RUNNER_TEMP/sim-dyld"
+          UDID=$(python3 scripts/ci-select-simulator.py)
+          echo "$UDID" > "$RUNNER_TEMP/sim-udids.txt"
+          mkdir -p "$RESULTS_DIR"
+          nohup xcrun simctl boot "$UDID" > "$RUNNER_TEMP/boot-1.log" 2>&1 &
+          echo "模拟器 $UDID 已在后台启动（$(date +%T)）"
+          echo "本片用例："
+          python3 scripts/ui-test-shards.py --shards "$UI_JOBS" --index $(( ${{ matrix.shard }} - 1 )) --list
+
+      - name: 等待测试产物
+        timeout-minutes: 25
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NAME: ios-test-products-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          api() { curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "$GITHUB_API_URL/repos/$REPO/$1"; }
+          START=$(date +%s)
+          while :; do
+            URL=$(api "actions/runs/$GITHUB_RUN_ID/artifacts?name=$NAME" | jq -r '.artifacts[0].archive_download_url // empty')
+            [ -n "$URL" ] && break
+            # 编译失败就不必再等。
+            BUILD=$(api "actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=50" | jq -r '.jobs[] | select(.name == "编译与打包") | .conclusion // empty')
+            if [ -n "$BUILD" ] && [ "$BUILD" != "success" ]; then echo "::error::编译与打包未成功（$BUILD），不再等待"; exit 1; fi
+            sleep 5
+          done
+          echo "测试产物已就绪（等了 $(( $(date +%s) - START )) 秒）"
+          echo "PRODUCTS_URL=$URL" >> "$GITHUB_ENV"
+          echo "DL_T0=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: 下载并解压测试产物
+        # 用 curl 直接下（run 41321342744 里 actions/download-artifact 要 1.5–3 分钟，比 curl 慢）；产物是 zstd 压缩的 tar。
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 -H "Authorization: Bearer $GH_TOKEN" -o "$RUNNER_TEMP/products.zip" "$PRODUCTS_URL"
+          echo "下载 $(( $(date +%s) - DL_T0 )) 秒（$(du -h "$RUNNER_TEMP/products.zip" | cut -f1)）"
+          unzip -q -o "$RUNNER_TEMP/products.zip" -d "$RUNNER_TEMP/products"
+          mkdir -p "$DERIVED_DATA/Build"
+          if [ -f "$RUNNER_TEMP/products/products.tar.zst" ]; then
+            zstd -dc "$RUNNER_TEMP/products/products.tar.zst" | tar -xf - -C "$DERIVED_DATA/Build"
+          else
+            tar -xf "$RUNNER_TEMP/products/products.tar" -C "$DERIVED_DATA/Build"
+          fi
+          echo "XCTESTRUN=$(ls "$DERIVED_DATA"/Build/Products/*.xctestrun | head -n 1)" >> "$GITHUB_ENV"
+          echo "下载解压 $(( $(date +%s) - DL_T0 )) 秒"
+
+      - name: UI 测试（fixture 模式）
+        # 等模拟器启动完 → 用本片最短的用例预热（通过即算通过）→ 跑本片其余用例，失败的只重跑一次。细节见 scripts/ci-ui-tests.sh。
+        # 步骤级超时：卡住时本步失败，后面的结果包上传照常进行（整个 job 超时会连日志都丢掉）。
+        timeout-minutes: 30
+        env:
+          UI_JOB_INDEX: ${{ matrix.shard }}
+        run: bash scripts/ci-ui-tests.sh "$RUNNER_TEMP/sim-udids.txt"
+
       - name: 打包模拟器 dyld 缓存
-        # 缓存未命中时由第 2 片保存（第 1 片还要打 IPA）；main 上的「模拟器缓存预热」每天也会保存一份供所有 PR 使用。
+        # 缓存未命中时在这里保存（只由第 1 片保存）；main 上的「模拟器缓存预热」每天也会保存一份供所有 PR 使用。
         id: dyld-pack
         if: always() && matrix.shard == 1 && steps.dyld.outputs.cache-hit != 'true' && steps.xcode.outputs.dyld_key != ''
         run: bash scripts/ci-sim-dyld-cache.sh pack "$RUNNER_TEMP/sim-dyld"
@@ -320,10 +394,12 @@ jobs:
       - name: 打印失败的断言
         # 把 .xcresult 里每条失败用例的断言信息打成 ::error:: 注解并写入摘要，不用下载结果包也能看清原因。
         if: always()
-        run: python3 scripts/print-xcresult-failures.py "$RESULTS_DIR/UITests.xcresult" "$RESULTS_DIR/Build.xcresult"
+        run: |
+          shopt -s nullglob
+          python3 scripts/print-xcresult-failures.py "$RESULTS_DIR"/UITests-*.xcresult
 
       - name: 上传结果包与日志
-        # 无论成败都上传 .xcresult（含截图与无障碍树），失败时便于排查。
+        # 无论成败都上传 .xcresult（含截图与无障碍树）与 build/results/routes-frames 逐帧截图。
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -334,7 +410,7 @@ jobs:
 
   result:
     name: iOS 构建与测试
-    needs: [plan, core, build-test]
+    needs: [plan, core, build, ui-test]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -347,16 +423,17 @@ jobs:
           NEED_CORE: ${{ needs.plan.outputs.core }}
           PLAN: ${{ needs.plan.result }}
           CORE: ${{ needs.core.result }}
-          BUILD: ${{ needs.build-test.result }}
+          BUILD: ${{ needs.build.result }}
+          UI: ${{ needs.ui-test.result }}
         run: |
-          echo "判定=$PLAN Core 单元测试=$CORE（需要：$NEED_CORE） 编译与 UI 测试=$BUILD（需要：$NEED_IOS）"
+          echo "判定=$PLAN Core 单元测试=$CORE（需要：$NEED_CORE） 编译与打包=$BUILD UI 测试=$UI（需要：$NEED_IOS）"
           if [ "$PLAN" = "success" ] && [ "$SKIP" = "true" ]; then
             echo "### 跳过重复测试" >> "$GITHUB_STEP_SUMMARY"
             echo "$REASON" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           ok() { [ "$1" = "success" ] || { [ "$1" = "skipped" ] && [ "$2" != "true" ]; }; }
-          if [ "$PLAN" != "success" ] || ! ok "$CORE" "$NEED_CORE" || ! ok "$BUILD" "$NEED_IOS"; then
+          if [ "$PLAN" != "success" ] || ! ok "$CORE" "$NEED_CORE" || ! ok "$BUILD" "$NEED_IOS" || ! ok "$UI" "$NEED_IOS"; then
             echo "::error::iOS 构建与测试未全部通过"
             exit 1
           fi
@@ -367,7 +444,7 @@ jobs:
 
       - name: 记录已全绿的被测文件树
         # 供之后合并到 main 的 push 判定：文件树完全相同则不重复测试（IPA 也由同一 run 产出，所以要求 macOS 跑过）。
-        if: needs.plan.outputs.skip != 'true' && needs.plan.outputs.tree != '' && needs.build-test.result == 'success' && (needs.core.result == 'success' || needs.plan.outputs.core != 'true')
+        if: needs.plan.outputs.skip != 'true' && needs.plan.outputs.tree != '' && needs.build.result == 'success' && needs.ui-test.result == 'success' && (needs.core.result == 'success' || needs.plan.outputs.core != 'true')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ env.GREEN_TREE_PREFIX }}${{ needs.plan.outputs.tree }}

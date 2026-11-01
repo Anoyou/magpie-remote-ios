@@ -6,29 +6,29 @@ import XCTest
 extension XCUIApplication {
     /// 等底栏出现（以固定的「更多」为准）。
     func waitForDock(timeout: TimeInterval) -> Bool {
-        tabBars.buttons["更多"].waitForExistence(timeout: timeout)
+        tabBars.buttons["更多"].appears(timeout: timeout)
     }
 
     /// 点底栏的一个页面，等它的导航栏标题出现。
     func openDockTab(_ title: String, navigationTitle: String? = nil, file: StaticString = #filePath, line: UInt = #line) {
         let tab = tabBars.buttons[title]
-        XCTAssertTrue(tab.waitForExistence(timeout: 15), "底栏里没有「\(title)」", file: file, line: line)
+        XCTAssertTrue(tab.appears(timeout: 15), "底栏里没有「\(title)」", file: file, line: line)
         tab.tap()
         let expected = navigationTitle ?? title
-        XCTAssertTrue(navigationBars[expected].waitForExistence(timeout: 10), "没有打开「\(expected)」", file: file, line: line)
+        XCTAssertTrue(navigationBars[expected].appears(timeout: 10), "没有打开「\(expected)」", file: file, line: line)
     }
 
     /// 打开「主页」并切到分页器里的一页（Agent / 供应商 / 额度），等这一页的导航栏标题出现。
     func openHome(_ segment: String, file: StaticString = #filePath, line: UInt = #line) {
         let tab = tabBars.buttons["主页"]
-        XCTAssertTrue(tab.waitForExistence(timeout: 15), "底栏里没有「主页」", file: file, line: line)
+        XCTAssertTrue(tab.appears(timeout: 15), "底栏里没有「主页」", file: file, line: line)
         tab.tap()
         let control = homeSegments
-        XCTAssertTrue(control.waitForExistence(timeout: 10), "主页顶部没有分页器", file: file, line: line)
+        XCTAssertTrue(control.appears(timeout: 10), "主页顶部没有分页器", file: file, line: line)
         let button = control.buttons[segment]
-        XCTAssertTrue(button.waitForExistence(timeout: 5), "分页器里没有「\(segment)」", file: file, line: line)
+        XCTAssertTrue(button.appears(timeout: 5), "分页器里没有「\(segment)」", file: file, line: line)
         if !button.isSelected { button.tap() }
-        XCTAssertTrue(navigationBars[segment].waitForExistence(timeout: 10), "没有切到「\(segment)」", file: file, line: line)
+        XCTAssertTrue(navigationBars[segment].appears(timeout: 10), "没有切到「\(segment)」", file: file, line: line)
     }
 
     /// 「主页」顶部的分页器。
@@ -46,11 +46,12 @@ extension XCUIApplication {
     func openFromMore(_ identifier: String, title: String, file: StaticString = #filePath, line: UInt = #line) {
         openMore(file: file, line: line)
         let link = descendants(matching: .any).matching(identifier: identifier).firstMatch
-        _ = link.waitForExistence(timeout: 5)
-        for _ in 0..<8 where !(link.exists && link.isHittable) { swipeUp() }
-        XCTAssertTrue(link.waitForExistence(timeout: 10), "「更多」里没有入口 \(identifier)", file: file, line: line)
+        // 懒加载的列表里靠下的行一开始不在无障碍树里：短等一下，没有就往下滑（找到即停）。
+        _ = link.appears(timeout: 2)
+        swipeUp(until: link, max: 8)
+        XCTAssertTrue(link.appears(timeout: 10), "「更多」里没有入口 \(identifier)", file: file, line: line)
         link.tap()
-        XCTAssertTrue(navigationBars[title].waitForExistence(timeout: 10), "没有打开「\(title)」", file: file, line: line)
+        XCTAssertTrue(navigationBars[title].appears(timeout: 10), "没有打开「\(title)」", file: file, line: line)
     }
 
     /// 弹出菜单里的一项。放在 Menu 的 Section 里的按钮，iOS 不会把 SwiftUI 的 accessibilityIdentifier

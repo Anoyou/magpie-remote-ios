@@ -16,12 +16,12 @@ final class DockUITests: XCTestCase {
     }
 
     private func scrollTo(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 6) {
-        for _ in 0..<attempts where !(element.exists && element.isHittable) { app.swipeUp() }
+        app.swipeUp(until: element, max: attempts)
     }
 
     /// 往回滑到列表顶部附近，直到元素可点（列表懒加载，滑走的行不在无障碍树里）。
     private func scrollBack(to element: XCUIElement, in app: XCUIApplication, attempts: Int = 6) {
-        for _ in 0..<attempts where !(element.exists && element.isHittable) { app.swipeDown() }
+        app.swipeDown(until: element, max: attempts)
     }
 
     private func launchCustomize() -> XCUIApplication {
@@ -38,24 +38,24 @@ final class DockUITests: XCTestCase {
     func testCustomizeDockAndRestoreDefault() {
         let app = launchCustomize()
         let first = element(id: "dock.slot.0", in: app)
-        XCTAssertTrue(first.waitForExistence(timeout: 10), "没有显示底栏第 1 个位置")
+        XCTAssertTrue(first.appears(timeout: 10), "没有显示底栏第 1 个位置")
         XCTAssertTrue(first.label.contains("主页"), "默认第 1 个应当是主页：\(first.label)")
         XCTAssertTrue(element(id: "dock.slot.more", in: app).exists, "第 5 个位置应当固定为「更多」")
         // 「恢复默认」在列表最下面（懒加载，要先滑到它）。
         let defaultReset = element(id: "dock.reset", in: app)
         scrollTo(defaultReset, in: app)
-        XCTAssertTrue(defaultReset.waitForExistence(timeout: 5), "没有「恢复默认」按钮")
+        XCTAssertTrue(defaultReset.appears(timeout: 5), "没有「恢复默认」按钮")
         XCTAssertFalse(defaultReset.isEnabled, "默认底栏时「恢复默认」应当不可点")
 
         let chat = element(id: "dock.candidate.chat", in: app)
         scrollBack(to: chat, in: app)
-        XCTAssertTrue(chat.waitForExistence(timeout: 10), "「在『更多』里」没有列出对话")
+        XCTAssertTrue(chat.appears(timeout: 10), "「在『更多』里」没有列出对话")
         chat.tap()
         let place = app.menuItem(id: "dock.place.0", label: "第 1 个位置（换下「主页」）")
-        XCTAssertTrue(place.waitForExistence(timeout: 5), "没有出现「放进底栏」的位置选项")
+        XCTAssertTrue(place.appears(timeout: 5), "没有出现「放进底栏」的位置选项")
         place.tap()
 
-        XCTAssertTrue(app.tabBars.buttons["对话"].waitForExistence(timeout: 10), "底栏没有出现「对话」")
+        XCTAssertTrue(app.tabBars.buttons["对话"].appears(timeout: 10), "底栏没有出现「对话」")
         XCTAssertFalse(app.tabBars.buttons["主页"].exists, "被换下的主页不应还在底栏")
         XCTAssertTrue(app.tabBars.buttons["更多"].exists, "「更多」应当一直在底栏")
         let slot0 = element(id: "dock.slot.0", in: app)
@@ -63,14 +63,14 @@ final class DockUITests: XCTestCase {
         XCTAssertTrue(slot0.label.contains("对话"), "第 1 个位置应当换成对话：\(slot0.label)")
         let home = element(id: "dock.candidate.home", in: app)
         scrollTo(home, in: app)
-        XCTAssertTrue(home.waitForExistence(timeout: 5), "被换下的主页应当回到「更多」")
+        XCTAssertTrue(home.appears(timeout: 5), "被换下的主页应当回到「更多」")
         XCTAssertFalse(element(id: "dock.candidate.chat", in: app).exists, "放进底栏的对话不应还在「更多」里")
 
         let reset = element(id: "dock.reset", in: app)
         scrollTo(reset, in: app)
         XCTAssertTrue(reset.isEnabled, "自定义后「恢复默认」应当可点")
         reset.tap()
-        XCTAssertTrue(app.tabBars.buttons["主页"].waitForExistence(timeout: 10), "恢复默认后底栏没有回到主页")
+        XCTAssertTrue(app.tabBars.buttons["主页"].appears(timeout: 10), "恢复默认后底栏没有回到主页")
         for title in ["会话", "路由", "用量", "更多"] {
             XCTAssertTrue(app.tabBars.buttons[title].exists, "恢复默认后缺少「\(title)」")
         }
@@ -82,25 +82,25 @@ final class DockUITests: XCTestCase {
         let app = launchCustomize()
         // 用第 4 个位置（用量）的菜单换成「网关密钥」。
         let menu = element(id: "dock.slot.3.menu", in: app)
-        XCTAssertTrue(menu.waitForExistence(timeout: 10), "底栏第 4 个位置没有更换按钮")
+        XCTAssertTrue(menu.appears(timeout: 10), "底栏第 4 个位置没有更换按钮")
         menu.tap()
         let keys = app.menuItem(id: "dock.slot.3.use.keys", label: "网关密钥")
-        XCTAssertTrue(keys.waitForExistence(timeout: 5), "更换菜单里没有「网关密钥」")
+        XCTAssertTrue(keys.appears(timeout: 5), "更换菜单里没有「网关密钥」")
         keys.tap()
-        XCTAssertTrue(app.tabBars.buttons["网关密钥"].waitForExistence(timeout: 10), "底栏没有出现「网关密钥」")
+        XCTAssertTrue(app.tabBars.buttons["网关密钥"].appears(timeout: 10), "底栏没有出现「网关密钥」")
         XCTAssertFalse(app.tabBars.buttons["用量"].exists, "被换下的「用量」不应还在底栏")
 
         app.openDockTab("网关密钥")
-        XCTAssertTrue(element(id: "key.add", in: app).waitForExistence(timeout: 15), "从底栏打开的网关密钥页没有内容")
+        XCTAssertTrue(element(id: "key.add", in: app).appears(timeout: 15), "从底栏打开的网关密钥页没有内容")
 
         // 回到「更多」根列表：网关密钥不在了，用量回来了。
         app.tabBars.buttons["更多"].tap()
         let back = app.navigationBars["自定义底栏"].buttons.element(boundBy: 0)
-        if back.waitForExistence(timeout: 5) { back.tap() }
-        XCTAssertTrue(app.navigationBars["更多"].waitForExistence(timeout: 10), "没有回到「更多」")
+        if back.appears(timeout: 5) { back.tap() }
+        XCTAssertTrue(app.navigationBars["更多"].appears(timeout: 10), "没有回到「更多」")
         // 「更多」列表停在上次滑到的位置（打开「自定义底栏」时滑到了底部），用量在上面的「网关」一节里。
         let usage = element(id: "more.usage", in: app)
-        if !usage.waitForExistence(timeout: 3) { scrollBack(to: usage, in: app) }
+        if !usage.appears(timeout: 3) { scrollBack(to: usage, in: app) }
         XCTAssertTrue(usage.exists, "换下来的「用量」应当出现在「更多」里")
         XCTAssertFalse(element(id: "manage.keys", in: app).exists, "放进底栏的「网关密钥」不应还在「更多」里")
     }

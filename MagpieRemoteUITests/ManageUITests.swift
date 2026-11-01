@@ -36,7 +36,7 @@ final class ManageUITests: XCTestCase {
     func testProvidersListShowsFixtureProviders() {
         let app = launchManage()
         app.openHome("供应商")
-        XCTAssertTrue(element(containing: "示例中转", in: app).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(containing: "示例中转", in: app).appears(timeout: 10))
         XCTAssertTrue(element(containing: "示例 DeepSeek", in: app).exists)
         XCTAssertTrue(element(containing: "示例 Codex 订阅", in: app).exists)
     }
@@ -45,43 +45,40 @@ final class ManageUITests: XCTestCase {
         let app = launchManage()
         app.openHome("供应商")
         let row = element(id: "provider.row.relay-example", in: app)
-        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        XCTAssertTrue(row.appears(timeout: 10))
         row.tap()
         // 详情页多了 Base URL 与 API Key 区，「删除」在列表最下面，懒加载：先滑下去再找
         let delete = element(id: "provider.delete", in: app)
         scrollTo(delete, in: app)
-        XCTAssertTrue(delete.waitForExistence(timeout: 10), "详情页最下面没有「删除这个供应商」")
+        XCTAssertTrue(delete.appears(timeout: 10), "详情页最下面没有「删除这个供应商」")
         delete.tap()
         let confirm = app.buttons["删除供应商"].firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "删除前应当先弹出确认")
+        XCTAssertTrue(confirm.appears(timeout: 5), "删除前应当先弹出确认")
         confirm.tap()
         // 删除后回到列表，示例中转不再出现
-        XCTAssertTrue(app.navigationBars["供应商"].waitForExistence(timeout: 10))
-        let gone = NSPredicate(format: "exists == false")
-        expectation(for: gone, evaluatedWith: element(id: "provider.row.relay-example", in: app))
-        waitForExpectations(timeout: 10)
+        XCTAssertTrue(app.navigationBars["供应商"].appears(timeout: 10))
+        XCTAssertTrue(element(id: "provider.row.relay-example", in: app).disappears(timeout: 10), "删除后示例中转不应还在列表里")
         XCTAssertTrue(element(containing: "示例 DeepSeek", in: app).exists)
     }
 
     func testCreateGatewayKeyShowsSecretOnce() {
         let app = launchManage()
         app.openFromMore("manage.keys", title: "网关密钥")
-        XCTAssertTrue(element(containing: "iPhone", in: app).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(containing: "iPhone", in: app).appears(timeout: 10))
         let add = element(id: "key.add", in: app)
-        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        XCTAssertTrue(add.appears(timeout: 5))
         add.tap()
         let name = app.textFields["key.new.name"]
-        XCTAssertTrue(name.waitForExistence(timeout: 10))
+        XCTAssertTrue(name.appears(timeout: 10))
         element(id: "key.new.create", in: app).tap()
         let secret = element(id: "key.secret.value", in: app)
-        XCTAssertTrue(secret.waitForExistence(timeout: 10), "创建后应当显示完整密钥")
+        XCTAssertTrue(secret.appears(timeout: 10), "创建后应当显示完整密钥")
         XCTAssertTrue(secret.label.contains("sk-magpie-key-EXAMPLE-NEW"), "显示的不是新密钥：\(secret.label)")
         XCTAssertTrue(element(id: "key.secret.copy", in: app).exists)
         XCTAssertTrue(element(containing: "只显示这一次", in: app).exists)
         element(id: "key.secret.done", in: app).tap()
         // 新密钥出现在列表里（示例数据原有 3 把）
         let rows = app.descendants(matching: .any).matching(identifier: "key.row")
-        expectation(for: NSPredicate(format: "count == 4"), evaluatedWith: rows)
-        waitForExpectations(timeout: 10)
+        XCTAssertTrue(waitUntil(10) { rows.count == 4 }, "新密钥没有出现在列表里：\(rows.count) 把")
     }
 }
