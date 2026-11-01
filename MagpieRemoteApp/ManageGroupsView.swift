@@ -92,6 +92,9 @@ struct ManageGroupsView: View {
                 Button { creating = true } label: { Label("新建路由组", systemImage: "plus") }
                     .accessibilityIdentifier("group.add")
             }
+            if RoutesClock.frozen {
+                ToolbarItem(placement: .topBarLeading) { RoutesSnapshotStep() }
+            }
         }
         .navigationDestination(item: $editing) { group in GroupEditorView(store: store, group: group) }
         .navigationDestination(isPresented: $creating) { GroupEditorView(store: store, group: nil) }

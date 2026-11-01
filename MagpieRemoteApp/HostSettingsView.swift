@@ -1,7 +1,7 @@
 import SwiftUI
 import MagpieRemoteCore
 
-/// 「主机」设置（从右上角「主机」按钮弹出）：添加 / 编辑 / 删除 / 切换主机。
+/// 「主机」设置（空状态的「添加主机」、「更新 Web 密钥」等处弹出）：添加 / 编辑 / 删除 / 切换主机。
 struct HostSettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -18,7 +18,7 @@ struct HostSettingsView: View {
     }
 }
 
-/// 主机列表本身：既用在弹出的「主机」设置里，也可以放进底栏或从「更多」推入。
+/// 主机列表本身：「更多 › 当前主机」推入的就是它（切换主机的唯一入口），也用在弹出的「主机」设置里。
 struct HostListContent: View {
     @Environment(AppModel.self) private var model
     @State private var editing: HostEditorTarget?

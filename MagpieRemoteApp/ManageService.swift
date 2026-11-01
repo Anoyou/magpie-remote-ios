@@ -89,6 +89,8 @@ actor FixtureManageService: ManageServing {
     private var keySecrets: [String: String] = ["fx-key-1": "sk-relay-EXAMPLE-MAIN1", "fx-key-2": "sk-relay-EXAMPLE-BACK2",
                                                 "fx-key-3": "sk-deepseek-EXAMPLE-EXMP"]
     private let traceStart = Date()
+    /// 逐帧截图时上次答到第几步。
+    private var servedStep = -1
     private var counter = 0
 
     init() {
@@ -332,6 +334,16 @@ actor FixtureManageService: ManageServing {
     func modelSpeeds() async throws -> ModelSpeeds { ModelSpeeds(json: RoutesFixture.speeds) }
 
     func trace(after seq: Int64, wait: Bool) async throws -> TraceSnapshot {
+        if RoutesClock.frozen {
+            // 逐帧截图：长轮询等到时钟走下一步（见 RoutesClock）
+            if wait { await RoutesClock.shared.nextStep(after: servedStep) }
+            let start = traceStart
+            let (step, elapsed, now) = await MainActor.run {
+                (RoutesClock.shared.currentStep, RoutesClock.shared.fixtureElapsed(since: start), RoutesClock.shared.date)
+            }
+            servedStep = step
+            return TraceSnapshot(json: RoutesFixture.trace(elapsed: elapsed, now: now))
+        }
         // 一次挂起最多 1.5 秒，模拟网页的长轮询；示例请求按时间推进（见 RoutesFixture.trace）
         if wait { try await Task.sleep(for: .milliseconds(700)) }
         return TraceSnapshot(json: RoutesFixture.trace(elapsed: Date().timeIntervalSince(traceStart), now: Date()))

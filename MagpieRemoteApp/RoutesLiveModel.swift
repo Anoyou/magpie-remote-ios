@@ -57,7 +57,7 @@ final class RoutesLiveModel {
 
     /// 与卡片讲的那个一起上台的请求（网页 `staged()`，不含 current）：正在飞的、每个 Agent 还在路上或刚结束 12 秒内的最后一个，
     /// 最多 4 个 Agent；选中一个时只画它。
-    func staged(now: Date = Date()) -> [TraceRoute] {
+    func staged(now: Date = RoutesClock.shared.date) -> [TraceRoute] {
         book.staged(current: current, pinned: pinned != nil, playing: Set(plays.keys), now: now).filter { $0.id != current?.id }
     }
 
@@ -109,6 +109,7 @@ final class RoutesLiveModel {
                 if let id = pinned, book.routes[id] == nil { pinned = nil }
                 toldID = book.told(toldID)?.id
                 schedule(first: !wasLoaded)
+                if RoutesClock.frozen { RoutesClock.shared.settle(step: RoutesClock.shared.currentStep) }
             } catch {
                 let error = MagpieError.from(error)
                 if error == .cancelled || Task.isCancelled { return }
@@ -118,16 +119,18 @@ final class RoutesLiveModel {
         }
     }
 
-    private var now: TimeInterval { Date().timeIntervalSinceReferenceDate }
+    private var now: TimeInterval { RoutesClock.shared.now }
+    /// 系统「减弱动态效果」（网页 still()）：飞行瞬间完成、不画喜鹊。由舞台告诉模型。
+    var still = false
 
     /// 新请求开演；已经在演的按网关的新记录接着排；第一次读到或刚回到页面时只演还在路上的（最多 4 个）。
     private func schedule(first: Bool) {
         let t = now
         if pinned == nil {
             if first || resuming {
-                for route in book.playable where plays[route.id] == nil { plays[route.id] = RoutePlay(route: route, now: t) }
+                for route in book.playable where plays[route.id] == nil { plays[route.id] = RoutePlay(route: route, now: t, still: still) }
             } else {
-                for id in book.fresh { if plays[id] == nil, let route = book.routes[id] { plays[id] = RoutePlay(route: route, now: t) } }
+                for id in book.fresh { if plays[id] == nil, let route = book.routes[id] { plays[id] = RoutePlay(route: route, now: t, still: still) } }
             }
         }
         resuming = false
@@ -137,7 +140,7 @@ final class RoutesLiveModel {
     private func replayUnderWay() {
         guard book.loaded else { return }
         let t = now
-        for route in book.playable where plays[route.id] == nil { plays[route.id] = RoutePlay(route: route, now: t) }
+        for route in book.playable where plays[route.id] == nil { plays[route.id] = RoutePlay(route: route, now: t, still: still) }
         advance(at: t)
     }
 

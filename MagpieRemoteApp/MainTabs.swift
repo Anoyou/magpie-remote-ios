@@ -44,24 +44,11 @@ struct MainTabs: View {
     }
 }
 
-/// 每个标签页的根：导航栈 + 右上角「主机」按钮（随时切换主机、打开配置引导）。
+/// 每个标签页的根：导航栈。切换 / 添加主机只在「更多 › 当前主机」里（右上角不再放「主机」按钮）。
 private struct TabRoot<Content: View>: View {
-    @Environment(AppModel.self) private var model
     @ViewBuilder var content: Content
 
     var body: some View {
-        NavigationStack {
-            content
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            model.sheet = .hosts
-                        } label: {
-                            Label(model.activeHost?.name ?? "主机", systemImage: "desktopcomputer")
-                        }
-                        .accessibilityIdentifier("hosts.open")
-                    }
-                }
-        }
+        NavigationStack { content }
     }
 }

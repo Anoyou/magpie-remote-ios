@@ -21,14 +21,15 @@ enum RT {
     static func dynamic(_ light: UInt32, _ dark: UInt32) -> Color {
         Color(UIColor { traits in UIColor(hex: traits.userInterfaceStyle == .dark ? dark : light) })
     }
+    // app.css :root 与 prefers-color-scheme: dark 里的值，一个不差
     static let line = dynamic(0xE3E3E8, 0x333339)
     static let fg = dynamic(0x1C1C21, 0xEDEDF1)
-    static let fg2 = dynamic(0x45454D, 0xC4C4CC)
+    static let fg2 = dynamic(0x4B4B53, 0xB9B9C1)
     static let muted = dynamic(0x85858D, 0x8B8B94)
-    static let card = dynamic(0xFFFFFF, 0x1C1C20)
-    static let card2 = dynamic(0xF4F4F6, 0x26262B)
-    static let red = Color(UIColor(hex: 0xD64545))
-    static let green = Color(UIColor(hex: 0x189A58))
+    static let card = dynamic(0xFFFFFF, 0x232327)
+    static let card2 = dynamic(0xF9F9FB, 0x1F1F23)
+    static let red = dynamic(0xD64545, 0xF28B82)
+    static let green = dynamic(0x189A58, 0x6FD99B)
 
     static func hue(_ agent: String) -> Color {
         let text = RouteStageBuilder.hue(agent).dropFirst()
@@ -154,10 +155,11 @@ struct RoutesStageView: View {
                 if model.current != nil {
                     // 倒计时（休息到几点、几小时后重置）与「刚结束的请求在台上留 12 秒」每秒走一次（网页 countdown()）
                     TimelineView(.periodic(from: .now, by: 1)) { context in
+                        let date = RoutesClock.frozen ? RoutesClock.shared.date : context.date
                         VStack(alignment: .leading, spacing: 0) {
                             if let route = model.current {
                                 let mask = model.mask(agentName: agentName)
-                                stage(RouteStageBuilder.build(current: route, staged: model.staged(now: context.date), now: context.date, agentName: agentName),
+                                stage(RouteStageBuilder.build(current: route, staged: model.staged(now: date), now: date, agentName: agentName),
                                       route: route, mask: mask)
                             }
                         }
@@ -176,6 +178,8 @@ struct RoutesStageView: View {
         .textRenderer(PIIRenderer())
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("routes.stage")
+        .onAppear { model.still = systemReduceMotion }
+        .onChange(of: systemReduceMotion) { _, still in model.still = still }
     }
 
     private func placeholder(_ text: String, symbol: String?) -> some View {
@@ -284,22 +288,41 @@ private struct StageCanvas: View {
         let plays = Array(model.plays.values).sorted { $0.route < $1.route }
         let flowing = stage.agents.contains(where: \.busy) || stage.rows.contains { $0.state == .answering }
         let animating = !stillSky && (!plays.isEmpty || flowing)
+        // 卡片跳一下、行抖一下、红色标签（网页 tick() / rerun(row.li, "hit")）：演出里排好的时刻
+        let agentTicks = Self.agentTicks(plays)
+        let hubTicks = plays.flatMap { $0.ticks.filter { $0.node == .hub }.map(\.at) }.sorted()
+        let hits = Dictionary(grouping: plays.flatMap(\.hits), by: \.seat).mapValues { $0.sorted { $0.at < $1.at } }
+        // 减弱动态效果时没有这些（网页 prefers-reduced-motion: animation none），标签照样出现
+        let moving = !plays.isEmpty && !stillSky
         VStack(alignment: .leading, spacing: 26) {
             HStack(alignment: .center, spacing: 28) {
                 VStack(spacing: 10) {
-                    ForEach(stage.agents) { agent in AgentNode(agent: agent).stageNode(.agent(agent.id)) }
+                    ForEach(stage.agents) { agent in
+                        StageMotion(paused: !moving) { t in
+                            AgentNode(agent: agent).scaleEffect(moving ? MagpieMotion.tickScale(agentTicks[agent.id] ?? [], at: t) : 1)
+                        }
+                        .stageNode(.agent(agent.id))
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .stageNode(.agents)
-                HubNode(chip: stage.chip, chipHidden: stage.chipHidden, action: onPickRouting)
-                    .frame(maxWidth: .infinity)
-                    .stageNode(.hub)
+                StageMotion(paused: !moving) { t in
+                    HubNode(chip: stage.chip, chipHidden: stage.chipHidden, action: onPickRouting)
+                        .scaleEffect(moving ? MagpieMotion.tickScale(hubTicks, at: t) : 1)
+                }
+                .frame(maxWidth: .infinity)
+                .stageNode(.hub)
             }
             VStack(spacing: 7) {
                 ForEach(stage.rows) { row in
-                    SeatRow(row: row, reduceMotion: reduceMotion, mask: mask)
-                        .stageNode(.row(row.id))
-                        .accessibilityIdentifier("routes.row.\(row.seat.id)")
+                    StageMotion(paused: hits[row.id] == nil || (RT.uiTesting && !RT.fliersInTests)) { t in
+                        let hit = hits[row.id]?.last { $0.at <= t }
+                        SeatRow(row: row, reduceMotion: reduceMotion, mask: mask,
+                                flightTag: hit.flatMap { h in MagpieMotion.tagShown(t - h.at).map { (text: "\(h.status) · \(RouteStageBuilder.failWord(h.fail))", shown: $0) } })
+                            .offset(x: stillSky ? 0 : MagpieMotion.hitOffset(hit.map { t - $0.at } ?? -1))
+                            .accessibilityIdentifier("routes.row.\(row.seat.id)")
+                    }
+                    .stageNode(.row(row.id))
                 }
                 if stage.rows.isEmpty {
                     Text(stage.mode.isEmpty ? "没有可用的账号" : "还没有排到任何账号")
@@ -313,9 +336,9 @@ private struct StageCanvas: View {
         }
         .backgroundPreferenceValue(StageBoundsKey.self) { anchors in
             GeometryReader { proxy in
-                TimelineView(.animation(paused: !animating)) { context in
+                TimelineView(.animation(paused: !animating || RoutesClock.frozen)) { context in
                     let layout = SkyLayout(anchors: anchors, proxy: proxy)
-                    let time = context.date.timeIntervalSinceReferenceDate
+                    let time = RoutesClock.frozen ? RoutesClock.shared.now : context.date.timeIntervalSinceReferenceDate
                     let items = layout.map { sky(plays: plays, layout: $0, time: time) } ?? []
                     let pad = Self.overflow
                     ZStack(alignment: .topLeading) {
@@ -343,10 +366,21 @@ private struct StageCanvas: View {
         }
     }
 
+    /// 每个 Agent 的卡片跳一下的时刻（按先后）。
+    private static func agentTicks(_ plays: [RoutePlay]) -> [String: [TimeInterval]] {
+        var out: [String: [TimeInterval]] = [:]
+        for play in plays {
+            for tick in play.ticks where tick.node == .agent { out[play.agent, default: []].append(tick.at) }
+        }
+        return out.mapValues { $0.sorted() }
+    }
+
     /// 线：默认灰；有请求在路上（或点正在它上面飞）时按 Agent 的颜色虚线流动；回答完亮着不动；休息中的虚线变淡。
     private func wires(in gc: inout GraphicsContext, layout: SkyLayout, plays: [RoutePlay], time: TimeInterval) {
-        // 0.7 秒流 8 点（@keyframes rtflow { to { stroke-dashoffset: -8 } }）
-        let phase = stillSky ? 0 : CGFloat(time.truncatingRemainder(dividingBy: 0.7) / 0.7) * -8
+        // 0.7 秒流 8 点（@keyframes rtflow { to { stroke-dashoffset: -8 } }）：虚线顺着线的方向往前走
+        // （Agent → magpie → 座位）。dashPhase 与 stroke-dashoffset 同义，这里取 0…8 里等价的正值。
+        let flow = stillSky ? 0 : CGFloat(time.truncatingRemainder(dividingBy: 0.7) / 0.7) * 8
+        let phase = flow == 0 ? 0 : 8 - flow
         // 网页 render()：点在线上飞的 Agent 也算在发
         var onWire = Set<String>()
         for play in plays { if let segment = play.segment(at: time), case .fly = segment.kind { onWire.insert(play.agent) } }
@@ -354,7 +388,7 @@ private struct StageCanvas: View {
             guard let rect = layout.agent(agent.id) else { continue }
             let path = Wires.agent(rect, hub: layout.hub)
             if agent.busy || onWire.contains(agent.id) {
-                gc.stroke(path, with: .color(RT.hue(agent.id)), style: StrokeStyle(lineWidth: 1.5, dash: [3, 5], dashPhase: -phase))
+                gc.stroke(path, with: .color(RT.hue(agent.id)), style: StrokeStyle(lineWidth: 1.5, dash: [3, 5], dashPhase: phase))
             } else {
                 gc.stroke(path, with: .color(RT.line), lineWidth: 1.5)
             }
@@ -365,7 +399,7 @@ private struct StageCanvas: View {
             let hue = row.agent.map(RT.hue) ?? RT.muted
             switch row.state {
             case .answering:
-                gc.stroke(path, with: .color(hue), style: StrokeStyle(lineWidth: 1.5, dash: [3, 5], dashPhase: -phase))
+                gc.stroke(path, with: .color(hue), style: StrokeStyle(lineWidth: 1.5, dash: [3, 5], dashPhase: phase))
             case .answered:
                 gc.stroke(path, with: .color(hue), lineWidth: 1.5)
             case .resting, .passedOver:
@@ -385,9 +419,9 @@ private struct StageCanvas: View {
             if let segment = play.segment(at: time), let dot = dotPoint(segment, play: play, layout: layout, time: time) {
                 var held: Double?
                 if case .holdSeat(_, let pulsing) = segment.kind, pulsing, !stillSky {
-                    // @keyframes rtheld 1.2s ease-in-out：50% 时 opacity .45
+                    // @keyframes rtheld 1.2s ease-in-out infinite：50% 时 opacity .45（每半段 ease-in-out）
                     let q = (time - segment.start).truncatingRemainder(dividingBy: 1.2) / 1.2
-                    held = 1 - 0.55 * (0.5 - 0.5 * cos(2 * Double.pi * q))
+                    held = MagpieMotion.keyframes([(0, 1), (0.5, 0.45), (1, 1)], q, timing: .easeInOut)
                 }
                 let moving: Bool = { if case .fly = segment.kind { return true }; return false }()
                 if !(stillSky && moving) {
@@ -436,32 +470,62 @@ private struct StageCanvas: View {
     }
 
     private func draw(_ items: [SkyItem], in gc: inout GraphicsContext) {
-        // 点先画，喜鹊在上（网页里点和喜鹊按出现的顺序叠，喜鹊总是刚衔起点时才出现）
+        // 按网页 .rt-sky 里元素的先后叠：每个请求先是它的点，再是衔着它的喜鹊（packet() 先于 bird()），后来的请求在上面
         for item in items {
-            guard case .dot(let style, let held) = item.kind else { continue }
-            let radius: CGFloat = style == .answer ? 4 : 4.5
-            let p = item.point
-            let dot = Path(ellipseIn: CGRect(x: p.x - radius, y: p.y - radius, width: radius * 2, height: radius * 2))
-            var layer = gc
-            if let held { layer.opacity = held }
-            switch style {
-            case .request:
-                // .pkt：Agent 的颜色，drop-shadow(0 0 3px)
-                var glow = layer
-                glow.addFilter(.shadow(color: item.hue, radius: 3))
-                glow.fill(dot, with: .color(item.hue))
-            case .answer:
-                layer.fill(dot, with: .color(RT.card))
-                layer.stroke(dot, with: .color(item.hue), lineWidth: 2.25)
-            case .error:
-                layer.fill(dot, with: .color(item.hue))
-                layer.stroke(dot, with: .color(RT.red), lineWidth: 2.25)
+            switch item.kind {
+            case .dot(let style, let held):
+                let radius: CGFloat = style == .answer ? 4 : 4.5
+                let p = item.point
+                let dot = Path(ellipseIn: CGRect(x: p.x - radius, y: p.y - radius, width: radius * 2, height: radius * 2))
+                var layer = gc
+                if let held { layer.opacity = held }
+                // .pkt：每种点都有 drop-shadow(0 0 3px var(--agent))——CSS 的模糊半径 3 = 高斯 σ 1.5
+                layer.drawLayer { ctx in
+                    ctx.addFilter(.shadow(color: item.hue, radius: 1.5))
+                    switch style {
+                    case .request:
+                        ctx.fill(dot, with: .color(item.hue))
+                    case .answer:
+                        // .pkt.back：卡片色填充、Agent 色的圈（stroke-width 2.25）
+                        ctx.fill(dot, with: .color(RT.card))
+                        ctx.stroke(dot, with: .color(item.hue), lineWidth: 2.25)
+                    case .error:
+                        // .pkt.back.err：Agent 色填充、红圈（半径仍是 4.5）
+                        ctx.fill(dot, with: .color(item.hue))
+                        ctx.stroke(dot, with: .color(RT.red), lineWidth: 2.25)
+                    }
+                }
+            case .bird(let pose, let lift, let flap):
+                MagpieFlier.draw(in: gc, pose: pose, lift: lift, flapTime: flap, ink: RT.fg, card: RT.card)
             }
         }
-        for item in items {
-            guard case .bird(let pose, let lift, let flap) = item.kind else { continue }
-            MagpieFlier.draw(in: gc, pose: pose, lift: lift, flapTime: flap, ink: RT.fg, card: RT.card)
+    }
+}
+
+/// 随时间变的一小块（卡片跳一下、行抖一下）：平时跟着屏幕刷新，逐帧截图时跟着 RoutesClock。
+private struct StageMotion<Content: View>: View {
+    let paused: Bool
+    @ViewBuilder let content: (TimeInterval) -> Content
+
+    var body: some View {
+        TimelineView(.animation(paused: paused || RoutesClock.frozen)) { context in
+            content(RoutesClock.frozen ? RoutesClock.shared.now : context.date.timeIntervalSinceReferenceDate)
         }
+    }
+}
+
+/// 逐帧截图（`--routes-snapshot`）用的「下一帧」：放在导航栏上，截图范围之外。它的 value 是已经画好的那一刻（毫秒），
+/// UI 测试等它跟上再截。
+struct RoutesSnapshotStep: View {
+    var body: some View {
+        let clock = RoutesClock.shared
+        Button {
+            clock.advance()
+        } label: {
+            Text(verbatim: "下一帧 \(clock.settledMilliseconds)").font(.caption.monospacedDigit())
+        }
+        .accessibilityIdentifier("routes.snapshot.step")
+        .accessibilityValue("\(clock.settledMilliseconds)")
     }
 }
 
@@ -603,6 +667,8 @@ private struct SeatRow: View {
     let row: StageRow
     let reduceMotion: Bool
     let mask: AccountMask?
+    /// 失败落在这里时的红色标签（网页 play()：`${status} · ${failWord}`，li.tagged 1.8 秒）与它显示了多少（0…1）。
+    var flightTag: (text: String, shown: Double)?
     @State private var pulse = false
 
     private var dimmed: Double {
@@ -642,17 +708,19 @@ private struct SeatRow: View {
         .background(RT.card, in: .rect(cornerRadius: 10, style: .continuous))
         .overlay(border)
         .overlay(alignment: .topTrailing) {
-            if let tag = row.tag {
-                Text(tag)
+            // .rt-accts .tag：right 10px; top -10px; padding 1px 7px; radius 6; 红底白字 600 10.5px 等宽；
+            // 没显示时 opacity 0、translateY(4px) scale(.9)，.tagged 时复原（.25s）
+            if let tag = flightTag {
+                Text(tag.text)
                     .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 7).padding(.vertical, 1)
                     .background(RT.red, in: .rect(cornerRadius: 6))
-                    .offset(x: -10, y: -10)
-                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                    .scaleEffect(0.9 + 0.1 * tag.shown)
+                    .offset(x: -10, y: -10 + 4 * (1 - tag.shown))
+                    .opacity(tag.shown)
             }
         }
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: row.tag)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: row.state)
         .accessibilityElement(children: .combine)
         .accessibilityValue(stateLabel)
