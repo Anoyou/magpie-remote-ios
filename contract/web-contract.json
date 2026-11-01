@@ -701,6 +701,167 @@
   },
   {
    "method": "GET",
+   "path": "/api/agents/cli",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"GET /api/agents/cli\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "agents.<id>.version?",
+     "agents.<id>.latest?",
+     "agents.<id>.via?",
+     "agents.<id>.command?",
+     "agents.<id>.update?",
+     "agents.<id>.app?",
+     "agents.<id>.admin?",
+     "agents.<id>.path?",
+     "agents.<id>.offPath?",
+     "agents.<id>.inDesktop?",
+     "agents.<id>.desktopVersion?",
+     "pending"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/agent/cliupdate.go",
+     "tags": [
+      "version",
+      "latest",
+      "via",
+      "command",
+      "update",
+      "app",
+      "admin",
+      "path",
+      "offPath",
+      "inDesktop",
+      "desktopVersion"
+     ]
+    }
+   ],
+   "note": "pending: some still being asked; ask again in a few seconds (the page retries up to 3 times, 4 s apart)",
+   "contains": [
+    "clis, pending := agent.CLIs(3 * time.Second)",
+    "writeJSON(rw, map[string]any{\"agents\": clis, \"pending\": pending})"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/agents/cli/{id}",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/agents/cli/{id}\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<agent.CLI>"
+    ]
+   },
+   "note": "updates the agent's CLI the way it was installed (npm/bun/pnpm/brew/self); up to 10 min; 400 {error} says why not",
+   "contains": [
+    "c, err := a.UpdateCLI()",
+    {
+     "file": "internal/agent/cliupdate.go",
+     "contains": [
+      "var updateTimeout = 10 * time.Minute",
+      "is already being updated"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/agents/preview/{id}",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"GET /api/agents/preview/{id}\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "changes[].path",
+     "changes[].removed?",
+     "changes[].created?",
+     "changes[].lines[].op",
+     "changes[].lines[].text",
+     "changes[].lines[].was?",
+     "revision?",
+     "error?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/agent/preview.go",
+     "tags": [
+      "path",
+      "removed",
+      "created",
+      "lines",
+      "op",
+      "text",
+      "was"
+     ]
+    }
+   ],
+   "note": "what disconnecting changes; a native agent (a.native) needs a revision or it can't be disconnected; error is 200 with {error}",
+   "contains": [
+    "writeJSON(rw, map[string]any{\"changes\": plan.Preview(), \"revision\": plan.Revision(a.ID)})"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/profile/{action}",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/profile/{action}\"",
+   "actions": [
+    "save",
+    "use",
+    "delete"
+   ],
+   "fields": {
+    "request": [
+     "name"
+    ],
+    "response": [
+     "<stateJSON>",
+     "profiles[].name",
+     "profiles[].summary",
+     "profiles[].agents[].fields[].label",
+     "profiles[].inUse?",
+     "changed"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/api.go",
+     "tags": [
+      "name",
+      "summary",
+      "library",
+      "agents",
+      "inUse",
+      "changed"
+     ]
+    },
+    {
+     "file": "internal/profile/details.go",
+     "tags": [
+      "id",
+      "name",
+      "icon",
+      "fields",
+      "key",
+      "label",
+      "value",
+      "hidden",
+      "follows"
+     ]
+    }
+   ],
+   "note": "untagged struct{ Name string }; save overwrites a profile of that name with the setup now"
+  },
+  {
+   "method": "GET",
    "path": "/api/agent-models/{id}",
    "source": "internal/gui/agent_models.go",
    "anchor": "mux.HandleFunc(\"GET /api/agent-models/{id}\"",
