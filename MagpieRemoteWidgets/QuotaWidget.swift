@@ -187,7 +187,7 @@ private struct AccountBlock: View {
             }
         }
         .padding(8)
-        .background(.fill.quinary, in: .rect(cornerRadius: 12, style: .continuous))
+        .background(.fill.quaternary, in: .rect(cornerRadius: 12, style: .continuous))
     }
 }
 
@@ -224,7 +224,8 @@ private struct QuotaRectangular: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(account?.account ?? "额度")
+            // 锁屏上别人也看得到：只写供应商名，不写账号（可能是邮箱）。
+            Text(account?.title ?? "额度")
                 .font(.headline)
                 .lineLimit(1)
                 .widgetAccentable()

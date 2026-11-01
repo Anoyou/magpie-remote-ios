@@ -121,7 +121,7 @@ struct RemainingBar: View {
                 if let remaining = display.remaining, !display.resetPassed {
                     Capsule()
                         .fill(display.level.tint)
-                        .frame(width: max(height, proxy.size.width * remaining / 100))
+                        .frame(width: max(height, proxy.size.width * CGFloat(remaining) / 100))
                         .widgetAccentable()
                 }
             }
@@ -146,13 +146,13 @@ struct WindowRow: View {
                 if showsReset, let reset = display.resetText {
                     Text(reset)
                         .font(.caption2)
-                        .foregroundStyle(display.resetPassed ? .orange : .secondary)
+                        .foregroundStyle(display.resetPassed ? Color.orange : Color.secondary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
                 Text(display.valueText)
                     .font(.caption.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(display.resetPassed ? .secondary : display.level.tint)
+                    .foregroundStyle(display.resetPassed ? Color.secondary : display.level.tint)
                     .lineLimit(1)
             }
             if display.remaining != nil {

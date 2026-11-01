@@ -27,7 +27,7 @@ struct UsageWidgetView: View {
     }
 
     @ViewBuilder private var content: some View {
-        if let notice {
+        if let notice = notice {
             UsageNoticeView(notice: notice, family: family)
         } else if let snapshot = entry.content.snapshot, let today = snapshot.today {
             let stale = WidgetFreshness(generatedAt: snapshot.generatedAt, now: entry.date) == .stale
@@ -173,7 +173,7 @@ private struct StatTile: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(.fill.quinary, in: .rect(cornerRadius: 12, style: .continuous))
+        .background(.fill.quaternary, in: .rect(cornerRadius: 12, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }
