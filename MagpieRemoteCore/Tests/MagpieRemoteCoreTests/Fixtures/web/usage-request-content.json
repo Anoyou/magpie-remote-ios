@@ -1,0 +1,39 @@
+{
+ "found": true,
+ "model": "claude-sonnet-4-6",
+ "input": [
+  {
+   "role": "user",
+   "kind": "text",
+   "text": "把登录按钮改成跟随系统的颜色。"
+  },
+  {
+   "role": "tool",
+   "kind": "tool_result",
+   "name": "Read",
+   "text": ".button { color: #222; }",
+   "cut": 120
+  }
+ ],
+ "output": [
+  {
+   "role": "assistant",
+   "kind": "thinking",
+   "text": "先看看样式文件。",
+   "model": "claude-sonnet-4-6"
+  },
+  {
+   "role": "assistant",
+   "kind": "tool_use",
+   "name": "Edit",
+   "text": "{\"file_path\":\"src/login.css\"}"
+  },
+  {
+   "role": "assistant",
+   "kind": "text",
+   "text": "改好了。",
+   "model": "claude-sonnet-4-6"
+  }
+ ],
+ "cut": true
+}

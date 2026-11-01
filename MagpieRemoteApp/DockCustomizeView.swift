@@ -14,7 +14,12 @@ final class DockStore {
     init(defaults: UserDefaults?) {
         self.defaults = defaults
         // 0.2 及以前的底栏（额度 / 用量 / 对话 / 管理）是固定的、没有保存过，所以老用户第一次打开就是新的默认底栏。
-        layout = DockLayout(stored: defaults?.stringArray(forKey: Self.defaultsKey))
+        let stored = defaults?.stringArray(forKey: Self.defaultsKey)
+        layout = DockLayout(stored: stored)
+        // 0.3 存下的 Agent / 供应商 / 额度已并入「主页」：整理后的布局写回去，下次不用再换。
+        if let stored, stored != layout.stored {
+            if layout.isDefault { defaults?.removeObject(forKey: Self.defaultsKey) } else { defaults?.set(layout.stored, forKey: Self.defaultsKey) }
+        }
     }
 
     func move(fromOffsets source: IndexSet, toOffset destination: Int) {
@@ -109,7 +114,7 @@ private struct DockSlotRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Text("\(index + 1)").monospacedDigit().foregroundStyle(.secondary).frame(width: 18)
-            Label(page.title, systemImage: page.symbol)
+            Label(page.title, page: page)
                 .accessibilityIdentifier("dock.slot.\(index)")
             Spacer()
             Menu {
@@ -118,7 +123,7 @@ private struct DockSlotRow: View {
                         Button {
                             dock.place(other, at: index)
                         } label: {
-                            Label(other.title, systemImage: other.symbol)
+                            Label(other.title, page: other)
                         }
                         .accessibilityIdentifier("dock.slot.\(index).use.\(other.rawValue)")
                     }
@@ -161,7 +166,7 @@ private struct DockCandidateRow: View {
                     Text(page.detail).font(.caption).foregroundStyle(.secondary)
                 }
             } icon: {
-                Image(systemName: page.symbol)
+                page.image
             }
             // 整行都能点开菜单（不然只有文字那一小块能点，点行的右半边没反应）。
             .frame(maxWidth: .infinity, alignment: .leading)

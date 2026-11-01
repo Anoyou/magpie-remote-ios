@@ -63,6 +63,14 @@ private struct ProviderRow: View {
     let provider: WebProvider
 
     var body: some View {
+        HStack(spacing: 12) {
+            BrandIcon(provider.officialIcon, size: 22).opacity(provider.off ? 0.5 : 1)
+            details
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var details: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
                 Text(provider.name).foregroundStyle(provider.off ? .secondary : .primary)
@@ -75,7 +83,6 @@ private struct ProviderRow: View {
             Text("\(provider.subtitle) · 开放 \(provider.models.filter(\.on).count)/\(provider.models.count) 个模型")
                 .font(.caption).foregroundStyle(.secondary)
         }
-        .accessibilityElement(children: .combine)
     }
 }
 
@@ -89,6 +96,8 @@ struct ProviderDetailView: View {
     @State private var key = ""
     @State private var loadedFrom: WebProvider?
     @State private var confirmDelete = false
+    /// 「API Key」区的明文与弹窗（见 ProviderKeysSection）。
+    @State private var keysUI = ProviderKeysUI()
 
     private var provider: WebProvider? { store.provider(id) }
 
@@ -133,18 +142,35 @@ struct ProviderDetailView: View {
                     TextField("名称", text: $name)
                         .accessibilityIdentifier("provider.name")
                     if provider.preset.isEmpty {
-                        TextField("Base URL，例如 https://relay.example/v1", text: $chat)
-                            .keyboardType(.URL)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .accessibilityIdentifier("provider.chat")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Base URL").font(.caption).foregroundStyle(.secondary)
+                            TextField("例如 https://relay.example/v1", text: $chat)
+                                .keyboardType(.URL)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .accessibilityIdentifier("provider.chat")
+                        }
                     } else {
                         LabeledContent("预设", value: provider.preset)
                     }
-                    SecureField(provider.keySet ? "API Key（已保存 \(provider.keyMasked)，留空不变）" : "API Key", text: $key)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .accessibilityIdentifier("provider.key")
+                    // 其余已保存的地址（Responses / Anthropic / Gemini，以及预设自带的地址）只读显示
+                    ForEach(provider.baseURLs.filter { !(provider.preset.isEmpty && $0.api == "OpenAI Chat") }) { item in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Base URL · \(item.api)").font(.caption).foregroundStyle(.secondary)
+                            Text(item.url)
+                                .font(.callout)
+                                .textSelection(.enabled)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("provider.url.\(item.api)")
+                    }
+                    // 还没有 Key 时在这里填第一把；已有 Key 时到下面的「API Key」区管理（与网页端相同）
+                    if provider.keyList.isEmpty {
+                        SecureField(provider.keySet ? "API Key（已保存 \(provider.keyMasked)，留空不变）" : "API Key", text: $key)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .accessibilityIdentifier("provider.key")
+                    }
                     Button("保存修改") {
                         Task {
                             let edits = WebRequests.ProviderEdits(name: name.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -161,7 +187,13 @@ struct ProviderDetailView: View {
                 } header: {
                     Text("基本信息")
                 } footer: {
-                    Text("保存时其余设置（备用、请求头、代理、并发、计价等）保持不变。")
+                    Text(provider.keyList.isEmpty
+                         ? "保存时其余设置（备用、请求头、代理、并发、计价等）保持不变。"
+                         : "保存只改名称和地址；Key 在下面单独管理，已保存的 Key 和其余设置（备用、请求头、代理、并发、计价等）都保持不变。")
+                }
+
+                if !provider.keyList.isEmpty {
+                    ProviderKeysSection(store: store, provider: provider, ui: keysUI)
                 }
             }
 
@@ -206,6 +238,7 @@ struct ProviderDetailView: View {
                     .accessibilityIdentifier("provider.delete")
             }
         }
+        .providerKeyPresentations(keysUI, store: store, provider: provider)
         .confirmationDialog("删除供应商「\(provider.name)」？", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("删除供应商", role: .destructive) {
                 Task { if await store.deleteProvider(provider.id) { dismiss() } }

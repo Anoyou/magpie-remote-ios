@@ -1,0 +1,16 @@
+{
+ "npm": {
+  "@magpie-community/example-auth": {
+   "version": "1.4.0",
+   "description": "Example Cloud for magpie",
+   "publisher": "magpie-bot",
+   "license": "MIT",
+   "homepage": "https://github.com/magpie-community/plugins#readme",
+   "repository": "https://github.com/magpie-community/plugins",
+   "weekly": 15230
+  },
+  "example-agent": {
+   "weekly": 0
+  }
+ }
+}

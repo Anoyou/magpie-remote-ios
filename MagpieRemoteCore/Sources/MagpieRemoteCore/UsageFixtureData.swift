@@ -133,7 +133,7 @@ public struct UsageFixtureData: Sendable {
         t.cost = row.cost
         t.unpriced = row.priced ? 0 : 1
         if let ttft = row.ttftMs {
-            t.timed = 1; t.ttftMs = ttft; t.decodeMs = max(1, row.ms - ttft); t.decodeOut = row.output
+            t.timed = 1; t.ttftMs = ttft; t.decodeMs = max(1, row.ms - ttft); t.decodeOut = row.output; t.decodeN = 1
         }
         return t
     }
@@ -218,13 +218,53 @@ public struct UsageFixtureData: Sendable {
         func options(_ key: (UsageRequestRow) -> String?, _ name: (UsageRequestRow) -> String) -> [UsageOption] {
             Self.group(matching, by: key).map { UsageOption(id: $0.0, name: name($0.1[0])) }
         }
-        return UsageRequestPage(
+        var result = UsageRequestPage(
             period: query.period.rawValue, rows: page, offset: offset, total: matching.count, totals: Self.sum(matching),
             callerKeys: options({ $0.callerKeyId ?? "none" }, { $0.callerKeyName ?? "未用网关密钥（本机）" }),
             agents: options({ $0.agent }, { $0.agentTitle }),
             providers: options({ $0.provider }, { $0.providerTitle ?? $0.provider }),
             models: options({ $0.model }, { $0.model }),
             accounts: options({ $0.providerAccount }, { _ in "工作订阅" }))
+        // 趋势图与排名：与 magpie 一样，按小时（今天）或按天，每个点再按维度拆开；排名按词元从多到少。
+        typealias Key = (String, (UsageRequestRow) -> String, (UsageRequestRow) -> String)
+        let keys: [Key] = [
+            ("model", { $0.model }, { $0.model }),
+            ("modelAt", { "\($0.provider)/\($0.model)" }, { "\($0.model) · \($0.providerTitle ?? $0.provider)" }),
+            ("provider", { $0.provider }, { $0.providerTitle ?? $0.provider }),
+            ("agent", { $0.agent }, { $0.agentTitle }),
+            ("callerKey", { $0.callerKeyId ?? "none" }, { $0.callerKeyName ?? "none" }),
+        ]
+        var by: [String: [UsageShare]] = [:]
+        for (dim, key, name) in keys {
+            by[dim] = Self.group(matching, by: key).map { UsageShare(id: $0.0, name: name($0.1[0]), totals: Self.sum($0.1)) }
+                .sorted { $0.totals.tokens != $1.totals.tokens ? $0.totals.tokens > $1.totals.tokens : $0.id < $1.id }
+        }
+        result.by = by
+        let summary = self.summary(query.period)
+        result.bucket = summary.bucket ?? "day"
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        let hourly = query.period == .today
+        result.series = summary.series.map { point in
+            let start = point.time?.date ?? now
+            let end = calendar.date(byAdding: hourly ? .hour : .day, value: 1, to: start) ?? start
+            let inBucket = matching.filter { guard let d = $0.time.date else { return false }; return d >= start && d < end }
+            var parts: [String: [String: UsageLedgerPart]] = [:]
+            for (dim, key, _) in keys {
+                var m: [String: UsageLedgerPart] = [:]
+                for row in inBucket {
+                    let t = Self.totals(row)
+                    var part = m[key(row)] ?? UsageLedgerPart()
+                    part.calls += 1; part.tokens += row.tokens; part.cost += row.cost
+                    part.timed += t.timed; part.ttftMs += t.ttftMs; part.decodeMs += t.decodeMs; part.decodeOut += t.decodeOut
+                    m[key(row)] = part
+                }
+                parts[dim] = m
+            }
+            return UsageLedgerPoint(label: point.label, time: point.time, totals: Self.sum(inBucket), by: parts)
+        }
+        result.through = result.totals
+        return result
     }
 
     // MARK: 并发

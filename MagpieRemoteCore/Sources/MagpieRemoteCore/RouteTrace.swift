@@ -29,6 +29,9 @@ public struct TraceSeat: Hashable, Sendable {
     public var provider: String
     /// 供应商名。
     public var name: String
+    /// 主机给的标志名（gateway.Weighed 的 `icon`）与供应商预设（`preset`）。
+    public var icon: String = ""
+    public var preset: String = ""
     /// 账号名，或 Key 的名字 / 脱敏值。
     public var who: String
     /// "account" / "key" / "provider"。
@@ -59,6 +62,8 @@ public struct TraceSeat: Hashable, Sendable {
         id = json["id"]?.string ?? ""
         provider = json["provider"]?.string ?? ""
         name = json["name"]?.string ?? ""
+        icon = json["icon"]?.string ?? ""
+        preset = json["preset"]?.string ?? ""
         who = json["who"]?.string ?? ""
         kind = json["kind"]?.string ?? "key"
         plan = json["plan"]?.string ?? ""
@@ -111,6 +116,8 @@ public struct TraceTry: Hashable, Sendable {
     public var rest: TraceRest?
     public var again: Int
     public var credits: Bool
+    /// 再试之前 Agent 已经走了。
+    public var gone: Bool
 
     init(_ json: WebJSON) {
         id = json["id"]?.string ?? ""
@@ -124,8 +131,9 @@ public struct TraceTry: Hashable, Sendable {
         fail = json["fail"]?.string ?? ""
         error = json["error"]?.string ?? ""
         rest = json["rest"].flatMap { $0.object == nil ? nil : TraceRest($0) }
-        again = json["again"]?.int ?? 0
+        again = json["again"]?.int ?? (json["again"]?.bool == true ? 1 : 0)
         credits = json["credits"]?.bool ?? false
+        gone = json["gone"]?.bool ?? false
     }
 
     /// 网页的 `tryOk`：状态码 < 400 且没有中途断开。
@@ -157,6 +165,9 @@ public struct TraceRoute: Hashable, Sendable, Identifiable {
     public var cost: Double?
     public var affinityMode: String?
     public var affinityKept: Bool
+    /// 网页的 `groupSession`：parentSession，没有时是 session（「按会话」分组用）。
+    public var session: String
+    public var folder: String
 
     public init(json: WebJSON) {
         id = Int64(json["id"]?.int ?? 0)
@@ -188,7 +199,16 @@ public struct TraceRoute: Hashable, Sendable, Identifiable {
         cost = (json["priced"]?.bool ?? false) ? json["cost"]?.double : nil
         affinityMode = json["affinity"]?["mode"]?.string
         affinityKept = json["affinity"]?["kept"]?.bool ?? false
+        let parent = json["parentSession"]?.string ?? ""
+        session = parent.isEmpty ? (json["session"]?.string ?? "") : parent
+        folder = json["folder"]?.string ?? ""
     }
+
+    /// 网页的 `sessionKey`：同一个 Agent 的同一个会话；没有会话标识时为空。
+    public var sessionKey: String { session.isEmpty ? "" : (agent.isEmpty ? "other" : agent) + "\u{0}" + session }
+
+    /// 结束的时刻（开始 + 用时）；没有时间时为 nil。
+    public var endedAt: Date? { time.map { $0.addingTimeInterval(Double(ms) / 1000) } }
 
     /// 网页的 `tried`：一次尝试落在哪个座位上。
     public func seat(of attempt: TraceTry) -> TraceSeat? {
@@ -241,6 +261,10 @@ public struct TraceSnapshot: Hashable, Sendable {
     /// 这台 magpie 在提供网关（或读得到提供网关的那台）。false 时没有可看的路由。
     public var mine: Bool
     public var now: Date?
+    /// 读这份路由的那台 magpie（另一台接管网关时会变：网页从头读一遍）。
+    public var pid: Int
+    /// 回答里出现的账号（网页 `noteAccounts`）：user / account / alias，以及 kind = account 的 who。给「账号打码」用。
+    public var accounts: [String]
 
     public init(json: WebJSON) {
         seq = Int64(json["seq"]?.int ?? 0)
@@ -250,6 +274,40 @@ public struct TraceSnapshot: Hashable, Sendable {
         ids = json["ids"]?.array.map { $0.compactMap { $0.int.map(Int64.init) } }
         mine = json["mine"]?.bool ?? false
         now = json["now"]?.string.flatMap(UsageTimestamp.parse)
+        pid = json["by"]?["pid"]?.int ?? 0
+        var found: [String] = []
+        Self.noteAccounts(json, into: &found)
+        accounts = found
+    }
+
+    /// app.js `noteAccount`：去掉首尾空白后 2–80 个字符、没有换行的才算。
+    static func noteAccount(_ value: String, into out: inout [String]) {
+        let s = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let n = s.utf16.count
+        if n >= 2 && n <= 80 && !s.contains("\n") && !s.contains("\r") && !out.contains(s) { out.append(s) }
+    }
+
+    /// app.js `noteAccounts`：最多走 8 层。
+    static func noteAccounts(_ json: WebJSON, into out: inout [String], depth: Int = 0) {
+        guard depth <= 8 else { return }
+        switch json {
+        case .array(let items):
+            for item in items { noteAccounts(item, into: &out, depth: depth + 1) }
+        case .object(let object):
+            let isAccount = object["kind"]?.string == "account"
+            for key in object.keys.sorted() {
+                guard let value = object[key] else { continue }
+                if case .string(let text) = value {
+                    if key == "user" || key == "account" || key == "alias" || (key == "who" && isAccount) { noteAccount(text, into: &out) }
+                } else if key == "who", isAccount, case .array(let names) = value {
+                    for name in names { if let text = name.string { noteAccount(text, into: &out) } }
+                } else if value.object != nil || value.array != nil {
+                    noteAccounts(value, into: &out, depth: depth + 1)
+                }
+            }
+        default:
+            break
+        }
     }
 }
 
@@ -267,6 +325,10 @@ public struct TraceBook: Hashable, Sendable {
     public private(set) var fresh: [Int64] = []
     /// 主机时间减本机时间（秒）。
     public private(set) var skew: TimeInterval = 0
+    /// 这一页见过的账号（只增不减，与网页的 accountNames 一样）。
+    public private(set) var accounts: [String] = []
+    /// 路由来自哪台 magpie。
+    public private(set) var pid = 0
     public static let keep = 60
 
     public init() {}
@@ -275,6 +337,17 @@ public struct TraceBook: Hashable, Sendable {
         mine = snapshot.mine
         totals = snapshot.totals
         if let now = snapshot.now { skew = now.timeIntervalSince(receivedAt) }
+        for name in snapshot.accounts where !accounts.contains(name) { accounts.append(name) }
+        // 另一台 magpie 接管了网关（#2606）：它的请求和 seq 是它自己的，从头读一遍（网页 poll 的 fromOther）
+        let fromOther = loaded && snapshot.pid != pid
+        pid = snapshot.pid
+        if fromOther {
+            routes.removeAll()
+            seq = 0
+            loaded = false
+            fresh = []
+            return
+        }
         guard snapshot.mine else {
             loaded = false
             fresh = []
@@ -302,6 +375,43 @@ public struct TraceBook: Hashable, Sendable {
     public var newest: TraceRoute? { routes.values.max { $0.id < $1.id } }
     /// 还在路上的请求。
     public var underWay: [TraceRoute] { list.filter { !$0.done } }
+
+    /// 网页 `underWay()`：还在路上的最近 4 个（旧的在前）——回到页面时只有它们接着飞。
+    public var playable: [TraceRoute] { Array(underWay.reversed().suffix(Self.live)) }
+    public static let live = 4
+
+    /// 网页 `told()`：实时卡片讲的那个请求。它没结束前一直讲它；更新的请求还没被路由时也不抢走一个已经路由了的。
+    public func told(_ shown: Int64?) -> TraceRoute? {
+        let n = newest
+        guard let shown, let c = routes[shown], let n, c.id != n.id else { return n }
+        if !c.done { return c }
+        return n.done || !n.tries.isEmpty || c.tries.isEmpty ? n : c
+    }
+
+    /// 一个 Agent 最后一个请求结束后在舞台上留多久（网页 LINGER）。
+    public static let linger: TimeInterval = 12
+
+    /// 网页 `staged()`：舞台上画的请求——选中的只画它自己；否则是正在飞的、每个 Agent 还在路上或刚结束 12 秒内的
+    /// 最后一个，加上卡片讲的那个；最多 4 个 Agent。旧的在前。
+    public func staged(current: TraceRoute?, pinned: Bool, playing: Set<Int64>, now: Date) -> [TraceRoute] {
+        if pinned { return current.map { [$0] } ?? [] }
+        let hostNow = now.addingTimeInterval(skew)
+        let rs = routes.values.sorted { $0.id < $1.id }
+        var last: [String: Int64] = [:]
+        for r in rs { last[r.agent] = r.id }
+        var out = rs.filter { r in
+            if playing.contains(r.id) { return true }
+            guard last[r.agent] == r.id else { return false }
+            if !r.done { return true }
+            guard let end = r.endedAt else { return false }
+            return end > hostNow.addingTimeInterval(-Self.linger)
+        }
+        if let current, let c = routes[current.id], !out.contains(where: { $0.id == c.id }) { out.append(c) }
+        var agents: [String] = []
+        for r in out where !agents.contains(r.agent) { agents.append(r.agent) }
+        let kept = Set(agents.suffix(4))
+        return out.filter { kept.contains($0.agent) }.sorted { $0.id < $1.id }
+    }
 }
 
 // MARK: 舞台
@@ -530,5 +640,359 @@ public enum RouteStageBuilder {
         }
         if route.order.isEmpty { return route.done ? "没有谁处理这个请求" : "magpie 还没开始路由这个请求" }
         return "\(agent) 的 \(model) 等待中"
+    }
+}
+
+// MARK: 账号打码（app.js 的 hideAccounts，网页「路由」页的「账号打码」）
+
+/// 一段文字里要打码的部分换成同样形状的替身字母（网页 `.pii`：模糊、半透明），其余照旧。
+public struct MaskSegment: Hashable, Sendable {
+    public var text: String
+    public var masked: Bool
+
+    public init(_ text: String, masked: Bool) {
+        self.text = text
+        self.masked = masked
+    }
+}
+
+/// 移植自 app.js：邮箱地址一律打码；账号名（网关回答里的 user / account / alias / 账号的 who）整词打码，
+/// 但供应商、Agent 的名字和几个通用词不算账号。替身字母每次一样：模糊之后读着像个名字，却不是。
+public struct AccountMask: Sendable {
+    /// app.js NOT_ACCOUNTS。
+    public static let notAccounts: Set<String> = ["default", "own", "desktop", "account", "main", "local", "unknown", "none", "free", "pro", "api key", "signed in"]
+    /// app.js EMAIL：`[\w.+*•-]+@[\w*•-]+(?:\.[\w*•-]+)+`（JS 的 \w 只是 ASCII）。
+    static let emailPattern = "[A-Za-z0-9_.+*•-]+@[A-Za-z0-9_*•-]+(?:\\.[A-Za-z0-9_*•-]+)+"
+    private static let isEmail = try! NSRegularExpression(pattern: "^(?:" + emailPattern + ")$")
+
+    public let names: [String]
+    private let finder: NSRegularExpression?
+
+    /// - Parameters:
+    ///   - accounts: 见过的账号
+    ///   - notNames: 供应商 id / 名字、Agent id / 名字（不当账号）
+    public init(accounts: [String], notNames: [String]) {
+        var not = Self.notAccounts
+        for n in notNames where !n.isEmpty { not.insert(n.lowercased()) }
+        var seen = Set<String>()
+        var list: [String] = []
+        for raw in accounts {
+            let n = raw.trimmingCharacters(in: .whitespaces)
+            guard n.utf16.count >= 2, !seen.contains(n) else { continue }
+            seen.insert(n)
+            let ns = n as NSString
+            if Self.isEmail.firstMatch(in: n, range: NSRange(location: 0, length: ns.length)) != nil { continue }
+            // 「名字 (2)」是第二个同名的
+            let bare = n.lowercased().replacingOccurrences(of: " \\(\\d+\\)$", with: "", options: .regularExpression)
+            if not.contains(bare) { continue }
+            list.append(n)
+        }
+        // 长的在前：一个名字在另一个里面时整个藏起来
+        let order = Dictionary(uniqueKeysWithValues: list.enumerated().map { ($1, $0) })
+        names = list.sorted { a, b in
+            let x = a.utf16.count, y = b.utf16.count
+            return x != y ? x > y : order[a]! < order[b]!
+        }
+        let escaped = { (s: String) in NSRegularExpression.escapedPattern(for: s) }
+        let at = names.filter { $0.contains("@") }.map(escaped)
+        let plain = names.filter { !$0.contains("@") }.map(escaped)
+        finder = try? NSRegularExpression(pattern: (at + [Self.emailPattern] + plain).joined(separator: "|"))
+    }
+
+    private static func isWord(_ u: UInt16?) -> Bool {
+        guard let u else { return false }
+        return (u >= 48 && u <= 57) || (u >= 65 && u <= 90) || (u >= 97 && u <= 122) || u == 95
+    }
+
+    private static func isJoin(_ u: UInt16?) -> Bool { u == 45 || u == 46 }
+
+    /// app.js `joined`：名字挨着字母数字，或挨着连字符 / 点再接字母数字（lingting-react-ui 里的 lingting 不是账号）。
+    private static func joined(_ s: [UInt16], _ i: Int, _ step: Int) -> Bool {
+        let at = { (k: Int) -> UInt16? in k >= 0 && k < s.count ? s[k] : nil }
+        return isWord(at(i)) || (isJoin(at(i)) && isWord(at(i + step)))
+    }
+
+    /// app.js `dots`：每个不是 @ 和 . 的字符（按 UTF-16）换成 "aeiounrstlcmdh" 里的一个，h 从 7 起 h = h * 31 + 字符码。
+    public static func dots(_ s: String) -> String {
+        let letters = Array("aeiounrstlcmdh".utf16)
+        var h: UInt32 = 7
+        var out: [UInt16] = []
+        for u in s.utf16 {
+            if u == 64 || u == 46 { out.append(u); continue }
+            h = h &* 31 &+ UInt32(u)
+            out.append(letters[Int(h % 14)])
+        }
+        return String(decoding: out, as: UTF16.self)
+    }
+
+    /// 把一段文字切成打码与不打码的几段。
+    public func segments(_ text: String) -> [MaskSegment] {
+        guard let finder, text.utf16.count >= 2 else { return [MaskSegment(text, masked: false)] }
+        let ns = text as NSString
+        let units = Array(text.utf16)
+        var out: [MaskSegment] = []
+        var last = 0
+        for match in finder.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
+            let r = match.range
+            guard r.length > 0 else { continue }
+            let hit = ns.substring(with: r)
+            if !hit.contains("@") {
+                let first = units[r.location], end = r.location + r.length, lastUnit = units[end - 1]
+                if (Self.isWord(first) && Self.joined(units, r.location - 1, -1)) || (Self.isWord(lastUnit) && Self.joined(units, end, 1)) { continue }
+            }
+            if r.location > last { out.append(MaskSegment(ns.substring(with: NSRange(location: last, length: r.location - last)), masked: false)) }
+            out.append(MaskSegment(Self.dots(hit), masked: true))
+            last = r.location + r.length
+        }
+        if out.isEmpty { return [MaskSegment(text, masked: false)] }
+        if last < ns.length { out.append(MaskSegment(ns.substring(from: last), masked: false)) }
+        return out
+    }
+
+    /// 打码后的纯文字（替身字母代替账号）。
+    public func apply(_ text: String) -> String { segments(text).map(\.text).joined() }
+}
+
+// MARK: 飞行（client.js play() / fly() / home()）
+
+/// 一段飞行走哪条路（线由界面按卡片的位置画出）。
+public enum FlightLeg: Hashable, Sendable {
+    /// Agent → magpie：路由还没选出谁，到 magpie 那里等。
+    case toHub
+    /// 飞向座位：从 Agent 出发整条飞（Agent 的线 + 穿过 magpie + 座位的线），或从 magpie 里接着飞。
+    case out(seat: String, from: FlightOrigin)
+    /// 回答：座位的线倒着飞 + 穿过 magpie + Agent 的线倒着飞。
+    case home(seat: String)
+    /// 失败但还有下一个：沿座位的线飞回 magpie，由它交给下一个。
+    case bounce(seat: String)
+}
+
+/// 去程从哪里起飞。
+public enum FlightOrigin: Hashable, Sendable {
+    /// 从 Agent 起飞。
+    case agent
+    /// 在 magpie 那里等过（Agent 线的终点）。
+    case hubFromAgent
+    /// 从上一个座位弹回 magpie 后（那条座位线的起点，朝回飞的方向）。
+    case hubFromSeat(String)
+}
+
+/// 点的样子（routing.css .pkt / .back / .err）。
+public enum FlightDot: Hashable, Sendable {
+    /// 请求：实心，Agent 的颜色，带光晕。
+    case request
+    /// 回答：卡片色填充，Agent 色的圈，小一点（r = 4）。
+    case answer
+    /// 失败：Agent 色填充，红圈。
+    case error
+}
+
+public struct FlightSegment: Hashable, Sendable {
+    public enum Kind: Hashable, Sendable {
+        case fly(FlightLeg, duration: TimeInterval)
+        /// 点停在座位前等它回答；pulsing = 一闪一闪（.held，rtheld 1.2 秒）。
+        case holdSeat(String, pulsing: Bool)
+        /// 点和喜鹊停在 magpie 前，等路由选出谁。
+        case holdHub
+    }
+
+    public var kind: Kind
+    /// 开始的时刻（timeIntervalSinceReferenceDate）。
+    public var start: TimeInterval
+    /// 结束的时刻；nil = 还在等。
+    public var end: TimeInterval?
+    public var dot: FlightDot
+    /// 衔着点的喜鹊；nil = 点自己停着。
+    public var bird: Int?
+}
+
+/// 一只喜鹊：出现（rtcome 0.3 秒），松开点后向上飞走（.away 0.45 秒）。
+public struct FlightBird: Hashable, Sendable {
+    public var id: Int
+    public var come: TimeInterval
+    /// 松开点的时刻；nil = 还衔着。
+    public var away: TimeInterval?
+}
+
+/// 一个请求的整段演出，按网关的记录一步步排出来（与网页 play() 的顺序和时长相同）：
+/// 一只喜鹊把请求从 Agent 衔过 magpie 送到路由排的第一个（1.4 秒；在 magpie 等过就 0.9 秒），
+/// 放下点让它在那里等回答；另一只把回答衔回 Agent（1.4 秒）。失败时另一只把红圈衔回 magpie（0.62 秒），
+/// 第一只再把请求送到下一个；那是最后的回答（没有休息、没有再试）就把错误衔回 Agent（1.35 秒）。
+/// 路由还没选出谁时，先飞到 magpie 等着（0.62 秒）。
+public struct RoutePlay: Hashable, Sendable {
+    public static let toHubTime: TimeInterval = 0.62
+    public static let outTime: TimeInterval = 1.4
+    public static let onTime: TimeInterval = 0.9
+    public static let homeTime: TimeInterval = 1.4
+    public static let failHomeTime: TimeInterval = 1.35
+    public static let bounceTime: TimeInterval = 0.62
+    /// 喜鹊松开点后飞走用的时间。
+    public static let awayTime: TimeInterval = 0.45
+
+    private enum Step: Hashable, Sendable {
+        case begin
+        case next
+        /// 在座位上等第 i 次尝试结束。
+        case held(Int)
+        /// 回答了，等请求整个结束（它的 token 那时才算好）。
+        case answered(Int)
+        case ended
+    }
+
+    public let route: Int64
+    public let agent: String
+    public private(set) var segments: [FlightSegment] = []
+    public private(set) var birds: [FlightBird] = []
+    private var step = Step.begin
+    private var index = 0
+    private var origin = FlightOrigin.agent
+    private var carrier: Int?
+    private var cursor: TimeInterval
+
+    public init(route: TraceRoute, now: TimeInterval) {
+        self.route = route.id
+        agent = route.agent
+        cursor = now
+    }
+
+    /// 演完了（最后一段已经排好结束时间）。
+    public var ended: Bool { step == .ended }
+
+    /// 最后一只喜鹊也飞走的时刻；还没演完时为 nil。
+    public var over: TimeInterval? {
+        guard ended else { return nil }
+        let last = segments.last?.end ?? cursor
+        return max(last, birds.compactMap(\.away).max() ?? last) + Self.awayTime
+    }
+
+    private mutating func bird(at t: TimeInterval) -> Int {
+        let id = birds.count
+        birds.append(FlightBird(id: id, come: t, away: nil))
+        return id
+    }
+
+    private mutating func release(_ id: Int?, at t: TimeInterval) {
+        guard let id, birds.indices.contains(id), birds[id].away == nil else { return }
+        birds[id].away = t
+    }
+
+    private mutating func fly(_ leg: FlightLeg, _ duration: TimeInterval, dot: FlightDot, bird: Int?, now: TimeInterval) {
+        let start = max(cursor, now)
+        segments.append(FlightSegment(kind: .fly(leg, duration: duration), start: start, end: start + duration, dot: dot, bird: bird))
+        cursor = start + duration
+    }
+
+    private mutating func hold(_ kind: FlightSegment.Kind, dot: FlightDot, bird: Int?, now: TimeInterval) {
+        let start = max(cursor, now)
+        segments.append(FlightSegment(kind: kind, start: start, end: nil, dot: dot, bird: bird))
+        cursor = start
+    }
+
+    /// 合上正在等的那一段。
+    private mutating func close(now: TimeInterval) {
+        guard let last = segments.indices.last, segments[last].end == nil else { return }
+        let end = max(segments[last].start, now)
+        segments[last].end = end
+        cursor = end
+    }
+
+    /// 按网关现在的记录把演出往下排。`route` 为 nil：网关已经不再保留它，演出就此结束。
+    /// `seated` 判断一个座位在舞台上有没有行（没有就跳过那次尝试，网页 `if (!row) { i++; continue; }`）。
+    public mutating func advance(_ route: TraceRoute?, now: TimeInterval, seated: (String) -> Bool = { _ in true }) {
+        guard let route else {
+            close(now: now)
+            release(carrier, at: max(cursor, now))
+            carrier = nil
+            step = .ended
+            return
+        }
+        while true {
+            switch step {
+            case .begin:
+                carrier = bird(at: max(cursor, now))
+                if route.tries.isEmpty {
+                    fly(.toHub, Self.toHubTime, dot: .request, bird: carrier, now: now)
+                    hold(.holdHub, dot: .request, bird: carrier, now: now)
+                    origin = .hubFromAgent
+                }
+                step = .next
+            case .next:
+                if index >= route.tries.count {
+                    if route.done {
+                        close(now: now)
+                        release(carrier, at: cursor)
+                        carrier = nil
+                        step = .ended
+                    }
+                    return
+                }
+                let attempt = route.tries[index]
+                let seat = route.seatKey(of: attempt)
+                guard route.seat(of: attempt) != nil, seated(seat) else { index += 1; continue }
+                close(now: now) // 在 magpie 等的那一段
+                if carrier == nil { carrier = bird(at: max(cursor, now)) }
+                fly(.out(seat: seat, from: origin), origin == .agent ? Self.outTime : Self.onTime, dot: .request, bird: carrier, now: now)
+                // 放下点：它在那里等回答
+                release(carrier, at: cursor)
+                carrier = nil
+                hold(.holdSeat(seat, pulsing: true), dot: .request, bird: nil, now: now)
+                step = .held(index)
+            case .held(let i):
+                let attempt = route.tries[i]
+                guard attempt.done else { return }
+                close(now: now)
+                let seat = route.seatKey(of: attempt)
+                if attempt.ok {
+                    hold(.holdSeat(seat, pulsing: false), dot: .request, bird: nil, now: now)
+                    step = .answered(i)
+                    continue
+                }
+                let back = bird(at: cursor)
+                if attempt.rest == nil && !attempt.credits && (attempt.again == 0 || attempt.gone) {
+                    // 那就是回答：Agent 拿到错误
+                    fly(.home(seat: seat), Self.failHomeTime, dot: .error, bird: back, now: now)
+                    release(back, at: cursor)
+                    step = .ended
+                    return
+                }
+                fly(.bounce(seat: seat), Self.bounceTime, dot: .error, bird: back, now: now)
+                release(back, at: cursor)
+                origin = .hubFromSeat(seat)
+                index = i + 1
+                step = .next
+            case .answered(let i):
+                guard route.done else { return }
+                close(now: now)
+                let seat = route.seatKey(of: route.tries[i])
+                let back = bird(at: cursor)
+                fly(.home(seat: seat), Self.homeTime, dot: .answer, bird: back, now: now)
+                release(back, at: cursor)
+                step = .ended
+                return
+            case .ended:
+                return
+            }
+        }
+    }
+
+    /// t 时刻点在哪一段（演完、或还没开始时为 nil）。
+    public func segment(at t: TimeInterval) -> FlightSegment? {
+        guard let first = segments.first, t >= first.start else { return nil }
+        for segment in segments.reversed() where segment.start <= t {
+            if let end = segment.end, t > end { return nil }
+            return segment
+        }
+        return nil
+    }
+
+    /// t 时刻喜鹊 b 所在的那一段与它在这段里的时刻（松开点之后停在松开的地方）。
+    public func place(of bird: FlightBird, at t: TimeInterval) -> (segment: FlightSegment, time: TimeInterval)? {
+        let when = min(t, bird.away ?? t)
+        let carrying = segments.filter { $0.bird == bird.id }
+        guard !carrying.isEmpty else { return nil }
+        for segment in carrying.reversed() where segment.start <= when {
+            return (segment, min(when, segment.end ?? when))
+        }
+        return carrying.first.map { ($0, $0.start) }
     }
 }

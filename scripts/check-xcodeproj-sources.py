@@ -4,9 +4,12 @@
 project.yml 是 XcodeGen 定义，但仓库同时提交生成后的 .xcodeproj（CI 不跑 XcodeGen）；新增文件时
 容易漏掉 PBXFileReference / PBXBuildFile。这里只按文件名比对，不要求安装 XcodeGen。
 修复：`python3 scripts/sync-xcodeproj.py`（或 `xcodegen generate`）后提交。
+另外核对资源目录：Core 里登记的官方标志（OfficialIconNames.swift）、导航图标、App 图标的图片文件都在
+（由 `scripts/gen-official-icons.py` 生成）。
 """
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -15,6 +18,43 @@ ROOT = Path(__file__).resolve().parents[1]
 PBXPROJ = ROOT / "MagpieRemote.xcodeproj" / "project.pbxproj"
 SOURCE_DIRS = ("MagpieRemoteApp", "MagpieRemoteUITests")
 RESOURCES = ("CHANGELOG.md", "Assets.xcassets", "PrivacyInfo.xcprivacy")
+ASSETS = ROOT / "MagpieRemoteApp" / "Assets.xcassets"
+ICON_SWIFT = ROOT / "MagpieRemoteCore" / "Sources" / "MagpieRemoteCore" / "OfficialIcon.swift"
+ICON_NAMES = ROOT / "MagpieRemoteCore" / "Sources" / "MagpieRemoteCore" / "OfficialIconNames.swift"
+
+
+def imageset_problems(folder: Path, name: str) -> list[str]:
+    """资源目录里的一个图片集：Contents.json 里写的文件都要在。"""
+    d = folder / f"{name}.imageset"
+    contents = d / "Contents.json"
+    if not contents.is_file():
+        return [f"资源目录缺少图片：{d.relative_to(ROOT)}"]
+    images = json.loads(contents.read_text(encoding="utf-8")).get("images", [])
+    missing = [i["filename"] for i in images if "filename" in i and not (d / i["filename"]).is_file()]
+    if not images or missing:
+        return [f"图片集缺文件：{d.relative_to(ROOT)} {missing}"]
+    return []
+
+
+def asset_problems() -> list[str]:
+    """Core 里写到的官方标志 / 导航图标 / App 图标，资源目录里都要有。"""
+    problems: list[str] = []
+    bundled = re.search(r"static let bundled: Set<String> = \[(.*?)\]", ICON_NAMES.read_text(encoding="utf-8"), re.S)
+    names = re.findall(r'"([^"]+)"', bundled.group(1)) if bundled else []
+    if not names:
+        problems.append("OfficialIconNames.swift 里没有 bundled 列表")
+    for name in names:
+        problems += imageset_problems(ASSETS / "Brand", name)
+    on_disk = {p.name[: -len(".imageset")] for p in (ASSETS / "Brand").glob("*.imageset")}
+    for extra in sorted(on_disk - set(names)):
+        problems.append(f"资源目录有未登记的标志：Brand/{extra}（重新运行 scripts/gen-official-icons.py）")
+    for glyph in re.findall(r'"Nav/([^"]+)"', ICON_SWIFT.read_text(encoding="utf-8")):
+        problems += imageset_problems(ASSETS / "Nav", glyph)
+    appicon = ASSETS / "AppIcon.appiconset"
+    for image in json.loads((appicon / "Contents.json").read_text(encoding="utf-8"))["images"]:
+        if not (appicon / image["filename"]).is_file():
+            problems.append(f"App 图标缺文件：{image['filename']}")
+    return problems
 
 
 def main() -> int:
@@ -41,12 +81,16 @@ def main() -> int:
         if f"/* {name} in Resources */ = {{isa = PBXBuildFile;" not in text:
             problems.append(f"资源未加入 App：{name}")
 
+    problems += asset_problems()
+
     if problems:
         print("MagpieRemote.xcodeproj 与源文件不同步（执行 `python3 scripts/sync-xcodeproj.py` 或 `xcodegen generate`）：", file=sys.stderr)
         for line in problems:
             print(f"  - {line}", file=sys.stderr)
         return 1
-    print(f"MagpieRemote.xcodeproj 已收录全部 {len(on_disk)} 个 Swift 源文件与 {len(RESOURCES)} 项资源。")
+    brand = len(list((ASSETS / "Brand").glob("*.imageset")))
+    print(f"MagpieRemote.xcodeproj 已收录全部 {len(on_disk)} 个 Swift 源文件与 {len(RESOURCES)} 项资源"
+          f"（资源目录含 {brand} 个官方标志）。")
     return 0
 
 

@@ -1,0 +1,101 @@
+{
+ "providers": [
+  {
+   "id": "relay",
+   "name": "Relay",
+   "icon": "",
+   "preset": "",
+   "host": "100.64.0.1:8080",
+   "chat": "http://100.64.0.1:8080/v1",
+   "responses": "http://100.64.0.1:8080/v1",
+   "anthropic": "http://100.64.0.1:8080",
+   "gemini": "",
+   "ready": true,
+   "off": false,
+   "key": {
+    "set": true,
+    "masked": "sk-r…0001",
+    "optional": false
+   },
+   "chosen": [],
+   "fallback": [],
+   "routing": "",
+   "affinity": "",
+   "models": [
+    {
+     "id": "gpt-4.1",
+     "name": "GPT 4.1",
+     "on": true,
+     "images": false
+    }
+   ],
+   "exposed": 1,
+   "noModels": false,
+   "bestInFamily": false,
+   "agents": [],
+   "keyList": [
+    {
+     "id": "fdbfd1d51e",
+     "name": "主力",
+     "masked": "sk-r…0001",
+     "active": true,
+     "on": true
+    },
+    {
+     "id": "1864038f31",
+     "name": "备用",
+     "masked": "sk-r…0002",
+     "active": false,
+     "on": true,
+     "protocol": "openai",
+     "rest": {
+      "why": "quota",
+      "status": 429,
+      "until": "2099-01-01T08:00:00.123456789+08:00",
+      "key": "relay#1864038f31",
+      "probed": true
+     }
+    },
+    {
+     "id": "a74efa6261",
+     "masked": "sk-r…0003",
+     "active": false,
+     "on": false
+    }
+   ]
+  },
+  {
+   "id": "solo",
+   "name": "Solo",
+   "icon": "",
+   "preset": "",
+   "host": "100.64.0.1:8081",
+   "chat": "http://100.64.0.1:8081/v1",
+   "responses": "",
+   "anthropic": "",
+   "ready": false,
+   "off": false,
+   "key": {
+    "set": false,
+    "masked": "",
+    "optional": false
+   },
+   "chosen": [],
+   "fallback": [],
+   "models": [],
+   "exposed": 0,
+   "noModels": false,
+   "bestInFamily": false,
+   "agents": [],
+   "keyList": []
+  }
+ ],
+ "presets": [
+  {
+   "id": "deepseek",
+   "name": "DeepSeek"
+  }
+ ],
+ "added": 2,
+ "had": 1
+}

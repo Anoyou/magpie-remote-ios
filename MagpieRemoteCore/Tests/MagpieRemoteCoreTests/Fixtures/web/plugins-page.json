@@ -1,0 +1,4 @@
+{
+ "readme": "# Example Cloud\n\n[![npm](https://img.shields.io/npm/v/x.svg)](https://npmjs.com/x) Sign in to **Example Cloud** with `magpie`.\n<!-- hidden -->\n\n## 💡 Quick start\n\n1. Install it\n2. Sign in — see [docs](https://example.com/docs) or [the next part](#usage)\n\n- [x] done\n- [ ] todo\n  continued\n\n> [!NOTE]\n> Keep your <b>key</b> safe.\n\n```sh\nmagpie plugin add x\n```\n\n| Option | Default |\n|---|---|\n| region | `cn` |\n\n---\n\n<img src=\"shot.png\"> Read <a href=\"https://example.com\">the site</a> or [local](./LOCAL.md).\n<script>alert(1)</script>\n",
+ "updated": "2026-10-28T09:30:00.123456789+08:00"
+}

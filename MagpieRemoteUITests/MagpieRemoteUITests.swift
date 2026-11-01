@@ -27,24 +27,30 @@ final class MagpieRemoteUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
     }
 
-    /// 默认底栏：Agent、会话、供应商、路由、更多；额度 / 用量 / 对话改从「更多」进入。
+    /// 默认底栏：主页、会话、路由、用量、更多；主页顶部分页器里是 Agent、供应商、额度；对话从「更多」进入。
     func testDefaultDockTabs() {
         let app = launch()
-        for title in ["Agent", "会话", "供应商", "路由", "更多"] {
+        for title in ["主页", "会话", "路由", "用量", "更多"] {
             XCTAssertTrue(app.tabBars.buttons[title].exists, "缺少标签：\(title)")
         }
         XCTAssertFalse(app.tabBars.buttons["管理"].exists, "旧的「管理」标签应当已经去掉")
-        XCTAssertTrue(app.navigationBars["Agent"].waitForExistence(timeout: 10), "首屏应当是底栏第一个页面「Agent」")
+        XCTAssertTrue(app.navigationBars["Agent"].waitForExistence(timeout: 10), "首屏应当是主页的「Agent」分页")
+        for title in ["Agent", "供应商", "额度"] {
+            XCTAssertTrue(app.homeSegments.buttons[title].exists, "主页分页器缺少「\(title)」")
+        }
+        XCTAssertFalse(app.tabBars.buttons["Agent"].exists, "Agent 已并入主页，不应再单独在底栏")
         app.openMore()
-        for id in ["more.quota", "more.usage", "more.chat", "manage.keys"] {
+        for id in ["more.chat", "manage.keys"] {
             XCTAssertTrue(app.descendants(matching: .any).matching(identifier: id).firstMatch.waitForExistence(timeout: 10), "「更多」里缺少 \(id)")
         }
-        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "manage.providers").firstMatch.exists, "在底栏里的页面不应再出现在「更多」里")
+        for id in ["more.home", "more.usage", "manage.groups"] {
+            XCTAssertFalse(app.descendants(matching: .any).matching(identifier: id).firstMatch.exists, "在底栏里的页面不应再出现在「更多」里：\(id)")
+        }
     }
 
     func testFixtureHostConnectsAndShowsQuota() {
         let app = launch()
-        app.openFromMore("more.quota", title: "额度")
+        app.openHome("额度")
         XCTAssertTrue(element(containing: "工作 Claude", in: app).waitForExistence(timeout: 15))
     }
 
@@ -76,7 +82,7 @@ final class MagpieRemoteUITests: XCTestCase {
 
     func testOfflineHostShowsChineseError() {
         let app = launch(["--fixture-offline"])
-        app.openFromMore("more.quota", title: "额度")
+        app.openHome("额度")
         XCTAssertTrue(element(containing: "连不上主机", in: app).waitForExistence(timeout: 15), "没有出现中文错误标题「连不上主机」")
         XCTAssertTrue(element(containing: "主机都没有回应", in: app).waitForExistence(timeout: 5), "没有出现超时的中文说明")
         XCTAssertTrue(element(id: "state.retry", in: app).waitForExistence(timeout: 5), "错误页里没有「重试」按钮（state.retry）")
@@ -88,11 +94,11 @@ final class MagpieRemoteUITests: XCTestCase {
         app.openFromMore("manage.about", title: "关于")
         app.buttons["about.changelog"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["更新日志"].waitForExistence(timeout: 10))
-        // 「未发布」条目变多后 0.1.0 段落可能在屏幕下方（List 懒加载），需要往下滚。
+        // 0.1.0 是最早的段落，在最下面（0.3.0、0.4.0 的条目很长，List 懒加载），需要往下滚很多屏。
         let release = element(containing: "0.1.0", in: app)
         var found = release.waitForExistence(timeout: 5)
-        for _ in 0..<6 where !found {
-            app.swipeUp()
+        for _ in 0..<30 where !found {
+            app.swipeUp(velocity: .fast)
             found = release.waitForExistence(timeout: 1)
         }
         XCTAssertTrue(found, "更新日志里没有 0.1.0")
@@ -117,12 +123,15 @@ final class MagpieRemoteUITests: XCTestCase {
     }
 
     private func openUsage(_ app: XCUIApplication) {
-        app.openFromMore("more.usage", title: "用量")
+        app.openDockTab("用量")
         XCTAssertTrue(element(id: "usage.totalCost", in: app).waitForExistence(timeout: 15), "用量页没有出现总花费（usage.totalCost）")
     }
 
     private func openRequests(_ app: XCUIApplication) {
+        // 概览里合计、图表变多了，「请求记录」入口在下面（列表懒加载）：滑到它出现
         let open = element(id: "usage.requests.open", in: app)
+        _ = open.waitForExistence(timeout: 5)
+        app.swipeUpUntilHittable(open)
         XCTAssertTrue(open.waitForExistence(timeout: 10), "没有「请求记录」入口（usage.requests.open）")
         open.tap()
         XCTAssertTrue(app.navigationBars["请求记录"].waitForExistence(timeout: 10), "没有打开「请求记录」")
@@ -154,6 +163,8 @@ final class MagpieRemoteUITests: XCTestCase {
         element(id: "usage.filter.failed", in: app).tap()
         XCTAssertTrue(waitUntil(10) { total.exists && total.label != before }, "只看失败后总条数没有变化：\(before)")
         let first = element(id: "usage.request.0", in: app)
+        _ = first.waitForExistence(timeout: 3)
+        app.swipeUpUntilHittable(first)
         XCTAssertTrue(first.waitForExistence(timeout: 10), "筛选后没有请求")
         XCTAssertTrue(first.label.contains("失败"), "只看失败后第一条不是失败的请求：\(first.label)")
     }
@@ -163,6 +174,8 @@ final class MagpieRemoteUITests: XCTestCase {
         openUsage(app)
         openRequests(app)
         let first = element(id: "usage.request.0", in: app)
+        _ = first.waitForExistence(timeout: 3)
+        app.swipeUpUntilHittable(first)
         XCTAssertTrue(first.waitForExistence(timeout: 10), "请求记录是空的")
         first.tap()
         XCTAssertTrue(app.navigationBars["请求详情"].waitForExistence(timeout: 10), "没有打开「请求详情」")
@@ -174,11 +187,14 @@ final class MagpieRemoteUITests: XCTestCase {
 
     func testUsageHeldKeyShowsOwnRequestsOnly() {
         let app = launch(["--fixture-held-key"])
-        app.openFromMore("more.usage", title: "用量")
+        app.openDockTab("用量")
         XCTAssertTrue(element(id: "usage.heldNote", in: app).waitForExistence(timeout: 15), "受限密钥没有显示说明")
         XCTAssertFalse(element(id: "usage.totalCost", in: app).exists, "受限密钥不应显示总花费")
         openRequests(app)
-        XCTAssertTrue(element(id: "usage.request.0", in: app).waitForExistence(timeout: 10), "受限密钥看不到自己的请求记录")
+        let first = element(id: "usage.request.0", in: app)
+        _ = first.waitForExistence(timeout: 3)
+        app.swipeUpUntilHittable(first)
+        XCTAssertTrue(first.waitForExistence(timeout: 10), "受限密钥看不到自己的请求记录")
     }
 
     // MARK: 对话（fixture：假模型目录 + 假的流式回答）
@@ -231,6 +247,11 @@ final class MagpieRemoteUITests: XCTestCase {
 }
 
 private extension XCUIApplication {
+    /// 向上滑直到元素出现并可点（合计、图表下面的列表行，懒加载）。
+    func swipeUpUntilHittable(_ element: XCUIElement, max: Int = 10) {
+        for _ in 0..<max where !(element.exists && element.isHittable) { swipeUp() }
+    }
+
     /// 向上滑几次直到找到元素（列表里靠下的内容）。
     func swipeUpAndFind(id: String) -> Bool {
         for _ in 0..<4 {

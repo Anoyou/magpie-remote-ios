@@ -131,7 +131,10 @@ struct AgentSessionsView: View {
                 }
             } header: {
                 if let agent = store.currentAgent {
-                    Text("\(agent.name) · \(sessions.count) 个会话")
+                    HStack(spacing: 6) {
+                        BrandIcon(agent.icon, size: 14)
+                        Text("\(agent.name) · \(sessions.count) 个会话")
+                    }
                 }
             } footer: {
                 footer

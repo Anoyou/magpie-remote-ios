@@ -1,0 +1,47 @@
+{
+ "repos": [
+  {
+   "spec": "github:example-owner/magpie-dash",
+   "repo": "example-owner/magpie-dash",
+   "url": "https://github.com/example-owner/magpie-dash",
+   "owner": "example-owner",
+   "description": "A dashboard page for magpie",
+   "stars": 1520,
+   "license": "NOASSERTION",
+   "pkgLicense": "MIT",
+   "pushed": "2026-10-30T08:12:45Z",
+   "package": "magpie-dash",
+   "version": "0.5.0",
+   "kind": "page"
+  },
+  {
+   "spec": "example-relay-auth",
+   "repo": "someone-else/relay-auth",
+   "url": "https://github.com/someone-else/relay-auth",
+   "owner": "someone-else",
+   "description": "Sign in to Example Relay",
+   "stars": 42,
+   "license": "Apache-2.0",
+   "pushed": "2026-09-01T00:00:00Z",
+   "package": "example-relay-auth",
+   "version": "1.0.2"
+  },
+  {
+   "spec": "github:someone-else/listed-twice",
+   "repo": "someone-else/listed-twice",
+   "url": "https://github.com/someone-else/listed-twice",
+   "owner": "someone-else",
+   "stars": 3,
+   "pushed": "2026-09-01T00:00:00Z",
+   "package": "@magpie-community/example-auth",
+   "kind": "middleware"
+  },
+  {
+   "repo": "no/spec"
+  }
+ ],
+ "topic": "magpie-plugin",
+ "error": "GET https://api.github.com/search/repositories: context deadline exceeded",
+ "why": "slow",
+ "missing": 2
+}

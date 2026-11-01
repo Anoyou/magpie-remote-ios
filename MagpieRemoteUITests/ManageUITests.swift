@@ -1,6 +1,6 @@
 import XCTest
 
-/// 供应商（默认在底栏）与网关密钥（在「更多」里）：fixture 模式下的示例数据（`FixtureManageService`）。
+/// 供应商（在「主页」分页器里）与网关密钥（在「更多」里）：fixture 模式下的示例数据（`FixtureManageService`）。
 @MainActor
 final class ManageUITests: XCTestCase {
     private var launchTimeout: TimeInterval {
@@ -35,7 +35,7 @@ final class ManageUITests: XCTestCase {
 
     func testProvidersListShowsFixtureProviders() {
         let app = launchManage()
-        app.openDockTab("供应商")
+        app.openHome("供应商")
         XCTAssertTrue(element(containing: "示例中转", in: app).waitForExistence(timeout: 10))
         XCTAssertTrue(element(containing: "示例 DeepSeek", in: app).exists)
         XCTAssertTrue(element(containing: "示例 Codex 订阅", in: app).exists)
@@ -43,13 +43,14 @@ final class ManageUITests: XCTestCase {
 
     func testDeleteProviderAsksForConfirmation() {
         let app = launchManage()
-        app.openDockTab("供应商")
+        app.openHome("供应商")
         let row = element(id: "provider.row.relay-example", in: app)
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
+        // 详情页多了 Base URL 与 API Key 区，「删除」在列表最下面，懒加载：先滑下去再找
         let delete = element(id: "provider.delete", in: app)
-        XCTAssertTrue(delete.waitForExistence(timeout: 10))
         scrollTo(delete, in: app)
+        XCTAssertTrue(delete.waitForExistence(timeout: 10), "详情页最下面没有「删除这个供应商」")
         delete.tap()
         let confirm = app.buttons["删除供应商"].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 5), "删除前应当先弹出确认")

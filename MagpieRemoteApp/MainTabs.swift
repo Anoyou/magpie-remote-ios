@@ -1,10 +1,10 @@
 import SwiftUI
 import MagpieRemoteCore
 
-/// 底栏：前 4 个是「自定义底栏」里选的页面（默认 Agent、会话、供应商、路由），第 5 个固定是「更多」。
+/// 底栏：前 4 个是「自定义底栏」里选的页面（默认主页、会话、路由、用量），第 5 个固定是「更多」。
 struct MainTabs: View {
     @Environment(AppModel.self) private var model
-    /// 需要 Web 密钥的页面（供应商、路由、Agent…）共用一份数据，不管它们在底栏还是在「更多」里。
+    /// 需要 Web 密钥的页面（主页里的 Agent / 供应商、路由…）共用一份数据，不管它们在底栏还是在「更多」里。
     @State private var manage = ManageStore()
 
     private var configurationID: String {
@@ -18,8 +18,10 @@ struct MainTabs: View {
         @Bindable var model = model
         TabView(selection: $model.selectedTab) {
             ForEach(model.dock.layout.pages) { page in
-                Tab(page.title, systemImage: page.symbol, value: AppTab.page(page)) {
+                Tab(value: AppTab.page(page)) {
                     TabRoot { AppPageView(page: page) }
+                } label: {
+                    Label(page.title, page: page)
                 }
                 .accessibilityIdentifier("tab.\(page.rawValue)")
             }

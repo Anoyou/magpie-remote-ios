@@ -21,6 +21,8 @@ ALLOWED_IP = re.compile(r"^(127\.0\.0\.1|0\.0\.0\.0|100\.64\.0\.\d{1,3}|192\.0\.
 IPV4 = re.compile(r"(?<![\d.])((?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3})(?![\d.])")
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)")
 ALLOWED_EMAIL_DOMAIN = re.compile(r"(^|\.)(example\.com|example\.org|example)$", re.I)
+# SVG 图形的坐标数据（路径、点列、变换）里常有四段小数相连、像 IP 的数字串，不是地址：查 IP 前先去掉。
+SVG_GEOMETRY = re.compile(r'\s(?:d|points|transform|gradientTransform|patternTransform|viewBox)="[^"]*"')
 TAILNET = re.compile(r"\b[\w-]+\.[\w-]+\.ts\.net\b|\b[\w-]+\.ts\.net\b", re.I)
 SECRETS = [
     re.compile(r"\bsk-[A-Za-z0-9_-]{12,}"),
@@ -50,6 +52,8 @@ def main() -> int:
         except UnicodeDecodeError:
             continue
         rel = path.relative_to(ROOT)
+        if path.suffix.lower() == ".svg":
+            text = SVG_GEOMETRY.sub("", text)
         for number, line in enumerate(text.splitlines(), 1):
             for match in IPV4.finditer(line):
                 if not ALLOWED_IP.match(match.group(1)):

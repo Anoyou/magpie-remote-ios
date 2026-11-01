@@ -13,8 +13,8 @@ final class QuotaUITests: XCTestCase {
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"] + extra
         app.launch()
         XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "首屏没有出现底栏「更多」")
-        // 默认底栏里没有「额度」，从「更多」进入。
-        app.openFromMore("more.quota", title: "额度")
+        // 额度在「主页」分页器里。
+        app.openHome("额度")
         return app
     }
 
@@ -79,11 +79,11 @@ final class QuotaUITests: XCTestCase {
         XCTAssertTrue(work.waitForExistence(timeout: 15))
         work.tap()
         XCTAssertTrue(cards(app).firstMatch.waitForExistence(timeout: 5))
-        // 额度在「更多」里：切到底栏「路由」，再回「更多」（停在额度页，或回到列表后重新进入）。
+        // 切到底栏「路由」，再回「主页」：分页器应当还停在额度（不在就重新切过去）。
         app.tabBars.buttons["路由"].tap()
-        app.tabBars.buttons["更多"].tap()
+        app.tabBars.buttons["主页"].tap()
         if !header("工作 Claude", in: app).waitForExistence(timeout: 5) {
-            app.openFromMore("more.quota", title: "额度")
+            app.openHome("额度")
         }
         XCTAssertTrue(header("工作 Claude", in: app).waitForExistence(timeout: 10))
         XCTAssertTrue(cards(app).firstMatch.waitForExistence(timeout: 5), "切换标签后展开状态没有保留")

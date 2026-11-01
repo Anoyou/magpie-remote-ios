@@ -208,6 +208,19 @@ public struct UsageTotals: Hashable, Sendable, Decodable {
     public var ttftMs = 0
     public var decodeMs = 0
     public var decodeOut = 0
+    /// 计了速度的回复数（`decode_n`）。
+    public var decodeN = 0
+    /// 只能从会话文件估出「至少多快」的回复：词元、毫秒与条数（`floor_out` / `floor_ms` / `floor_n`）。
+    public var floorOut = 0
+    public var floorMs = 0
+    public var floorN = 0
+    /// magpie 因为回复陷入死循环而截断的请求数。
+    public var loops = 0
+    /// 缓存写入里保留一小时的部分。
+    public var cacheWrite1h = 0
+    /// 供应商不报告缓存的词元与请求数（命中率不算它们）。
+    public var cacheUnknown = 0
+    public var cacheUnknownCalls = 0
 
     public init() {}
 
@@ -218,7 +231,20 @@ public struct UsageTotals: Hashable, Sendable, Decodable {
         cacheRead = c.int("cache_read"); cacheWrite = c.int("cache_write"); reasoning = c.int("reasoning")
         cost = c.double("cost"); unpriced = c.int("unpriced")
         timed = c.int("timed"); ttftMs = c.int("ttft_ms"); decodeMs = c.int("decode_ms"); decodeOut = c.int("decode_out")
+        decodeN = c.int("decode_n"); floorOut = c.int("floor_out"); floorMs = c.int("floor_ms"); floorN = c.int("floor_n")
+        loops = c.int("loops"); cacheWrite1h = c.int("cache_write_1h")
+        cacheUnknown = c.int("cache_unknown"); cacheUnknownCalls = c.int("cache_unknown_calls")
     }
+
+    /// 输入 + 输出（不含缓存），magpie「概览」默认的词元口径。
+    public var inOut: Int { input + output }
+    /// 缓存命中率：提示里从缓存读的比例；不报告缓存的供应商不计入。没有可算的提示时为 nil（magpie `cacheHitOf`）。
+    public var cacheHitRate: Double? {
+        let prompt = input + cacheRead + cacheWrite - cacheUnknown
+        return prompt > 0 ? Double(cacheRead) / Double(prompt) : nil
+    }
+    /// 估出的「至少多快」（词元 / 秒）。
+    public var floorSpeed: Double? { floorMs > 0 ? Double(floorOut) / (Double(floorMs) / 1000) : nil }
 
     /// 输入 + 输出 + 缓存读写（与 magpie 页面的「词元」口径一致）。
     public var tokens: Int { input + output + cacheRead + cacheWrite }
@@ -233,6 +259,8 @@ public struct UsageTotals: Hashable, Sendable, Decodable {
         t.input += b.input; t.output += b.output; t.cacheRead += b.cacheRead; t.cacheWrite += b.cacheWrite
         t.reasoning += b.reasoning; t.cost += b.cost; t.unpriced += b.unpriced
         t.timed += b.timed; t.ttftMs += b.ttftMs; t.decodeMs += b.decodeMs; t.decodeOut += b.decodeOut
+        t.decodeN += b.decodeN; t.floorOut += b.floorOut; t.floorMs += b.floorMs; t.floorN += b.floorN
+        t.loops += b.loops; t.cacheWrite1h += b.cacheWrite1h; t.cacheUnknown += b.cacheUnknown; t.cacheUnknownCalls += b.cacheUnknownCalls
         return t
     }
 }
@@ -319,6 +347,8 @@ public struct UsageBreakdownItem: Hashable, Sendable, Identifiable {
     public var totals: UsageTotals
     /// 占比 0...1：有花费时按花费，否则按请求数。
     public var share: Double
+    /// 词元占比 0...1（magpie「概览」列表的条形按词元算）。
+    public var tokenShare: Double = 0
 }
 
 /// `GET /v1/magpie/usage` 的回复。
@@ -396,6 +426,10 @@ public struct UsageSummary: Hashable, Sendable, Decodable {
             if totalCost > 0 { items[i].share = items[i].totals.cost / totalCost }
             else if totalCalls > 0 { items[i].share = Double(items[i].totals.calls) / Double(totalCalls) }
         }
+        let totalTokens = items.reduce(0) { $0 + $1.totals.inOut }
+        if totalTokens > 0 {
+            for i in items.indices { items[i].tokenShare = Double(items[i].totals.inOut) / Double(totalTokens) }
+        }
         return items.sorted {
             if $0.totals.cost != $1.totals.cost { return $0.totals.cost > $1.totals.cost }
             if $0.totals.calls != $1.totals.calls { return $0.totals.calls > $1.totals.calls }
@@ -448,6 +482,41 @@ public struct UsageRequestRow: Hashable, Sendable, Identifiable, Decodable {
     public var access: String?
     public var rejected = false
     public var responseId: String?
+    /// 供应商给这次请求的 id。
+    public var requestID: String?
+    /// 不是对话本身的调用（子 Agent、起标题、权限检查…）的用途。
+    public var kind: String?
+    /// 发给供应商前在 magpie 里花的时间，以及其中脱敏、先失败的尝试、排队等名额的部分（毫秒）。
+    public var sentMs: Int?
+    public var ownMs: Int?
+    public var maskingMs: Int?
+    public var retriedMs: Int?
+    public var queuedMs: Int?
+    public var firstTextMs: Int?
+    public var firstReasoningMs: Int?
+    public var flowMs: Int?
+    public var reasoningHidden = false
+    /// 聚合商（OpenRouter 等）说在它后面实际回答的供应商。
+    public var upstream: String?
+    public var sessionProvider: String?
+    public var sessionAccount: String?
+    public var sessionOfficialLogin = false
+    public var pricingModel: String?
+    /// 通过同步拿到的另一台电脑上的调用。
+    public var computer: String?
+    public var computerName: String?
+    /// 被算作某个 Agent 的客户端自己的名字。
+    public var client: String?
+    /// `log`：从 Agent 自己的会话文件读到的调用（网关没经手）。
+    public var source: String?
+    /// 回复里的模型跟发出去的不一样。
+    public var swapped = false
+    /// 远端 magpie 的路由组由组里某个成员回答。
+    public var routed = false
+    public var cacheWrite1h = 0
+    public var cacheUnknown = false
+    public var nativeSession: String?
+    public var handedOn = false
 
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: UsageKey.self)
@@ -478,6 +547,21 @@ public struct UsageRequestRow: Hashable, Sendable, Identifiable, Decodable {
         endpoint = c.string("ep"); stop = c.string("stop"); session = c.string("session")
         cost = c.double("cost"); priced = c.bool("priced")
         access = c.string("access"); rejected = c.bool("rejected"); responseId = c.string("response_id")
+        func positive(_ key: String) -> Int? { let v = c.int(key); return v > 0 ? v : nil }
+        requestID = c.string("rid"); kind = c.string("kind")
+        sentMs = positive("sent_ms"); maskingMs = positive("masking_ms"); retriedMs = positive("retried_ms"); queuedMs = positive("queued_ms")
+        ownMs = c.int64("own_ms").map { Int($0) }
+        firstTextMs = positive("first_text_ms"); firstReasoningMs = positive("first_reasoning_ms"); flowMs = positive("flow_ms")
+        reasoningHidden = c.bool("reasoning_hidden")
+        upstream = c.string("upstream")
+        sessionProvider = c.string("session_provider"); sessionAccount = c.string("session_account")
+        sessionOfficialLogin = c.bool("session_official_login")
+        pricingModel = c.string("pricing_model")
+        computer = c.string("computer"); computerName = c.string("computerName")
+        client = c.string("client"); source = c.string("source")
+        swapped = c.bool("swapped"); routed = c.bool("routed")
+        cacheWrite1h = c.int("cache_write_1h"); cacheUnknown = c.bool("cache_unknown")
+        nativeSession = c.string("native_session"); handedOn = c.bool("handed_on")
         id = ""
         id = fallbackID
     }
@@ -548,10 +632,33 @@ public struct UsageRequestPage: Hashable, Sendable, Decodable {
     /// 按模型的排名（`by.model`），其 id 正是 `model` 筛选要用的值。
     public var models: [UsageOption]
     public var accounts: [UsageOption]
+    /// 趋势图：按小时 / 天 / 周（`bucket`），每个点再按维度拆开（`series[].by`）。
+    public var bucket: String = ""
+    public var series: [UsageLedgerPoint] = []
+    /// 各维度的排名（`by`：model / modelAt / provider / agent / callerKey），词元多的在前。
+    public var by: [String: [UsageShare]] = [:]
+    /// 经网关的、读自会话文件的、客户端上报的三部分合计。
+    public var through = UsageTotals()
+    public var direct = UsageTotals()
+    public var reported = UsageTotals()
+    /// 这段时间里出现过的调用用途（筛选用）。
+    public var purposes: [String] = []
+    /// 这台电脑与同步来的其它电脑（只有一台时为空）。
+    public var computers: [UsageShare] = []
+    public var day: String?
 
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: UsageKey.self)
         period = c.string("period") ?? ""
+        bucket = c.string("bucket") ?? ""
+        series = c.list(UsageLedgerPoint.self, "series")
+        by = ((try? c.decodeIfPresent([String: [UsageShare]].self, forKey: UsageKey("by"))) ?? nil) ?? [:]
+        through = ((try? c.decodeIfPresent(UsageTotals.self, forKey: UsageKey("through"))) ?? nil) ?? UsageTotals()
+        direct = ((try? c.decodeIfPresent(UsageTotals.self, forKey: UsageKey("direct"))) ?? nil) ?? UsageTotals()
+        reported = ((try? c.decodeIfPresent(UsageTotals.self, forKey: UsageKey("reported"))) ?? nil) ?? UsageTotals()
+        purposes = c.list(String.self, "purposes")
+        computers = c.list(UsageShare.self, "computers")
+        day = c.string("day")
         rows = Self.uniquified(c.list(UsageRequestRow.self, "rows"))
         offset = c.int("offset")
         total = c.int("total")
@@ -602,20 +709,30 @@ public struct UsageRequestQuery: Hashable, Sendable {
     public var callerKey: String?
     public var provider: String?
     public var account: String?
+    /// 调用的用途（`purpose`，取自记录页的 `purposes`）。
+    public var purpose: String?
+    /// 哪台电脑（`computer`：`this` 或同步来的另一台的 id）。
+    public var computer: String?
+    /// 来源：`gateway` 经网关、`log` 读自会话文件、`reported` 客户端上报（`via`）。
+    public var via: String?
+    /// 只看某一天（`day`，YYYY-MM-DD，读者时区）。
+    public var day: String?
     public var search: String
 
     public init(period: UsagePeriod = .today, offset: Int = 0, limit: Int = UsageRequestQuery.pageSize, failedOnly: Bool = false,
                 retriedOnly: Bool = false, model: String? = nil, agent: String? = nil, callerKey: String? = nil,
-                provider: String? = nil, account: String? = nil, search: String = "") {
+                provider: String? = nil, account: String? = nil, purpose: String? = nil, computer: String? = nil,
+                via: String? = nil, day: String? = nil, search: String = "") {
         self.period = period; self.offset = offset; self.limit = limit; self.failedOnly = failedOnly; self.retriedOnly = retriedOnly
         self.model = model; self.agent = agent; self.callerKey = callerKey; self.provider = provider; self.account = account
+        self.purpose = purpose; self.computer = computer; self.via = via; self.day = day
         self.search = search
     }
 
     /// 是否设置了任何筛选（不算时间段与分页）。
     public var isFiltered: Bool {
         failedOnly || retriedOnly || model != nil || agent != nil || callerKey != nil || provider != nil || account != nil
-            || !trimmedSearch.isEmpty
+            || purpose != nil || computer != nil || via != nil || day != nil || !trimmedSearch.isEmpty
     }
 
     public var trimmedSearch: String { search.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -626,7 +743,8 @@ public struct UsageRequestQuery: Hashable, Sendable {
         items.append(URLQueryItem(name: "limit", value: String(min(max(1, limit), Self.maxLimit))))
         if failedOnly { items.append(URLQueryItem(name: "failed", value: "1")) }
         if retriedOnly { items.append(URLQueryItem(name: "retried", value: "1")) }
-        for (name, value) in [("model", model), ("agent", agent), ("callerKey", callerKey), ("provider", provider), ("account", account)] {
+        for (name, value) in [("model", model), ("agent", agent), ("callerKey", callerKey), ("provider", provider), ("account", account),
+                              ("purpose", purpose), ("computer", computer), ("via", via), ("day", day)] {
             if let value, !value.isEmpty { items.append(URLQueryItem(name: name, value: value)) }
         }
         if !trimmedSearch.isEmpty { items.append(URLQueryItem(name: "q", value: trimmedSearch)) }

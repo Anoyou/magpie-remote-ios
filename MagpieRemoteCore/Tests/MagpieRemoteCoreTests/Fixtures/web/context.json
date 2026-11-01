@@ -1,0 +1,254 @@
+{
+ "days": 7,
+ "agents": [
+  {
+   "agent": "claude",
+   "requests": 120,
+   "sessions": 4,
+   "errors": 2,
+   "calls": 124,
+   "median": 52000,
+   "p90": 98000,
+   "baseline": 21000,
+   "window": 200000,
+   "cache": 0.86,
+   "growth": 1800,
+   "peakFill": 0.71,
+   "compacts": 1,
+   "shares": {
+    "system": 0.05,
+    "tools": 0.22,
+    "memory": 0.06,
+    "files": 0.004,
+    "results": 0.18,
+    "chat": 0.49
+   },
+   "mcp": 9000,
+   "score": 78,
+   "scores": [
+    {
+     "key": "cache",
+     "points": 38,
+     "most": 40
+    },
+    {
+     "key": "lean",
+     "points": 12,
+     "most": 20
+    },
+    {
+     "key": "pace",
+     "points": 16,
+     "most": 20
+    },
+    {
+     "key": "reliable",
+     "points": 12,
+     "most": 20
+    }
+   ],
+   "tags": [
+    {
+     "key": "cache-friendly",
+     "tone": "good",
+     "value": 0.86
+    },
+    {
+     "key": "mcp-heavy",
+     "tone": "warn",
+     "value": 9000
+    },
+    {
+     "key": "compacts",
+     "tone": "info",
+     "value": 1
+    }
+   ],
+   "models": [
+    "anthropic/claude-sonnet-4-6"
+   ],
+   "latestId": 9123,
+   "latestTime": "2026-11-01T09:05:00.5+08:00"
+  },
+  {
+   "agent": "scripts",
+   "requests": 3,
+   "sessions": 0,
+   "errors": 0,
+   "calls": 3,
+   "median": 400,
+   "p90": 900,
+   "baseline": 0,
+   "window": 0,
+   "cache": 0,
+   "growth": 0,
+   "peakFill": 0,
+   "compacts": 0,
+   "shares": {
+    "chat": 1
+   },
+   "mcp": 0,
+   "score": 60,
+   "scores": [
+    {
+     "key": "lean",
+     "points": 20,
+     "most": 20
+    },
+    {
+     "key": "reliable",
+     "points": 20,
+     "most": 20
+    }
+   ],
+   "tags": [
+    {
+     "key": "steady",
+     "tone": "good"
+    }
+   ],
+   "models": [
+    "deepseek/deepseek-chat"
+   ],
+   "latestId": 9100,
+   "latestTime": "2026-10-31T20:00:00+08:00",
+   "clients": [
+    "curl",
+    "python-httpx"
+   ]
+  }
+ ],
+ "sessions": [
+  {
+   "agent": "claude",
+   "key": "5f0e7c1a-1",
+   "title": "修复登录页的样式问题",
+   "model": "anthropic/claude-sonnet-4-6",
+   "first": "2026-11-01T08:00:00+08:00",
+   "last": "2026-11-01T09:05:00.5+08:00",
+   "requests": 14,
+   "peak": 61000,
+   "window": 200000,
+   "compacts": 0,
+   "latest": {
+    "window": 200000,
+    "tokens": 61000,
+    "counted": true,
+    "turns": 14,
+    "parts": [
+     {
+      "kind": "chat",
+      "tokens": 30000,
+      "items": [
+       {
+        "name": "14",
+        "tag": "turn",
+        "tokens": 2000
+       },
+       {
+        "name": "",
+        "tag": "turns",
+        "n": 13,
+        "tokens": 28000
+       }
+      ]
+     },
+     {
+      "kind": "system",
+      "tokens": 3000,
+      "items": [
+       {
+        "name": "prompt",
+        "tokens": 3000
+       }
+      ]
+     },
+     {
+      "kind": "tools",
+      "tokens": 14000,
+      "items": [
+       {
+        "name": "Bash",
+        "tokens": 4000
+       },
+       {
+        "name": "github",
+        "tag": "mcp",
+        "n": 24,
+        "tokens": 9000
+       },
+       {
+        "name": "",
+        "tag": "more",
+        "n": 6,
+        "tokens": 1000
+       }
+      ]
+     },
+     {
+      "kind": "memory",
+      "tokens": 4000,
+      "items": [
+       {
+        "name": "~/code/demo-app/CLAUDE.md",
+        "tag": "project",
+        "tokens": 4000
+       }
+      ]
+     },
+     {
+      "kind": "results",
+      "tokens": 10000,
+      "items": [
+       {
+        "name": "Read",
+        "tag": "read",
+        "n": 5,
+        "tokens": 10000
+       }
+      ]
+     }
+    ]
+   },
+   "latestId": 9123,
+   "points": [
+    {
+     "id": 9110,
+     "time": "2026-11-01T08:00:00+08:00",
+     "tokens": 22000,
+     "window": 200000,
+     "cache": 20000
+    },
+    {
+     "id": 9123,
+     "time": "2026-11-01T09:05:00.5+08:00",
+     "tokens": 61000,
+     "window": 200000,
+     "cache": 55000
+    }
+   ]
+  },
+  {
+   "agent": "claude",
+   "key": "9a8b7c6d-2",
+   "model": "anthropic/claude-sonnet-4-6",
+   "first": "2026-10-30T10:00:00+08:00",
+   "last": "2026-10-30T12:00:00+08:00",
+   "requests": 60,
+   "peak": 190000,
+   "window": 200000,
+   "compacts": 2,
+   "latest": null,
+   "latestId": 9050,
+   "points": [
+    {
+     "id": 9050,
+     "time": "2026-10-30T12:00:00+08:00",
+     "tokens": 90000,
+     "window": 200000,
+     "cache_unknown": true
+    }
+   ]
+  }
+ ]
+}
