@@ -221,7 +221,12 @@ jobs:
           echo "编译用时 $(( $(date +%s) - START )) 秒（编译缓存 $(du -sh "$CAS_DIR" 2>/dev/null | cut -f1)）"
           # 用 tar 保留可执行权限与符号链接（artifact 本身不保留权限）。
           mkdir -p "$RUNNER_TEMP/products"
-          tar -cf "$RUNNER_TEMP/products/products.tar" -C "$DERIVED_DATA/Build" Products
+          # zstd 压缩（约为原大小的三分之一），各 UI 测试 job 下载更快。
+          if command -v zstd >/dev/null; then
+            tar -cf - -C "$DERIVED_DATA/Build" Products | zstd -q -T0 -3 -o "$RUNNER_TEMP/products/products.tar.zst"
+          else
+            tar -cf "$RUNNER_TEMP/products/products.tar" -C "$DERIVED_DATA/Build" Products
+          fi
           ls -lh "$RUNNER_TEMP/products"
 
       - name: 上传测试产物（给各 UI 测试 job）
@@ -230,7 +235,7 @@ jobs:
           name: ios-test-products-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/products
           retention-days: 1
-          compression-level: 1
+          compression-level: 0
           if-no-files-found: error
 
       - name: 打包未签名 IPA（供 main push 同树复用）
@@ -347,27 +352,21 @@ jobs:
           echo "PRODUCTS_URL=$URL" >> "$GITHUB_ENV"
           echo "DL_T0=$(date +%s)" >> "$GITHUB_ENV"
 
-      # 官方下载 action 并行分块下载（run 41319389079 里 curl 下 46 MB 要 70 多秒）；万一取不到，下一步用 curl 兜底。
-      - name: 下载测试产物
-        id: dl
-        continue-on-error: true
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: ios-test-products-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/products
-
-      - name: 解压测试产物
+      - name: 下载并解压测试产物
+        # 用 curl 直接下（run 41321342744 里 actions/download-artifact 要 1.5–3 分钟，比 curl 慢）；产物是 zstd 压缩的 tar。
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [ ! -f "$RUNNER_TEMP/products/products.tar" ]; then
-            echo "::warning::download-artifact 没取到，改用 curl"
-            curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -o "$RUNNER_TEMP/products.zip" "$PRODUCTS_URL"
-            unzip -q -o "$RUNNER_TEMP/products.zip" -d "$RUNNER_TEMP/products"
-          fi
+          curl -fsSL --retry 3 -H "Authorization: Bearer $GH_TOKEN" -o "$RUNNER_TEMP/products.zip" "$PRODUCTS_URL"
+          echo "下载 $(( $(date +%s) - DL_T0 )) 秒（$(du -h "$RUNNER_TEMP/products.zip" | cut -f1)）"
+          unzip -q -o "$RUNNER_TEMP/products.zip" -d "$RUNNER_TEMP/products"
           mkdir -p "$DERIVED_DATA/Build"
-          tar -xf "$RUNNER_TEMP/products/products.tar" -C "$DERIVED_DATA/Build"
+          if [ -f "$RUNNER_TEMP/products/products.tar.zst" ]; then
+            zstd -dc "$RUNNER_TEMP/products/products.tar.zst" | tar -xf - -C "$DERIVED_DATA/Build"
+          else
+            tar -xf "$RUNNER_TEMP/products/products.tar" -C "$DERIVED_DATA/Build"
+          fi
           echo "XCTESTRUN=$(ls "$DERIVED_DATA"/Build/Products/*.xctestrun | head -n 1)" >> "$GITHUB_ENV"
           echo "下载解压 $(( $(date +%s) - DL_T0 )) 秒"
 
