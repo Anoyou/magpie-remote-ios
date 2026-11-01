@@ -40,10 +40,10 @@ final class RoutePlayTests: XCTestCase {
         play.advance(r, now: 100)
         XCTAssertEqual(legs(play), ["out a#k1 agent 1.4", "hold a#k1 pulsing"])
         XCTAssertEqual(play.segments[0].start, 100)
-        XCTAssertEqual(play.segments[1].start, 101.4, accuracy: 1e-9)
+        XCTAssertEqual(play.segments[1].start, 101.4 + RoutePlay.frameLag, accuracy: 1e-9, "这段到了的那一帧（网页 rAF 里 resolve）才放下点")
         XCTAssertNil(play.segments[1].end, "回答之前点一直停在座位上")
         XCTAssertEqual(play.birds.count, 1)
-        XCTAssertEqual(play.birds[0].away ?? 0, 101.4, accuracy: 1e-9, "到了座位就松开点飞走")
+        XCTAssertEqual(play.birds[0].away ?? 0, 101.4 + RoutePlay.frameLag, accuracy: 1e-9, "到了座位就松开点飞走")
         XCTAssertFalse(play.ended)
         // 飞到一半时：点在去程上，喜鹊衔着它
         XCTAssertEqual(play.segment(at: 100.7)?.dot, .request)
@@ -57,7 +57,7 @@ final class RoutePlayTests: XCTestCase {
         XCTAssertEqual(play.segments[3].dot, .answer)
         XCTAssertEqual(play.birds.count, 2, "回答由另一只喜鹊衔回来")
         XCTAssertTrue(play.ended)
-        XCTAssertEqual(play.over ?? 0, 106.4 + RoutePlay.awayTime, accuracy: 1e-9)
+        XCTAssertEqual(play.over ?? 0, 106.4 + RoutePlay.frameLag + RoutePlay.awayTime, accuracy: 1e-9)
         XCTAssertNil(play.segment(at: 107))
     }
 
@@ -66,7 +66,7 @@ final class RoutePlayTests: XCTestCase {
         var play = RoutePlay(route: r, now: 10)
         play.advance(r, now: 10)
         XCTAssertEqual(legs(play), ["out a#k1 agent 1.4", "hold a#k1 pulsing", "hold a#k1", "home a#k1 1.4"])
-        XCTAssertEqual(play.segments[3].start, 11.4, accuracy: 1e-9, "回程接在去程后面")
+        XCTAssertEqual(play.segments[3].start, 11.4 + RoutePlay.frameLag, accuracy: 1e-9, "回程接在去程后面")
         XCTAssertTrue(play.ended)
     }
 
@@ -81,7 +81,7 @@ final class RoutePlayTests: XCTestCase {
         XCTAssertEqual(legs(play), ["toHub 0.62", "hub", "out b#k1 hubFromAgent 0.9", "hold b#k1 pulsing"])
         XCTAssertEqual(play.segments[1].end ?? 0, 3)
         XCTAssertEqual(play.birds.count, 1, "同一只喜鹊接着把请求送到座位")
-        XCTAssertEqual(play.birds[0].away ?? 0, 3.9, accuracy: 1e-9)
+        XCTAssertEqual(play.birds[0].away ?? 0, 3.9 + RoutePlay.frameLag, accuracy: 1e-9)
     }
 
     func testFailureGoesBackToMagpieAndOnToTheNext() {
@@ -114,17 +114,20 @@ final class RoutePlayTests: XCTestCase {
         play.advance(r, now: 0)
         XCTAssertEqual(play.ticks.map(\.node), [.agent, .hub, .agent])
         XCTAssertEqual(play.ticks[0].at, 0)
-        XCTAssertEqual(play.ticks[1].at, 1.4 + 0.62, accuracy: 1e-9, "从 magpie 再出发时 magpie 跳一下")
-        XCTAssertEqual(play.ticks[2].at, 1.4 + 0.62 + 0.9 + 1.4, accuracy: 1e-9, "回答到 Agent 时 Agent 跳一下")
+        XCTAssertEqual(play.ticks[1].at, 1.4 + 0.62 + 2 * RoutePlay.frameLag, accuracy: 1e-9, "从 magpie 再出发时 magpie 跳一下")
+        XCTAssertEqual(play.ticks[2].at, 1.4 + 0.62 + 0.9 + 1.4 + 4 * RoutePlay.frameLag, accuracy: 1e-9, "回答到 Agent 时 Agent 跳一下")
         XCTAssertEqual(play.hits.count, 1)
         XCTAssertEqual(play.hits[0].status, 429)
         XCTAssertEqual(play.hits[0].fail, "rate")
-        XCTAssertEqual(play.hits[0].at, 1.4, accuracy: 1e-9)
+        XCTAssertEqual(play.hits[0].at, 1.4 + RoutePlay.frameLag, accuracy: 1e-9)
+        // 舞台下的那句：开演时讲为什么这样排，失败落下时讲那次尝试，回答到了时（不重要地）讲回答
+        XCTAssertEqual(play.says.map(\.attempt), [nil, 0, 1])
+        XCTAssertEqual(play.says.map(\.lo), [false, false, true])
 
         var waiting = RoutePlay(route: route(tries: [], done: false), now: 0)
         waiting.advance(route(tries: [], done: false), now: 0)
         XCTAssertEqual(waiting.ticks.map(\.node), [.agent, .hub])
-        XCTAssertEqual(waiting.ticks[1].at, 0.62, accuracy: 1e-9, "喜鹊到 magpie 时 magpie 跳一下")
+        XCTAssertEqual(waiting.ticks[1].at, 0.62 + RoutePlay.frameLag, accuracy: 1e-9, "喜鹊到 magpie 时 magpie 跳一下")
     }
 
     /// 减弱动态效果：每段飞行瞬间完成（网页 still() 时 fly 的 ms 为 0），点直接停在座位上。
