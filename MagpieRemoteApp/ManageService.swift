@@ -476,6 +476,16 @@ actor FixtureManageService: ManageServing {
             keyList[index]["off"] = .bool(action == .off)
         case .remove:
             keyList.removeAll { $0["id"]?.string == id }
+        case .rename:
+            guard let index else { throw MagpieError.webRejected(message: "Key not found", code: nil) }
+            keyList[index]["name"] = body["name"] ?? keyList[index]["name"]
+        case .resetLimit:
+            guard let index else { throw MagpieError.webRejected(message: "Key not found", code: nil) }
+            keyList[index]["used"] = ["cost": .double(0)]
+        case .access:
+            guard let index else { throw MagpieError.webRejected(message: "Key not found", code: nil) }
+            if keyList[index]["lan"]?.bool == true { throw MagpieError.webRejected(message: "the sharing key can't be read-only", code: nil) }
+            keyList[index]["readOnly"] = .bool(body["readOnly"]?.bool ?? false)
         }
         return keys()
     }

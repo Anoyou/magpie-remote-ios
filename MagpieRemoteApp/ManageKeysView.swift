@@ -11,6 +11,11 @@ struct ManageKeysView: View {
     @State private var pendingRemove: WebCallerKey?
     @State private var pendingRotate: WebCallerKey?
     @State private var pendingRevoke: IssuedKey?
+    /// 重命名中的密钥与输入的新名字。
+    @State private var renaming: WebCallerKey?
+    @State private var newName = ""
+    /// 等确认「重置额度」的密钥。
+    @State private var pendingReset: WebCallerKey?
 
     var body: some View {
         List {
@@ -75,6 +80,7 @@ struct ManageKeysView: View {
             }
         }
         .refreshable { await store.refresh() }
+        .safeAreaInset(edge: .bottom) { ManageStatusLine(store: store) }
         .sheet(isPresented: $creating) { NewKeySheet(store: store) }
         .sheet(isPresented: $issuing) { IssueKeySheet(store: store) }
         .confirmationDialog("删除密钥「\(pendingRemove?.name ?? "")」？", isPresented: present($pendingRemove), titleVisibility: .visible, presenting: pendingRemove) { key in
@@ -92,6 +98,27 @@ struct ManageKeysView: View {
         } message: { _ in
             Text("会生成一个新的密钥值，旧值立即失效。")
         }
+        .confirmationDialog("重置 \(pendingReset?.name ?? "") 的额度？", isPresented: present($pendingReset), titleVisibility: .visible, presenting: pendingReset) { key in
+            Button("重置额度", role: .destructive) {
+                Task {
+                    if await store.callerKey(.resetLimit, WebRequests.callerKey(key.id)).ok {
+                        store.status = "已重置 \(key.name) 的额度"
+                    }
+                }
+            }
+            .accessibilityIdentifier("key.reset.confirm")
+        } message: { key in
+            Text("\(key.name) 已用的 Token 和费用一起清零，本周期内此前的调用不再计入。")
+        }
+        .alert("重命名", isPresented: present($renaming), presenting: renaming) { key in
+            TextField("网关密钥名称", text: $newName)
+            Button("取消", role: .cancel) {}
+            Button("保存") {
+                let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty, name != key.name else { return }
+                Task { await store.callerKey(.rename, WebRequests.callerKeyRename(key.id, name: name)) }
+            }
+        }
         .confirmationDialog("吊销临时密钥「\(pendingRevoke?.name ?? "")」？", isPresented: present($pendingRevoke), titleVisibility: .visible, presenting: pendingRevoke) { key in
             Button("吊销", role: .destructive) { Task { await store.revokeIssued(key.id) } }
         }
@@ -102,6 +129,23 @@ struct ManageKeysView: View {
     private func menu(for key: WebCallerKey) -> some View {
         Button { Task { await store.callerKey(.copy, WebRequests.callerKey(key.id), title: "「\(key.name)」") } } label: {
             Label("显示密钥", systemImage: "eye")
+        }
+        Button { renaming = key; newName = key.name } label: { Label("重命名", systemImage: "pencil") }
+        if key.readOnly {
+            Button {
+                Task { if await store.callerKey(.access, WebRequests.callerKeyAccess(key.id, readOnly: false)).ok { store.status = "\(key.name) 已恢复完整权限" } }
+            } label: {
+                Label("恢复完整权限", systemImage: "eye")
+            }
+        } else if !key.lan {
+            Button {
+                Task { if await store.callerKey(.access, WebRequests.callerKeyAccess(key.id, readOnly: true)).ok { store.status = "\(key.name) 已设为只读" } }
+            } label: {
+                Label("设为只读", systemImage: "eye.slash")
+            }
+        }
+        if key.limitSummary != nil {
+            Button { pendingReset = key } label: { Label("重置额度", systemImage: "arrow.counterclockwise") }
         }
         Button { pendingRotate = key } label: { Label("轮换", systemImage: "arrow.triangle.2.circlepath") }
         Button { Task { await store.callerKey(key.off ? .on : .off, WebRequests.callerKey(key.id)) } } label: {

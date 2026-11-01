@@ -231,4 +231,18 @@ final class AgentControlsTests: XCTestCase {
             XCTAssertEqual(try body(request)["name"]?.string, "Work")
         }
     }
+
+    // MARK: 网关密钥补齐官方：重命名、设为只读 / 恢复完整权限、重置额度
+
+    func testCallerKeyParityRequests() async throws {
+        XCTAssertEqual(WebRequests.callerKeyRename("key-1", name: "  iPad  "), ["key": "key-1", "name": "iPad"])
+        XCTAssertEqual(WebRequests.callerKeyAccess("key-1", readOnly: false), ["key": "key-1", "readOnly": false])
+        XCTAssertEqual(WebRequests.callerKeyAccess("key-1", readOnly: true), ["key": "key-1", "readOnly": true])
+        StubURLProtocol.handler = { _ in (200, ["Content-Type": "application/json"], try WebFixture.data("caller-keys.json")) }
+        for (action, path) in [(CallerKeyAction.rename, "rename-key"), (.resetLimit, "reset-limit-key"), (.access, "access-key")] {
+            _ = try await client.callerKey(action, WebRequests.callerKey("key-1"))
+            XCTAssertEqual(StubURLProtocol.lastRequest?.url?.path, "/api/caller-keys/\(path)")
+            XCTAssertEqual(try body(StubURLProtocol.lastRequest)["key"]?.string, "key-1")
+        }
+    }
 }

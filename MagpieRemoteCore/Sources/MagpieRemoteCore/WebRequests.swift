@@ -164,6 +164,14 @@ public enum WebRequests {
     /// rotate-key / copy-key / on-key / off-key / remove-key。
     public static func callerKey(_ id: String) -> WebJSON { ["key": .string(id)] }
 
+    /// rename-key：新名字（去掉首尾空白）。
+    public static func callerKeyRename(_ id: String, name: String) -> WebJSON {
+        ["key": .string(id), "name": .string(name.trimmingCharacters(in: .whitespacesAndNewlines))]
+    }
+
+    /// access-key：`readOnly` 为 true 设为只读，false 恢复完整权限（明确发 false）。
+    public static func callerKeyAccess(_ id: String, readOnly: Bool) -> WebJSON { ["key": .string(id), "readOnly": .bool(readOnly)] }
+
     /// 网关 `POST /v1/magpie/keys`：签发一把临时密钥。
     public static func issueKey(name: String, ttl: String, models: [String] = [], readOnly: Bool = false) -> WebJSON {
         var body: [String: WebJSON] = ["name": .string(name), "ttl": .string(ttl)]
@@ -181,6 +189,12 @@ public enum CallerKeyAction: String, Sendable, CaseIterable {
     case on = "on-key"
     case off = "off-key"
     case remove = "remove-key"
+    /// 改名（官方「重命名」）。
+    case rename = "rename-key"
+    /// 用量清零、重新开始一个周期（官方「重置额度」）。
+    case resetLimit = "reset-limit-key"
+    /// 只读 / 完整权限（官方「设为只读」「恢复完整权限」）。
+    case access = "access-key"
 }
 
 /// 供应商的操作（对应 `POST /api/provider/{action}`）。

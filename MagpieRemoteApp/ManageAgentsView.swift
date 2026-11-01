@@ -76,7 +76,7 @@ struct ManageAgentsView: View {
                 .accessibilityIdentifier("agents.rescan")
             }
         }
-        .safeAreaInset(edge: .bottom) { AgentStatusLine(store: store) }
+        .safeAreaInset(edge: .bottom) { ManageStatusLine(store: store) }
         .sheet(item: $disconnecting) { agent in
             AgentDisconnectSheet(store: store, agent: agent)
         }
@@ -122,8 +122,8 @@ private struct FoldCaption: View {
     }
 }
 
-/// 官方网页底部的状态栏：操作完成后的一句话，4 秒后消失。
-private struct AgentStatusLine: View {
+/// 官方网页底部的状态栏：操作完成后的一句话，4 秒后消失（Agent 页、网关密钥页共用）。
+struct ManageStatusLine: View {
     let store: ManageStore
 
     var body: some View {
@@ -631,7 +631,7 @@ private struct AgentProfileDetail: View {
             }
             Button("取消", role: .cancel) {}
         }
-        .safeAreaInset(edge: .bottom) { AgentStatusLine(store: store) }
+        .safeAreaInset(edge: .bottom) { ManageStatusLine(store: store) }
         .manageAlerts(store: store, id: "agents.profile")
     }
 }
