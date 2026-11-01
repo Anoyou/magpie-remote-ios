@@ -1,0 +1,129 @@
+{
+ "sessions": [
+  {
+   "agent": "claude",
+   "id": "fixture-claude-2",
+   "cwd": "~/code/notes",
+   "title": "写一个周报模板",
+   "start": "Sun 2026-11-01 9:05 AM CST (UTC+08:00)",
+   "last": "Sun 2026-11-01 9:05 AM CST (UTC+08:00)",
+   "models": [
+    {
+     "model": "claude-sonnet-4-6",
+     "input": 1000,
+     "output": 500,
+     "cache_read": 2000,
+     "cache_write": 0,
+     "cost": 0.1,
+     "priced": true
+    }
+   ],
+   "input": 1000,
+   "output": 500,
+   "cache_read": 2000,
+   "cache_write": 0,
+   "cost": 0.1,
+   "unpriced": 0,
+   "path": "~/.claude/sessions/fixture-claude-2.jsonl",
+   "transcript": true,
+   "name": "Claude Code",
+   "icon": "claude",
+   "resume": "claude --resume fixture-claude-2"
+  },
+  {
+   "agent": "codex",
+   "id": "fixture-codex-1",
+   "cwd": "~/code/server",
+   "title": "把单元测试迁到新框架",
+   "start": "Sat 2026-10-31 8:00 AM CST (UTC+08:00)",
+   "last": "Sat 2026-10-31 8:00 AM CST (UTC+08:00)",
+   "models": [
+    {
+     "model": "gpt-5",
+     "input": 1000,
+     "output": 500,
+     "cache_read": 2000,
+     "cache_write": 0,
+     "cost": 0.1,
+     "priced": true
+    }
+   ],
+   "input": 1000,
+   "output": 500,
+   "cache_read": 2000,
+   "cache_write": 0,
+   "cost": 0.1,
+   "unpriced": 0,
+   "path": "~/.codex/sessions/fixture-codex-1.jsonl",
+   "transcript": true,
+   "name": "Codex",
+   "icon": "codex",
+   "resume": "codex --resume fixture-codex-1"
+  },
+  {
+   "agent": "claude",
+   "id": "fixture-claude-1",
+   "cwd": "~/code/demo-app",
+   "title": "修复登录页的样式问题",
+   "start": "Mon 2026-10-26 10:40 AM CST (UTC+08:00)",
+   "last": "Mon 2026-10-26 10:40 AM CST (UTC+08:00)",
+   "models": [
+    {
+     "model": "claude-sonnet-4-6",
+     "input": 1000,
+     "output": 500,
+     "cache_read": 2000,
+     "cache_write": 0,
+     "cost": 0.1,
+     "priced": true
+    }
+   ],
+   "input": 1000,
+   "output": 500,
+   "cache_read": 2000,
+   "cache_write": 0,
+   "cost": 0.1,
+   "unpriced": 0,
+   "path": "~/.claude/sessions/fixture-claude-1.jsonl",
+   "transcript": true,
+   "name": "Claude Code",
+   "icon": "claude",
+   "resume": "claude --resume fixture-claude-1"
+  },
+  {
+   "agent": "claude",
+   "id": "fixture-claude-old",
+   "cwd": "~/code/demo-app",
+   "title": "很久以前的会话",
+   "start": "Tue 2026-09-01 10:00 AM CST (UTC+08:00)",
+   "last": "Tue 2026-09-01 10:00 AM CST (UTC+08:00)",
+   "models": [
+    {
+     "model": "claude-sonnet-4-6",
+     "input": 1000,
+     "output": 500,
+     "cache_read": 2000,
+     "cache_write": 0,
+     "cost": 0.1,
+     "priced": true
+    }
+   ],
+   "input": 1000,
+   "output": 500,
+   "cache_read": 2000,
+   "cache_write": 0,
+   "cost": 0.1,
+   "unpriced": 0,
+   "path": "~/.claude/sessions/fixture-claude-old.jsonl",
+   "transcript": true,
+   "name": "Claude Code",
+   "icon": "claude",
+   "resume": "claude --resume fixture-claude-old"
+  }
+ ],
+ "terminal": false,
+ "dirs": [
+  "~/.claude/projects",
+  "~/.codex/sessions"
+ ]
+}

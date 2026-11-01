@@ -1911,9 +1911,16 @@
       "calls",
       "tokens"
      ]
+    },
+    {
+     "file": "internal/sessions/sessions.go",
+     "tags": [
+      "app",
+      "resume"
+     ]
     }
    ],
-   "note": "every agent's sessions merged, newest first; reference only (the app lists per agent via /api/sessions/manage)"
+   "note": "every agent's sessions merged, newest first; \u7528\u91cf \u203a \u4f1a\u8bdd lists the ones at work in the range (stats.keys) from it; \u4f1a\u8bdd\u8bb0\u5f55 lists per agent via /api/sessions/manage"
   },
   {
    "method": "GET",
@@ -2166,6 +2173,406 @@
     ]
    },
    "note": "the app shares this file through the iOS share sheet"
+  },
+  {
+   "method": "GET",
+   "path": "/api/usage/heatmap",
+   "source": "internal/gui/usage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/usage/heatmap\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?the request log's filters (no period/day)"
+    ],
+    "response": [
+     "from",
+     "to",
+     "days[].date",
+     "days[].calls",
+     "days[].tokens",
+     "days[].cost",
+     "days[].unpriced?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/usage/heatmap.go",
+     "tags": [
+      "from",
+      "to",
+      "days",
+      "date",
+      "calls",
+      "tokens",
+      "cost",
+      "unpriced"
+     ]
+    }
+   ],
+   "note": "the last 53 weeks, a day each, only days with calls listed",
+   "contains": [
+    "usage.HeatmapOf(ledgerFilter(r))"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/usage/requests/content",
+   "source": "internal/gui/usage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/usage/requests/content\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?agent",
+     "?session",
+     "?from (RFC3339)",
+     "?to (RFC3339)",
+     "?at?"
+    ],
+    "response": [
+     "found",
+     "why?",
+     "model?",
+     "input[].role",
+     "input[].kind",
+     "input[].text",
+     "input[].name?",
+     "input[].cut?",
+     "output[]",
+     "cut?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/usage.go",
+     "tags": [
+      "found",
+      "why",
+      "model"
+     ]
+    },
+    {
+     "file": "internal/sessions/content.go",
+     "tags": [
+      "input",
+      "output",
+      "cut",
+      "role",
+      "kind",
+      "name",
+      "text",
+      "model"
+     ]
+    }
+   ],
+   "note": "what was said in one request, read from the agent's session file; 400 when from/to aren't times",
+   "contains": [
+    "out.Why = \"session\"",
+    "out.Why = \"agent\"",
+    "out.Why = \"missing\"",
+    "out.Why = \"read\"",
+    "agent != \"claude\" && agent != \"claude-desktop\" && agent != \"codex\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions/stats",
+   "source": "internal/gui/sessions.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions/stats\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?days (0 = all)"
+    ],
+    "response": [
+     "from",
+     "to",
+     "days[].date",
+     "days[].usage[].agent",
+     "days[].usage[].cwd",
+     "days[].usage[].model",
+     "days[].usage[].input",
+     "days[].usage[].output",
+     "days[].usage[].cache_read",
+     "days[].usage[].cache_write",
+     "days[].usage[].cost",
+     "days[].usage[].priced",
+     "days[].active[].agent",
+     "days[].active[].cwd",
+     "days[].active[].seconds",
+     "days[].active[].hours?",
+     "keys",
+     "agents{id:name}"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/sessions/stats.go",
+     "tags": [
+      "from",
+      "to",
+      "days",
+      "keys",
+      "date",
+      "usage",
+      "active",
+      "agent",
+      "cwd",
+      "model",
+      "cost",
+      "priced",
+      "seconds",
+      "hours"
+     ]
+    },
+    {
+     "file": "internal/sessions/sessions.go",
+     "tags": [
+      "input",
+      "output",
+      "cache_read",
+      "cache_write"
+     ]
+    }
+   ],
+   "note": "days null when nothing; a request with X-Magpie-Had equal to the last X-Magpie-Tag gets an empty 200 with X-Magpie-Same: 1 (the app never sends it)",
+   "contains": [
+    "text(`,\"keys\":`)",
+    "text(`,\"agents\":`)",
+    "r.Header.Get(\"X-Magpie-Had\") == t.tag"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/sessions/overview",
+   "source": "internal/gui/sessions.go",
+   "anchor": "mux.HandleFunc(\"GET /api/sessions/overview\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?days",
+     "?agent",
+     "?model",
+     "?cwd"
+    ],
+    "response": [
+     "count",
+     "median",
+     "p90",
+     "days[]",
+     "messages[]",
+     "output[]",
+     "top.tokens[]",
+     "top.cost[]",
+     "top.active[]",
+     "top.*[].key",
+     "top.*[].agent",
+     "top.*[].id",
+     "top.*[].cwd",
+     "top.*[].title",
+     "top.*[].last",
+     "top.*[].cost",
+     "top.*[].active",
+     "top.*[].models[]",
+     "shape.messages|minutes|autonomy.edges|counts|total",
+     "tools.calls",
+     "tools.sessions",
+     "tools.top[].name",
+     "tools.top[].category?",
+     "tools.top[].calls",
+     "tools.top[].sessions",
+     "tools.categories[]",
+     "tools.weeks[].start",
+     "tools.weeks[].calls",
+     "skills.calls",
+     "skills.count",
+     "skills.top[].name",
+     "skills.top[].calls",
+     "skills.top[].sessions",
+     "skills.top[].last",
+     "skills.top[].agents",
+     "skills.top[].projects[]"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/sessions/stats.go",
+     "tags": [
+      "count",
+      "median",
+      "p90",
+      "days",
+      "top",
+      "messages",
+      "output",
+      "shape",
+      "tools",
+      "skills",
+      "edges",
+      "counts",
+      "total",
+      "calls",
+      "sessions",
+      "categories",
+      "weeks",
+      "start",
+      "name",
+      "category",
+      "last",
+      "agents",
+      "projects",
+      "key",
+      "agent",
+      "id",
+      "cwd",
+      "title",
+      "active",
+      "models",
+      "prompts",
+      "replies",
+      "tool_calls"
+     ]
+    }
+   ],
+   "note": "top: the 8 sessions that spent the most each way",
+   "contains": [
+    "st.Overview(q.Get(\"agent\"), q.Get(\"model\"), q.Get(\"cwd\"), 8)"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/context",
+   "source": "internal/gui/context.go",
+   "anchor": "mux.HandleFunc(\"GET /api/context\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "?days (1..30, else 7)"
+    ],
+    "response": [
+     "days",
+     "agents[].agent",
+     "agents[].requests",
+     "agents[].sessions",
+     "agents[].errors",
+     "agents[].calls",
+     "agents[].median",
+     "agents[].p90",
+     "agents[].baseline",
+     "agents[].window",
+     "agents[].cache",
+     "agents[].growth",
+     "agents[].peakFill",
+     "agents[].compacts",
+     "agents[].shares{kind:share}",
+     "agents[].mcp",
+     "agents[].score",
+     "agents[].scores[].key",
+     "agents[].scores[].points",
+     "agents[].scores[].most",
+     "agents[].tags[].key",
+     "agents[].tags[].tone",
+     "agents[].tags[].value?",
+     "agents[].models[]",
+     "agents[].latestId",
+     "agents[].latestTime",
+     "agents[].clients?",
+     "sessions[].agent",
+     "sessions[].key",
+     "sessions[].title?",
+     "sessions[].model",
+     "sessions[].first",
+     "sessions[].last",
+     "sessions[].requests",
+     "sessions[].peak",
+     "sessions[].window",
+     "sessions[].compacts?",
+     "sessions[].latest?.window?",
+     "sessions[].latest?.tokens",
+     "sessions[].latest?.counted?",
+     "sessions[].latest?.held?",
+     "sessions[].latest?.turns?",
+     "sessions[].latest?.parts[].kind",
+     "sessions[].latest?.parts[].tokens",
+     "sessions[].latest?.parts[].items[]?.name",
+     "sessions[].latest?.parts[].items[]?.tag?",
+     "sessions[].latest?.parts[].items[]?.n?",
+     "sessions[].latest?.parts[].items[]?.tokens",
+     "sessions[].latestId",
+     "sessions[].points[].id",
+     "sessions[].points[].time",
+     "sessions[].points[].tokens",
+     "sessions[].points[].window?",
+     "sessions[].points[].cache?",
+     "sessions[].points[].cache_unknown?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/context.go",
+     "tags": [
+      "days",
+      "agents",
+      "sessions",
+      "agent",
+      "requests",
+      "errors",
+      "calls",
+      "median",
+      "p90",
+      "baseline",
+      "window",
+      "cache",
+      "growth",
+      "peakFill",
+      "compacts",
+      "shares",
+      "mcp",
+      "score",
+      "scores",
+      "tags",
+      "models",
+      "latestId",
+      "latestTime",
+      "clients",
+      "key",
+      "points",
+      "most",
+      "tone",
+      "value",
+      "title",
+      "model",
+      "first",
+      "last",
+      "peak",
+      "latest",
+      "id",
+      "time",
+      "tokens",
+      "cache_unknown"
+     ]
+    },
+    {
+     "file": "internal/gateway/prompt.go",
+     "tags": [
+      "window",
+      "tokens",
+      "counted",
+      "held",
+      "turns",
+      "parts",
+      "kind",
+      "items",
+      "name",
+      "tag",
+      "n"
+     ]
+    }
+   ],
+   "note": "agents' prompts as the gateway read them; part kinds system|tools|skills|memory|files|results|chat",
+   "contains": [
+    "days <= 0 || days > 30",
+    "scriptsAgent = \"scripts\""
+   ]
   },
   {
    "method": "POST",
