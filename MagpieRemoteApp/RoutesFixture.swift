@@ -95,14 +95,15 @@ enum RoutesFixture {
         return .string(formatter.string(from: date))
     }
 
-    /// 每 6 秒来一个新请求：前 2.5 秒在路上，之后回答完；每第 3 个请求先被第一个 Key 限流（429），改道到第二个。
+    /// 每 6 秒来一个新请求：前 0.4 秒路由还没选出谁（喜鹊先飞到 magpie 等），前 2.5 秒在路上，之后回答完；
+    /// 每第 3 个请求先被第一个 Key 限流（429），改道到第二个。还有一个备用的订阅账号（名字是邮箱，「账号打码」用）。
     static func trace(elapsed: TimeInterval, now: Date) -> WebJSON {
         let period: TimeInterval = 6
-        let current = Int(elapsed / period) + 3 // 先有两个已经回答完的
+        let current = Int(elapsed / period) + 12 // 先有 11 个已经回答完的（「最近的请求」默认只列 10 个）
         let phase = elapsed.truncatingRemainder(dividingBy: period)
         var routes: [WebJSON] = []
         var done = 0, rerouted = 0
-        for number in max(1, current - 7)...current {
+        for number in max(1, current - 13)...current {
             let age = TimeInterval(current - number) * period + phase
             let start = now.addingTimeInterval(-age)
             let inFlight = number == current && phase < 2.5
@@ -112,8 +113,13 @@ enum RoutesFixture {
                                   "model": "gpt-4.1", "routing": "", "used": 0]
             let second: WebJSON = ["id": "deepseek#k1", "provider": "deepseek", "name": "示例 DeepSeek", "who": "sk-d…EXMP", "kind": "key",
                                    "model": "deepseek-chat", "routing": "", "used": 0]
+            let spare: WebJSON = ["id": "codex#demo", "provider": "codex", "name": "Codex", "who": "demo.user@example.com", "kind": "account",
+                                  "plan": "plus", "model": "gpt-5", "routing": "", "known": true, "used": 41, "fallback": true]
+            let picking = number == current && phase < 0.4
             var tries: [WebJSON] = []
-            if failsFirst {
+            if picking {
+                // 路由还没选出谁
+            } else if failsFirst {
                 tries.append(["id": "relay-example#k1", "model": "gpt-4.1", "start": stamp(start), "done": true, "status": 429, "ms": 380,
                               "fail": "rate", "rest": ["why": "rate", "status": 429, "until": stamp(start.addingTimeInterval(40)), "key": "relay-example#k1"]])
                 tries.append(["id": "deepseek#k1", "model": "deepseek-chat", "start": stamp(start.addingTimeInterval(0.4)),
@@ -127,8 +133,9 @@ enum RoutesFixture {
             routes.append(["id": .int(Int64(number)), "seq": .int(Int64(number * 2 + (inFlight ? 0 : 1))), "time": stamp(start),
                            "agent": .string(agent), "model": "group/smart", "provider": "relay-example",
                            "group": ["id": "smart", "name": "聪明组", "routing": "order", "members": ["relay-example/gpt-4.1", "deepseek/deepseek-chat"]],
-                           "order": [first, second], "tries": .array(tries), "done": .bool(!inFlight), "status": inFlight ? 0 : 200,
+                           "order": [first, second, spare], "tries": .array(tries), "done": .bool(!inFlight), "status": inFlight ? 0 : 200,
                            "ms": inFlight ? 0 : (failsFirst ? 2500 : 1800), "tokens": inFlight ? 0 : 1840, "out": inFlight ? 0 : 320,
+                           "session": number % 2 == 0 ? "demo-session-a" : "demo-session-b",
                            "sessionTitle": number % 2 == 0 ? "修复登录页" : "整理周报", "cost": .double(0.0042), "priced": true])
         }
         let seq = Int64(current * 2 + (phase < 2.5 ? 0 : 1))
