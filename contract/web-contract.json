@@ -62,7 +62,15 @@
      "disabledModels?",
      "web?",
      "gatewayOn?",
-     "dir"
+     "dir",
+     "agentOrder?",
+     "agentsHidden?",
+     "agentsShown?",
+     "disabledHits?",
+     "titleModels[].id",
+     "titleModels[].name",
+     "titleModels[].provider",
+     "titleModels[].providerName"
     ]
    },
    "goTags": [
@@ -78,7 +86,9 @@
       "onNetwork",
       "addrEnv",
       "web",
-      "gatewayOn"
+      "gatewayOn",
+      "disabledHits",
+      "titleModels"
      ]
     },
     {
@@ -89,7 +99,19 @@
       "allowIPs",
       "lanKeyId",
       "disabledModels",
-      "corsOrigins"
+      "corsOrigins",
+      "agentOrder",
+      "agentsHidden",
+      "agentsShown"
+     ]
+    },
+    {
+     "file": "internal/gui/groups.go",
+     "tags": [
+      "id",
+      "name",
+      "provider",
+      "providerName"
      ]
     }
    ]
@@ -861,6 +883,28 @@
    "note": "untagged struct{ Name string }; save overwrites a profile of that name with the setup now"
   },
   {
+   "method": "POST",
+   "path": "/api/agents/arrange",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/agents/arrange\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "order",
+     "hidden",
+     "shown"
+    ],
+    "response": [
+     "<settingsJSON>"
+    ]
+   },
+   "note": "untagged struct; the whole arrangement each time; shown is always [] from the web page now",
+   "contains": [
+    "var in struct{ Order, Hidden, Shown []string }",
+    "s.AgentOrder, s.AgentsHidden, s.AgentsShown = in.Order, in.Hidden, in.Shown"
+   ]
+  },
+  {
    "method": "GET",
    "path": "/api/agent-models/{id}",
    "source": "internal/gui/agent_models.go",
@@ -881,6 +925,7 @@
      "models[].own?",
      "ordered",
      "only",
+     "own",
      "ownHidden"
     ]
    },
@@ -929,7 +974,11 @@
      "ownHidden?"
     ]
    },
-   "note": "untagged struct; send exactly one of the fields"
+   "note": "untagged struct; send exactly one of the fields",
+   "contains": [
+    "writeJSON(rw, map[string]any{\"models\": agentModelList(a), \"count\": modelCount(id), \"only\": only})",
+    "hidden = slices.DeleteFunc(slices.Clone(hidden), func(s string) bool { return used[s] })"
+   ]
   },
   {
    "method": "GET",
@@ -1237,7 +1286,8 @@
      "count (models)",
      "dropped? (models)",
      "models[].id (list)",
-     "ok,amount,error? (balance)"
+     "ok,amount,error? (balance)",
+     "providers[].modelTest?"
     ]
    },
    "goTags": [
@@ -1291,9 +1341,27 @@
       "results",
       "provider",
       "count",
-      "dropped"
+      "dropped",
+      "modelTest"
+     ]
+    },
+    {
+     "file": "internal/provider/test.go",
+     "tags": [
+      "account",
+      "protocol",
+      "ok",
+      "status",
+      "ms",
+      "model",
+      "error"
      ]
     }
+   ],
+   "contains": [
+    "writeJSON(rw, map[string]any{\"results\": p.TestModels(ctx, req.Test)})",
+    "testRuns.Store(req.Run, stop)",
+    "rw.WriteHeader(http.StatusNoContent)"
    ]
   },
   {
@@ -1364,7 +1432,12 @@
     "response": [
      "<settingsJSON>"
     ]
-   }
+   },
+   "note": "the list sent whole; each an id or a glob such as *fable*",
+   "contains": [
+    "var in struct{ Models []string }",
+    "provider.SetDisabledModels(in.Models)"
+   ]
   },
   {
    "method": "GET",
@@ -1716,7 +1789,24 @@
      "keys[].used?.tokensLeft",
      "keys[].used?.spent",
      "keys[].usedAll?",
-     "accountNames"
+     "accountNames",
+     "keys[].quotas?",
+     "keys[].limit?.days?",
+     "keys[].limit?.hours?",
+     "keys[].limit?.cacheReads?",
+     "keys[].moreLimits[]?.period",
+     "keys[].usedAll[]?.period",
+     "keys[].usedAll[]?.start",
+     "keys[].usedAll[]?.reset",
+     "keys[].usedAll[]?.tokens",
+     "keys[].usedAll[]?.cost",
+     "keys[].usedAll[]?.tokenLimit?",
+     "keys[].usedAll[]?.costLimit?",
+     "keys[].usedAll[]?.tokensLeft",
+     "keys[].usedAll[]?.costLeft",
+     "keys[].usedAll[]?.spent",
+     "keys[].usedAll[]?.inFlight?",
+     "keys[].usedAll[]?.unpriced?"
     ]
    },
    "goTags": [
@@ -1767,7 +1857,11 @@
       "costLimit",
       "tokensLeft",
       "costLeft",
-      "spent"
+      "spent",
+      "days",
+      "hours",
+      "unpriced",
+      "inFlight"
      ]
     },
     {
@@ -1856,7 +1950,15 @@
      "secret"
     ]
    },
-   "note": "actions are cases in internal/access/access.go Update()"
+   "note": "actions are cases in internal/access/access.go Update(); limit-key: index one past the last adds a limit (max 5), a null limit there removes that one, no index = the key's only limit",
+   "contains": [
+    {
+     "file": "internal/access/limit.go",
+     "contains": [
+      "const MaxLimits = 5"
+     ]
+    }
+   ]
   },
   {
    "method": "POST",

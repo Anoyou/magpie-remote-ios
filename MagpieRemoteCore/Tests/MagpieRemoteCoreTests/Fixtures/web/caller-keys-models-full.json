@@ -1,0 +1,11 @@
+{"models": [
+  {"id": "group/smart", "name": "聪明组", "group": true},
+  {"id": "relay-one/gpt-4.1", "name": "GPT 4.1", "provider": "relay-one", "providerName": "Relay One"},
+  {"id": "relay-one/o3", "name": "o3", "provider": "relay-one", "providerName": "Relay One"},
+  {"id": "codex/gpt-5", "name": "GPT-5", "provider": "codex", "providerName": "Codex"}
+ ],
+ "accounts": [
+  {"id": "relay-one/k-01", "name": "sk-r…AIN1", "provider": "relay-one", "providerName": "Relay One", "key": true},
+  {"id": "codex/acct-01", "name": "someone@example.com", "provider": "codex", "providerName": "Codex", "account": true, "plan": "Plus"},
+  {"id": "kimi/acct-02", "name": "kimi@example.com", "provider": "kimi", "providerName": "Kimi", "account": true}
+ ]}

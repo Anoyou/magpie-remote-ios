@@ -237,12 +237,11 @@ public struct AgentModelList: Hashable, Sendable {
     }
 }
 
-/// 上下文长度的简写（官方 ctxShort）：200K、1M。
+/// 上下文长度的简写（官方 ctxShort）：200K、1M、1.0M（不是整百万时保留一位）。
 public func agentContextShort(_ tokens: Int) -> String {
     guard tokens > 0 else { return "" }
     if tokens >= 1_000_000 {
-        let m = Double(tokens) / 1_000_000
-        return (m.rounded() == m ? String(Int(m)) : String(format: "%.1f", m)) + "M"
+        return (tokens % 1_000_000 == 0 ? String(tokens / 1_000_000) : String(format: "%.1f", Double(tokens) / 1_000_000)) + "M"
     }
     return "\(Int((Double(tokens) / 1000).rounded()))K"
 }

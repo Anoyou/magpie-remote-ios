@@ -1,0 +1,7 @@
+{"models": [
+  {"id": "group/smart", "name": "聪明组", "group": "Routing groups", "icons": ["openai"]},
+  {"id": "relay-one/gpt-4.1", "name": "GPT 4.1", "group": "Relay One", "inUse": true},
+  {"id": "relay-one/o3", "name": "o3", "group": "Relay One"}
+ ],
+ "count": {"shown": 3, "listed": 3, "by": [{"name": "Relay One", "icon": "openai", "n": 2}], "names": ["聪明组", "GPT 4.1", "o3"]},
+ "only": true}
