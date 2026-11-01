@@ -33,6 +33,10 @@ struct ManageGroupsView: View {
                     Text("路由")
                     LiveDot(on: live.phase == .live)
                     Text("实时 · 网关正在做的决定").font(.caption2).foregroundStyle(.tertiary).textCase(nil)
+                    if RoutesClock.frozen {
+                        Spacer(minLength: 4)
+                        RoutesSnapshotStep().textCase(nil)
+                    }
                 }
             }
 
@@ -91,9 +95,6 @@ struct ManageGroupsView: View {
             ToolbarItem(placement: .primaryAction) {
                 Button { creating = true } label: { Label("新建路由组", systemImage: "plus") }
                     .accessibilityIdentifier("group.add")
-            }
-            if RoutesClock.frozen {
-                ToolbarItem(placement: .topBarLeading) { RoutesSnapshotStep() }
             }
         }
         .navigationDestination(item: $editing) { group in GroupEditorView(store: store, group: group) }

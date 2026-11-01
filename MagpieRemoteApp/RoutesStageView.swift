@@ -514,8 +514,8 @@ private struct StageMotion<Content: View>: View {
     }
 }
 
-/// 逐帧截图（`--routes-snapshot`）用的「下一帧」：放在导航栏上，截图范围之外。它的 value 是已经画好的那一刻（毫秒），
-/// UI 测试等它跟上再截。
+/// 逐帧截图（`--routes-snapshot`）用的「下一帧」：放在「路由」分区标题里（舞台之外，不进截图）。它的 label / value
+/// 是已经画好的那一刻（毫秒），UI 测试等它跟上再截。不放导航栏：导航栏按钮在 iOS 26 上不带 accessibilityValue。
 struct RoutesSnapshotStep: View {
     var body: some View {
         let clock = RoutesClock.shared
@@ -525,7 +525,8 @@ struct RoutesSnapshotStep: View {
             Text(verbatim: "下一帧 \(clock.settledMilliseconds)").font(.caption.monospacedDigit())
         }
         .accessibilityIdentifier("routes.snapshot.step")
-        .accessibilityValue("\(clock.settledMilliseconds)")
+        .accessibilityLabel(Text(verbatim: "下一帧 \(clock.settledMilliseconds)"))
+        .accessibilityValue(Text(verbatim: "\(clock.settledMilliseconds)"))
     }
 }
 

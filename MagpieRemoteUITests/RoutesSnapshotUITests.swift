@@ -3,7 +3,7 @@ import XCTest
 /// 「路由」舞台的逐帧截图：和官方 magpie 网页路由页逐帧对比喜鹊的样子与时间（网页那边用 Playwright 的假时钟截）。
 ///
 /// `--routes-snapshot=<秒>` 让舞台用停住的时钟（RoutesClock）：fixture 的示例请求（RoutesFixture.trace）从 <秒> 开始，
-/// 每点一下导航栏上的「下一帧」（routes.snapshot.step）走 0.1 秒，等它的 value 显示这一刻已经画好再截。每帧既作为附件放进 .xcresult，
+/// 每点一下「路由」分区标题里的「下一帧」（routes.snapshot.step）走 0.1 秒，等它的 label 显示这一刻已经画好再截。每帧既作为附件放进 .xcresult，
 /// 也写到仓库的 build/results/routes-frames/（CI 会把 build/results 整个上传成 artifact）。
 /// 场景：6.0–10.6 秒是第 13 个请求（先飞到 magpie 等路由，再到第一个 Key，回答衔回来）；
 /// 18.0–22.6 秒是第 15 个请求（第一个 Key 限流 429，红圈飞回 magpie，改道到第二个 Key）。
@@ -56,10 +56,19 @@ final class RoutesSnapshotUITests: XCTestCase {
         }
     }
 
+    /// 等「下一帧」的 label 显示这一刻（毫秒）已经画好。直接读 label，比 expectation 的轮询快、失败时也能说出停在哪。
     private func wait(for clock: XCUIElement, toShow ms: Int) {
-        let shown = NSPredicate(format: "value == %@", "\(ms)")
-        let done = expectation(for: shown, evaluatedWith: clock)
-        wait(for: [done], timeout: 20)
+        let want = "下一帧 \(ms)"
+        let deadline = Date().addingTimeInterval(30)
+        var seen = "-"
+        while Date() < deadline {
+            if clock.exists {
+                seen = clock.label
+                if seen == want { return }
+            }
+            usleep(100_000)
+        }
+        XCTFail("「下一帧」没走到 \(ms)：exists=\(clock.exists)，label=\(seen)")
     }
 
     func testRoutesFramesSuccess() {
