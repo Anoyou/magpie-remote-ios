@@ -90,6 +90,10 @@ struct MoreView: View {
             }
         }
         .navigationTitle("更多")
+        // 点小组件打开、而对应页面在「更多」里时：直接推入那个页面。
+        .navigationDestination(item: Binding(get: { model.morePush }, set: { model.morePush = $0 })) { page in
+            AppPageView(page: page)
+        }
         .refreshable { await store.refresh() }
         .onAppear { Task { await store.configure(model: model) } }
         .manageAlerts(store: store, id: "more")

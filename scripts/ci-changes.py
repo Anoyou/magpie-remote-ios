@@ -42,6 +42,7 @@ RULES: list[tuple[str, tuple[bool, bool]]] = [
     ("MagpieRemoteCore/*", BOTH),
     ("MagpieRemoteApp/*", IOS),
     ("MagpieRemoteUITests/*", IOS),
+    ("MagpieRemoteWidgets/*", IOS),
     ("MagpieRemote.xcodeproj/*", IOS),
     ("project.yml", IOS),
     (".github/workflows/ios-ipa.yml", IOS),

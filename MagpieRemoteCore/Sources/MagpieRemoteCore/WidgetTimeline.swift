@@ -28,6 +28,11 @@ public enum WidgetContent: Hashable, Sendable {
     /// 共享目录可用，但 App 还没写过快照（或快照是更新版本写的）。
     case noSnapshot
     case snapshot(WidgetSnapshot)
+
+    public var snapshot: WidgetSnapshot? {
+        if case .snapshot(let snapshot) = self { return snapshot }
+        return nil
+    }
 }
 
 /// 一个时间点上一个窗口的显示。

@@ -22,6 +22,8 @@ settings:
     CODE_SIGN_STYLE: Automatic
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+    # App 与小组件共享快照的 App Group 原名（自签改名后运行时另找，见 docs/widgets.md）。
+    MAGPIE_APP_GROUP: group.com.magpieremote.personal
 targets:
   MagpieRemote:
     type: application
@@ -30,6 +32,7 @@ targets:
       - path: MagpieRemoteApp
         excludes:
           - Info.plist
+          - MagpieRemote.entitlements
       # App 更新日志随 App 打包，供「管理 → 关于 → 更新日志」离线显示。
       - path: CHANGELOG.md
         buildPhase: resources
@@ -38,12 +41,40 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.magpieremote.personal
         PRODUCT_NAME: MagpieRemote
         INFOPLIST_FILE: MagpieRemoteApp/Info.plist
+        CODE_SIGN_ENTITLEMENTS: MagpieRemoteApp/MagpieRemote.entitlements
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: NO
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - package: MagpieRemoteCore
+      # 小组件扩展：嵌入 MagpieRemote.app/PlugIns/。
+      - target: MagpieRemoteWidgets
+        embed: true
+  MagpieRemoteWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: MagpieRemoteWidgets
+        excludes:
+          - Info.plist
+          - MagpieRemoteWidgets.entitlements
+      # 与 App 共用：官方标志的画法与资源目录。
+      - path: MagpieRemoteApp/OfficialIconViews.swift
+      - path: MagpieRemoteApp/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.magpieremote.personal.widgets
+        PRODUCT_NAME: MagpieRemoteWidgets
+        INFOPLIST_FILE: MagpieRemoteWidgets/Info.plist
+        CODE_SIGN_ENTITLEMENTS: MagpieRemoteWidgets/MagpieRemoteWidgets.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        SKIP_INSTALL: YES
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     dependencies:
       - package: MagpieRemoteCore
   MagpieRemoteUITests:

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App 与小组件共享快照的 App Group（免费 Apple ID 也能用）。自签工具可能改名，运行时会另找，见 docs/widgets.md。 -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.com.magpieremote.personal</string>
+    </array>
+</dict>
+</plist>

@@ -6,7 +6,9 @@
 （对象 ID 不同不影响构建）。对象 ID 由名称确定性生成，重复运行结果不变，便于审查差异。
 
 只支持本仓库用到的结构：一个 App target（MagpieRemoteApp/ 下的源文件与资源 + CHANGELOG.md）、
-一个 UI 测试 target（MagpieRemoteUITests/）、一个本地 Swift 包（MagpieRemoteCore）。
+一个小组件扩展 target（MagpieRemoteWidgets/，嵌入 App 的 PlugIns/，另外共用 App 的 OfficialIconViews.swift 与
+Assets.xcassets）、一个 UI 测试 target（MagpieRemoteUITests/）、一个本地 Swift 包（MagpieRemoteCore，App 与扩展都链接）。
+`.entitlements` 只登记文件引用（由 CODE_SIGN_ENTITLEMENTS 引用），不进任何构建阶段。
 用法：python3 scripts/sync-xcodeproj.py [--check]
 """
 from __future__ import annotations
@@ -24,6 +26,12 @@ WORKSPACE = PROJ / "project.xcworkspace" / "contents.xcworkspacedata"
 APP = "MagpieRemote"
 APP_DIR = "MagpieRemoteApp"
 UI = "MagpieRemoteUITests"
+WIDGET = "MagpieRemoteWidgets"
+WIDGET_DIR = "MagpieRemoteWidgets"
+# 小组件扩展也编译 / 打包的 App 文件（同一个文件引用，扩展里另有一份构建文件）。
+WIDGET_SHARED_SOURCES = (f"{APP_DIR}/OfficialIconViews.swift",)
+WIDGET_SHARED_RESOURCES = (f"{APP_DIR}/Assets.xcassets",)
+APP_GROUP = "group.com.magpieremote.personal"
 CORE = "MagpieRemoteCore"
 BUNDLE_ID = "com.magpieremote.personal"
 EXCLUDED = {"Info.plist", ".DS_Store"}
@@ -33,6 +41,7 @@ FILE_TYPES = {
     ".md": "net.daringfireball.markdown",
     ".plist": "text.plist.xml",
     ".json": "text.json",
+    ".entitlements": "text.plist.entitlements",
 }
 
 
@@ -103,6 +112,7 @@ def generate() -> tuple[str, str]:
     v = project_values()
     app_tree = Tree.scan(APP_DIR)
     ui_tree = Tree.scan(UI)
+    widget_tree = Tree.scan(WIDGET_DIR)
 
     ids = {
         "project": oid("project"), "main": oid("group", "main"), "products": oid("group", "Products"),
@@ -115,8 +125,14 @@ def generate() -> tuple[str, str]:
         "core_build": oid("build", CORE), "changelog_ref": oid("file", "CHANGELOG.md"),
         "changelog_build": oid("build", "CHANGELOG.md"),
         "cfg_project": oid("cfglist", "project"), "cfg_app": oid("cfglist", APP), "cfg_ui": oid("cfglist", UI),
+        "widget_target": oid("target", WIDGET), "widget_product": oid("product", WIDGET),
+        "widget_sources": oid("phase", WIDGET, "Sources"), "widget_resources": oid("phase", WIDGET, "Resources"),
+        "widget_frameworks": oid("phase", WIDGET, "Frameworks"), "app_embed": oid("phase", APP, "Embed Foundation Extensions"),
+        "widget_embed_build": oid("build", APP, f"{WIDGET}.appex"), "widget_proxy": oid("proxy", WIDGET),
+        "widget_dependency": oid("dependency", WIDGET), "widget_core_product": oid("productdep", WIDGET, CORE),
+        "widget_core_build": oid("build", WIDGET, CORE), "cfg_widget": oid("cfglist", WIDGET),
     }
-    for scope in ("project", APP, UI):
+    for scope in ("project", APP, UI, WIDGET):
         for config in ("Debug", "Release"):
             ids[f"cfg_{scope}_{config}"] = oid("config", scope, config)
 
@@ -126,6 +142,8 @@ def generate() -> tuple[str, str]:
     app_sources: list[str] = []
     app_resources: list[str] = []
     ui_sources: list[str] = []
+    widget_sources: list[str] = []
+    widget_resources: list[str] = []
 
     def file_ref(path: str) -> str:
         name = Path(path).name
@@ -146,9 +164,11 @@ def generate() -> tuple[str, str]:
             ref = file_ref(path)
             children.append((name, ref))
             build = oid("build", path)
-            if path.endswith(".swift"):
+            if path.endswith(".entitlements"):
+                pass
+            elif path.endswith(".swift"):
                 build_files.append(f"\t\t{build} /* {name} in Sources */ = {{isa = PBXBuildFile; fileRef = {ref} /* {name} */; }};")
-                (app_sources if target == APP else ui_sources).append(f"\t\t\t\t{build} /* {name} in Sources */,")
+                {APP: app_sources, UI: ui_sources, WIDGET: widget_sources}[target].append(f"\t\t\t\t{build} /* {name} in Sources */,")
             elif target == APP:
                 build_files.append(f"\t\t{build} /* {name} in Resources */ = {{isa = PBXBuildFile; fileRef = {ref} /* {name} */; }};")
                 app_resources.append(f"\t\t\t\t{build} /* {name} in Resources */,")
@@ -160,20 +180,31 @@ def generate() -> tuple[str, str]:
 
     app_group = add_tree(app_tree, APP)
     ui_group = add_tree(ui_tree, UI)
+    widget_group = add_tree(widget_tree, WIDGET)
+    for path in WIDGET_SHARED_SOURCES + WIDGET_SHARED_RESOURCES:
+        if not (ROOT / path).exists():
+            raise SystemExit(f"小组件共用的文件不存在：{path}")
+        name, ref, build = Path(path).name, oid("file", path), oid("build", WIDGET, path)
+        phase_name = "Sources" if path.endswith(".swift") else "Resources"
+        build_files.append(f"\t\t{build} /* {name} in {phase_name} */ = {{isa = PBXBuildFile; fileRef = {ref} /* {name} */; }};")
+        (widget_sources if phase_name == "Sources" else widget_resources).append(f"\t\t\t\t{build} /* {name} in {phase_name} */,")
 
     build_files.append(f"\t\t{ids['changelog_build']} /* CHANGELOG.md in Resources */ = {{isa = PBXBuildFile; fileRef = {ids['changelog_ref']} /* CHANGELOG.md */; }};")
     app_resources.insert(0, f"\t\t\t\t{ids['changelog_build']} /* CHANGELOG.md in Resources */,")
     build_files.append(f"\t\t{ids['core_build']} /* {CORE} in Frameworks */ = {{isa = PBXBuildFile; productRef = {ids['core_product']} /* {CORE} */; }};")
+    build_files.append(f"\t\t{ids['widget_core_build']} /* {CORE} in Frameworks */ = {{isa = PBXBuildFile; productRef = {ids['widget_core_product']} /* {CORE} */; }};")
+    build_files.append(f"\t\t{ids['widget_embed_build']} /* {WIDGET}.appex in Embed Foundation Extensions */ = {{isa = PBXBuildFile; fileRef = {ids['widget_product']} /* {WIDGET}.appex */; settings = {{ATTRIBUTES = (RemoveHeadersOnCopy, ); }}; }};")
     file_refs += [
         f'\t\t{ids["changelog_ref"]} /* CHANGELOG.md */ = {{isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; }};',
         f"\t\t{ids['core_ref']} /* {CORE} */ = {{isa = PBXFileReference; lastKnownFileType = folder; name = {CORE}; path = {CORE}; sourceTree = SOURCE_ROOT; }};",
         f"\t\t{ids['app_product']} /* {APP}.app */ = {{isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = {APP}.app; sourceTree = BUILT_PRODUCTS_DIR; }};",
         f"\t\t{ids['ui_product']} /* {UI}.xctest */ = {{isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = {UI}.xctest; sourceTree = BUILT_PRODUCTS_DIR; }};",
+        f"\t\t{ids['widget_product']} /* {WIDGET}.appex */ = {{isa = PBXFileReference; explicitFileType = \"wrapper.app-extension\"; includeInIndex = 0; path = {WIDGET}.appex; sourceTree = BUILT_PRODUCTS_DIR; }};",
     ]
     groups += [
-        f'\t\t{ids["main"]} = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{ids["changelog_ref"]} /* CHANGELOG.md */,\n\t\t\t\t{app_group} /* {APP_DIR} */,\n\t\t\t\t{ui_group} /* {UI} */,\n\t\t\t\t{ids["packages"]} /* Packages */,\n\t\t\t\t{ids["products"]} /* Products */,\n\t\t\t);\n\t\t\tsourceTree = "<group>";\n\t\t}};',
+        f'\t\t{ids["main"]} = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{ids["changelog_ref"]} /* CHANGELOG.md */,\n\t\t\t\t{app_group} /* {APP_DIR} */,\n\t\t\t\t{ui_group} /* {UI} */,\n\t\t\t\t{widget_group} /* {WIDGET_DIR} */,\n\t\t\t\t{ids["packages"]} /* Packages */,\n\t\t\t\t{ids["products"]} /* Products */,\n\t\t\t);\n\t\t\tsourceTree = "<group>";\n\t\t}};',
         f'\t\t{ids["packages"]} /* Packages */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{ids["core_ref"]} /* {CORE} */,\n\t\t\t);\n\t\t\tname = Packages;\n\t\t\tsourceTree = "<group>";\n\t\t}};',
-        f'\t\t{ids["products"]} /* Products */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{ids["app_product"]} /* {APP}.app */,\n\t\t\t\t{ids["ui_product"]} /* {UI}.xctest */,\n\t\t\t);\n\t\t\tname = Products;\n\t\t\tsourceTree = "<group>";\n\t\t}};',
+        f'\t\t{ids["products"]} /* Products */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{ids["app_product"]} /* {APP}.app */,\n\t\t\t\t{ids["ui_product"]} /* {UI}.xctest */,\n\t\t\t\t{ids["widget_product"]} /* {WIDGET}.appex */,\n\t\t\t);\n\t\t\tname = Products;\n\t\t\tsourceTree = "<group>";\n\t\t}};',
     ]
 
     common = {
@@ -197,7 +228,7 @@ def generate() -> tuple[str, str]:
         "GCC_WARN_UNDECLARED_SELECTOR": "YES", "GCC_WARN_UNINITIALIZED_AUTOS": "YES_AGGRESSIVE",
         "GCC_WARN_UNUSED_FUNCTION": "YES", "GCC_WARN_UNUSED_VARIABLE": "YES",
         "IPHONEOS_DEPLOYMENT_TARGET": v["IPHONEOS_DEPLOYMENT_TARGET"], "MARKETING_VERSION": v["MARKETING_VERSION"],
-        "MTL_FAST_MATH": "YES", "PRODUCT_NAME": "$(TARGET_NAME)", "SDKROOT": "iphoneos", "SWIFT_VERSION": v["SWIFT_VERSION"],
+        "MAGPIE_APP_GROUP": APP_GROUP, "MTL_FAST_MATH": "YES", "PRODUCT_NAME": "$(TARGET_NAME)", "SDKROOT": "iphoneos", "SWIFT_VERSION": v["SWIFT_VERSION"],
     }
     project_debug = dict(common, DEBUG_INFORMATION_FORMAT="dwarf", ENABLE_TESTABILITY="YES", GCC_DYNAMIC_NO_PIC="NO",
                          GCC_OPTIMIZATION_LEVEL="0", GCC_PREPROCESSOR_DEFINITIONS=["$(inherited)", "DEBUG=1"],
@@ -207,6 +238,7 @@ def generate() -> tuple[str, str]:
                            MTL_ENABLE_DEBUG_INFO="NO", SWIFT_COMPILATION_MODE="wholemodule", SWIFT_OPTIMIZATION_LEVEL="-O")
     app_settings = {
         "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon", "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
+        "CODE_SIGN_ENTITLEMENTS": f"{APP_DIR}/MagpieRemote.entitlements",
         "CODE_SIGN_IDENTITY": "iPhone Developer", "GENERATE_INFOPLIST_FILE": "NO",
         "INFOPLIST_FILE": f"{APP_DIR}/Info.plist", "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks"],
         "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID, "PRODUCT_NAME": APP, "SDKROOT": "iphoneos",
@@ -218,8 +250,17 @@ def generate() -> tuple[str, str]:
         "PRODUCT_BUNDLE_IDENTIFIER": f"{BUNDLE_ID}.uitests", "SDKROOT": "iphoneos", "TARGETED_DEVICE_FAMILY": "1,2",
         "TEST_TARGET_NAME": APP,
     }
+    widget_settings = {
+        "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
+        "CODE_SIGN_ENTITLEMENTS": f"{WIDGET_DIR}/{WIDGET}.entitlements", "CODE_SIGN_IDENTITY": "iPhone Developer",
+        "GENERATE_INFOPLIST_FILE": "NO", "INFOPLIST_FILE": f"{WIDGET_DIR}/Info.plist",
+        "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"],
+        "PRODUCT_BUNDLE_IDENTIFIER": f"{BUNDLE_ID}.widgets", "PRODUCT_NAME": WIDGET, "SDKROOT": "iphoneos",
+        "SKIP_INSTALL": "YES", "SUPPORTS_MACCATALYST": "NO", "TARGETED_DEVICE_FAMILY": "1,2",
+    }
     configs = []
-    for scope, debug, release in (("project", project_debug, project_release), (APP, app_settings, app_settings), (UI, ui_settings, ui_settings)):
+    for scope, debug, release in (("project", project_debug, project_release), (APP, app_settings, app_settings), (UI, ui_settings, ui_settings),
+                                  (WIDGET, widget_settings, widget_settings)):
         for config, settings in (("Debug", debug), ("Release", release)):
             configs.append(f"\t\t{ids[f'cfg_{scope}_{config}']} /* {config} */ = {{\n\t\t\tisa = XCBuildConfiguration;\n\t\t\tbuildSettings = {{\n{settings_block(settings)}\n\t\t\t}};\n\t\t\tname = {config};\n\t\t}};")
 
@@ -239,33 +280,47 @@ def generate() -> tuple[str, str]:
     out = ["// !$*UTF8*$!\n{\n\tarchiveVersion = 1;\n\tclasses = {\n\t};\n\tobjectVersion = 77;\n\tobjects = {\n\n"]
     out.append(section("PBXBuildFile", by_id(build_files)) + "\n")
     out.append(section("PBXContainerItemProxy", [
-        f"\t\t{ids['proxy']} /* PBXContainerItemProxy */ = {{\n\t\t\tisa = PBXContainerItemProxy;\n\t\t\tcontainerPortal = {ids['project']} /* Project object */;\n\t\t\tproxyType = 1;\n\t\t\tremoteGlobalIDString = {ids['app_target']};\n\t\t\tremoteInfo = {APP};\n\t\t}};"]) + "\n")
+        f"\t\t{ids['proxy']} /* PBXContainerItemProxy */ = {{\n\t\t\tisa = PBXContainerItemProxy;\n\t\t\tcontainerPortal = {ids['project']} /* Project object */;\n\t\t\tproxyType = 1;\n\t\t\tremoteGlobalIDString = {ids['app_target']};\n\t\t\tremoteInfo = {APP};\n\t\t}};",
+        f"\t\t{ids['widget_proxy']} /* PBXContainerItemProxy */ = {{\n\t\t\tisa = PBXContainerItemProxy;\n\t\t\tcontainerPortal = {ids['project']} /* Project object */;\n\t\t\tproxyType = 1;\n\t\t\tremoteGlobalIDString = {ids['widget_target']};\n\t\t\tremoteInfo = {WIDGET};\n\t\t}};"]) + "\n")
+    out.append(section("PBXCopyFilesBuildPhase", [
+        f"\t\t{ids['app_embed']} /* Embed Foundation Extensions */ = {{\n\t\t\tisa = PBXCopyFilesBuildPhase;\n\t\t\tbuildActionMask = 2147483647;\n\t\t\tdstPath = \"\";\n\t\t\tdstSubfolderSpec = 13;\n\t\t\tfiles = (\n\t\t\t\t{ids['widget_embed_build']} /* {WIDGET}.appex in Embed Foundation Extensions */,\n\t\t\t);\n\t\t\tname = \"Embed Foundation Extensions\";\n\t\t\trunOnlyForDeploymentPostprocessing = 0;\n\t\t}};"]) + "\n")
     out.append(section("PBXFileReference", by_id(file_refs)) + "\n")
-    out.append(section("PBXFrameworksBuildPhase", [phase(ids["app_frameworks"], "PBXFrameworksBuildPhase", "Frameworks", [f"\t\t\t\t{ids['core_build']} /* {CORE} in Frameworks */,"])]) + "\n")
+    out.append(section("PBXFrameworksBuildPhase", by_id([
+        phase(ids["app_frameworks"], "PBXFrameworksBuildPhase", "Frameworks", [f"\t\t\t\t{ids['core_build']} /* {CORE} in Frameworks */,"]),
+        phase(ids["widget_frameworks"], "PBXFrameworksBuildPhase", "Frameworks", [f"\t\t\t\t{ids['widget_core_build']} /* {CORE} in Frameworks */,"]),
+    ])) + "\n")
     out.append(section("PBXGroup", by_id(groups)) + "\n")
     out.append(section("PBXNativeTarget", [
-        f"\t\t{ids['app_target']} /* {APP} */ = {{\n\t\t\tisa = PBXNativeTarget;\n\t\t\tbuildConfigurationList = {ids['cfg_app']} /* Build configuration list for PBXNativeTarget \"{APP}\" */;\n\t\t\tbuildPhases = (\n\t\t\t\t{ids['app_sources']} /* Sources */,\n\t\t\t\t{ids['app_resources']} /* Resources */,\n\t\t\t\t{ids['app_frameworks']} /* Frameworks */,\n\t\t\t);\n\t\t\tbuildRules = (\n\t\t\t);\n\t\t\tdependencies = (\n\t\t\t);\n\t\t\tname = {APP};\n\t\t\tpackageProductDependencies = (\n\t\t\t\t{ids['core_product']} /* {CORE} */,\n\t\t\t);\n\t\t\tproductName = {APP};\n\t\t\tproductReference = {ids['app_product']} /* {APP}.app */;\n\t\t\tproductType = \"com.apple.product-type.application\";\n\t\t}};",
+        f"\t\t{ids['app_target']} /* {APP} */ = {{\n\t\t\tisa = PBXNativeTarget;\n\t\t\tbuildConfigurationList = {ids['cfg_app']} /* Build configuration list for PBXNativeTarget \"{APP}\" */;\n\t\t\tbuildPhases = (\n\t\t\t\t{ids['app_sources']} /* Sources */,\n\t\t\t\t{ids['app_resources']} /* Resources */,\n\t\t\t\t{ids['app_frameworks']} /* Frameworks */,\n\t\t\t\t{ids['app_embed']} /* Embed Foundation Extensions */,\n\t\t\t);\n\t\t\tbuildRules = (\n\t\t\t);\n\t\t\tdependencies = (\n\t\t\t\t{ids['widget_dependency']} /* PBXTargetDependency */,\n\t\t\t);\n\t\t\tname = {APP};\n\t\t\tpackageProductDependencies = (\n\t\t\t\t{ids['core_product']} /* {CORE} */,\n\t\t\t);\n\t\t\tproductName = {APP};\n\t\t\tproductReference = {ids['app_product']} /* {APP}.app */;\n\t\t\tproductType = \"com.apple.product-type.application\";\n\t\t}};",
         f"\t\t{ids['ui_target']} /* {UI} */ = {{\n\t\t\tisa = PBXNativeTarget;\n\t\t\tbuildConfigurationList = {ids['cfg_ui']} /* Build configuration list for PBXNativeTarget \"{UI}\" */;\n\t\t\tbuildPhases = (\n\t\t\t\t{ids['ui_sources']} /* Sources */,\n\t\t\t);\n\t\t\tbuildRules = (\n\t\t\t);\n\t\t\tdependencies = (\n\t\t\t\t{ids['dependency']} /* PBXTargetDependency */,\n\t\t\t);\n\t\t\tname = {UI};\n\t\t\tpackageProductDependencies = (\n\t\t\t);\n\t\t\tproductName = {UI};\n\t\t\tproductReference = {ids['ui_product']} /* {UI}.xctest */;\n\t\t\tproductType = \"com.apple.product-type.bundle.ui-testing\";\n\t\t}};",
+        f"\t\t{ids['widget_target']} /* {WIDGET} */ = {{\n\t\t\tisa = PBXNativeTarget;\n\t\t\tbuildConfigurationList = {ids['cfg_widget']} /* Build configuration list for PBXNativeTarget \"{WIDGET}\" */;\n\t\t\tbuildPhases = (\n\t\t\t\t{ids['widget_sources']} /* Sources */,\n\t\t\t\t{ids['widget_resources']} /* Resources */,\n\t\t\t\t{ids['widget_frameworks']} /* Frameworks */,\n\t\t\t);\n\t\t\tbuildRules = (\n\t\t\t);\n\t\t\tdependencies = (\n\t\t\t);\n\t\t\tname = {WIDGET};\n\t\t\tpackageProductDependencies = (\n\t\t\t\t{ids['widget_core_product']} /* {CORE} */,\n\t\t\t);\n\t\t\tproductName = {WIDGET};\n\t\t\tproductReference = {ids['widget_product']} /* {WIDGET}.appex */;\n\t\t\tproductType = \"com.apple.product-type.app-extension\";\n\t\t}};",
     ]) + "\n")
     out.append(section("PBXProject", [
-        f"\t\t{ids['project']} /* Project object */ = {{\n\t\t\tisa = PBXProject;\n\t\t\tattributes = {{\n\t\t\t\tBuildIndependentTargetsInParallel = YES;\n\t\t\t\tLastUpgradeCheck = 1430;\n\t\t\t\tTargetAttributes = {{\n\t\t\t\t\t{ids['app_target']} = {{\n\t\t\t\t\t\tProvisioningStyle = Automatic;\n\t\t\t\t\t}};\n\t\t\t\t\t{ids['ui_target']} = {{\n\t\t\t\t\t\tProvisioningStyle = Automatic;\n\t\t\t\t\t\tTestTargetID = {ids['app_target']};\n\t\t\t\t\t}};\n\t\t\t\t}};\n\t\t\t}};\n\t\t\tbuildConfigurationList = {ids['cfg_project']} /* Build configuration list for PBXProject \"{APP}\" */;\n\t\t\tdevelopmentRegion = \"zh-Hans\";\n\t\t\thasScannedForEncodings = 0;\n\t\t\tknownRegions = (\n\t\t\t\tBase,\n\t\t\t\t\"zh-Hans\",\n\t\t\t);\n\t\t\tmainGroup = {ids['main']};\n\t\t\tminimizedProjectReferenceProxies = 1;\n\t\t\tpackageReferences = (\n\t\t\t\t{ids['core_pkg']} /* XCLocalSwiftPackageReference \"{CORE}\" */,\n\t\t\t);\n\t\t\tpreferredProjectObjectVersion = 77;\n\t\t\tproductRefGroup = {ids['products']} /* Products */;\n\t\t\tprojectDirPath = \"\";\n\t\t\tprojectRoot = \"\";\n\t\t\ttargets = (\n\t\t\t\t{ids['app_target']} /* {APP} */,\n\t\t\t\t{ids['ui_target']} /* {UI} */,\n\t\t\t);\n\t\t}};"]) + "\n")
-    out.append(section("PBXResourcesBuildPhase", [phase(ids["app_resources"], "PBXResourcesBuildPhase", "Resources", app_resources)]) + "\n")
+        f"\t\t{ids['project']} /* Project object */ = {{\n\t\t\tisa = PBXProject;\n\t\t\tattributes = {{\n\t\t\t\tBuildIndependentTargetsInParallel = YES;\n\t\t\t\tLastUpgradeCheck = 1430;\n\t\t\t\tTargetAttributes = {{\n\t\t\t\t\t{ids['app_target']} = {{\n\t\t\t\t\t\tProvisioningStyle = Automatic;\n\t\t\t\t\t}};\n\t\t\t\t\t{ids['ui_target']} = {{\n\t\t\t\t\t\tProvisioningStyle = Automatic;\n\t\t\t\t\t\tTestTargetID = {ids['app_target']};\n\t\t\t\t\t}};\n\t\t\t\t\t{ids['widget_target']} = {{\n\t\t\t\t\t\tProvisioningStyle = Automatic;\n\t\t\t\t\t}};\n\t\t\t\t}};\n\t\t\t}};\n\t\t\tbuildConfigurationList = {ids['cfg_project']} /* Build configuration list for PBXProject \"{APP}\" */;\n\t\t\tdevelopmentRegion = \"zh-Hans\";\n\t\t\thasScannedForEncodings = 0;\n\t\t\tknownRegions = (\n\t\t\t\tBase,\n\t\t\t\t\"zh-Hans\",\n\t\t\t);\n\t\t\tmainGroup = {ids['main']};\n\t\t\tminimizedProjectReferenceProxies = 1;\n\t\t\tpackageReferences = (\n\t\t\t\t{ids['core_pkg']} /* XCLocalSwiftPackageReference \"{CORE}\" */,\n\t\t\t);\n\t\t\tpreferredProjectObjectVersion = 77;\n\t\t\tproductRefGroup = {ids['products']} /* Products */;\n\t\t\tprojectDirPath = \"\";\n\t\t\tprojectRoot = \"\";\n\t\t\ttargets = (\n\t\t\t\t{ids['app_target']} /* {APP} */,\n\t\t\t\t{ids['ui_target']} /* {UI} */,\n\t\t\t\t{ids['widget_target']} /* {WIDGET} */,\n\t\t\t);\n\t\t}};"]) + "\n")
+    out.append(section("PBXResourcesBuildPhase", by_id([
+        phase(ids["app_resources"], "PBXResourcesBuildPhase", "Resources", app_resources),
+        phase(ids["widget_resources"], "PBXResourcesBuildPhase", "Resources", widget_resources),
+    ])) + "\n")
     out.append(section("PBXSourcesBuildPhase", by_id([
         phase(ids["app_sources"], "PBXSourcesBuildPhase", "Sources", sorted(app_sources, key=lambda l: l.split("/* ")[1].lower())),
         phase(ids["ui_sources"], "PBXSourcesBuildPhase", "Sources", sorted(ui_sources, key=lambda l: l.split("/* ")[1].lower())),
+        phase(ids["widget_sources"], "PBXSourcesBuildPhase", "Sources", sorted(widget_sources, key=lambda l: l.split("/* ")[1].lower())),
     ])) + "\n")
     out.append(section("PBXTargetDependency", [
-        f"\t\t{ids['dependency']} /* PBXTargetDependency */ = {{\n\t\t\tisa = PBXTargetDependency;\n\t\t\ttarget = {ids['app_target']} /* {APP} */;\n\t\t\ttargetProxy = {ids['proxy']} /* PBXContainerItemProxy */;\n\t\t}};"]) + "\n")
+        f"\t\t{ids['dependency']} /* PBXTargetDependency */ = {{\n\t\t\tisa = PBXTargetDependency;\n\t\t\ttarget = {ids['app_target']} /* {APP} */;\n\t\t\ttargetProxy = {ids['proxy']} /* PBXContainerItemProxy */;\n\t\t}};",
+        f"\t\t{ids['widget_dependency']} /* PBXTargetDependency */ = {{\n\t\t\tisa = PBXTargetDependency;\n\t\t\ttarget = {ids['widget_target']} /* {WIDGET} */;\n\t\t\ttargetProxy = {ids['widget_proxy']} /* PBXContainerItemProxy */;\n\t\t}};"]) + "\n")
     out.append(section("XCBuildConfiguration", by_id(configs)) + "\n")
     out.append(section("XCConfigurationList", by_id([
         config_list("cfg_project", "project", f'PBXProject "{APP}"'),
         config_list("cfg_app", APP, f'PBXNativeTarget "{APP}"'),
         config_list("cfg_ui", UI, f'PBXNativeTarget "{UI}"'),
+        config_list("cfg_widget", WIDGET, f'PBXNativeTarget "{WIDGET}"'),
     ])) + "\n")
     out.append(section("XCLocalSwiftPackageReference", [
         f"\t\t{ids['core_pkg']} /* XCLocalSwiftPackageReference \"{CORE}\" */ = {{\n\t\t\tisa = XCLocalSwiftPackageReference;\n\t\t\trelativePath = {CORE};\n\t\t}};"]) + "\n")
     out.append(section("XCSwiftPackageProductDependency", [
-        f"\t\t{ids['core_product']} /* {CORE} */ = {{\n\t\t\tisa = XCSwiftPackageProductDependency;\n\t\t\tproductName = {CORE};\n\t\t}};"]))
+        f"\t\t{ids['core_product']} /* {CORE} */ = {{\n\t\t\tisa = XCSwiftPackageProductDependency;\n\t\t\tproductName = {CORE};\n\t\t}};",
+        f"\t\t{ids['widget_core_product']} /* {CORE} */ = {{\n\t\t\tisa = XCSwiftPackageProductDependency;\n\t\t\tproductName = {CORE};\n\t\t}};"]))
     out.append(f"\t}};\n\trootObject = {ids['project']} /* Project object */;\n}}\n")
     pbx = "".join(out)
 
