@@ -214,7 +214,7 @@ private struct UsageBreakdownSection: View {
                     .font(.footnote).foregroundStyle(.secondary)
             } else {
                 ForEach(showAll ? items : Array(items.prefix(8))) { item in
-                    BreakdownRow(item: item)
+                    BreakdownRow(item: item, icon: summary.officialIcon(for: item, in: dimension))
                 }
                 if items.count > 8 {
                     Button(showAll ? "收起" : "显示全部 \(items.count) 项") { showAll.toggle() }
@@ -228,10 +228,16 @@ private struct UsageBreakdownSection: View {
 
 private struct BreakdownRow: View {
     let item: UsageBreakdownItem
+    /// 官方标志（模型厂商 / Agent / 供应商）；nil 时不留位置。
+    var icon: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
+                if let icon {
+                    // 图标中线对齐第一行文字（基线往上约 5pt）
+                    BrandIcon(icon, size: 18).alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 5 }
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.title).font(.body).lineLimit(1)
                     if let subtitle = item.subtitle {

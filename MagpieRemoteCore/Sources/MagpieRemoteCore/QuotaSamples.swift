@@ -6,22 +6,22 @@ public enum QuotaSamples {
     public static func cards(now: Date = Date()) -> [QuotaCard] {
         let json = """
         {"object":"list","data":[
-          {"provider":"claude","name":"Claude","icon":"claude","plan":"Max 5x","user":"work@example.com","alias":"工作 Claude",
+          {"provider":"claude","name":"Claude","icon":"claude-color","plan":"Max 5x","user":"work@example.com","alias":"工作 Claude",
            "windows":[{"name":"5 hours","used":37,"resetsAt":"\(rfc(now, 2 * 3600 + 18 * 60))"},
                       {"name":"Week","used":61.5,"resetsAt":"\(rfc(now, 3 * 86400 + 6 * 3600))"}],
            "readAt":"\(rfc(now, -90))","kind":"subscription"},
-          {"provider":"claude","name":"Claude","icon":"claude","plan":"Pro","user":"me@example.com",
+          {"provider":"claude","name":"Claude","icon":"claude-color","plan":"Pro","user":"me@example.com",
            "windows":[{"name":"5 hours","used":92,"resetsAt":"\(rfc(now, 47 * 60))"},
                       {"name":"Week","used":40,"resetsAt":"\(rfc(now, 5 * 86400))"}],
            "readAt":"\(rfc(now, -4 * 60))","kind":"subscription"},
-          {"provider":"codex","name":"Codex","icon":"codex","plan":"Plus","user":"me@example.com",
+          {"provider":"codex","name":"Codex","icon":"codex-color","plan":"Plus","user":"me@example.com",
            "windows":[{"name":"5 hours","used":100,"resetSecs":5400},
                       {"name":"Week","used":44,"resetsAt":"\(rfc(now, 2 * 86400 + 3 * 3600))"}],
            "readAt":"\(rfc(now, -10 * 60))","kind":"subscription"},
           {"provider":"zai","name":"Z.ai Coding Plan","icon":"zai","plan":"Pro",
            "windows":[{"name":"5 hours","used":12.4,"display":"248 / 2000","resetsAt":"\(rfc(now, 4 * 3600))"}],
            "until":"\(rfc(now, 44 * 86400))","renew":"auto","readAt":"\(rfc(now, -60))","kind":"plan"},
-          {"provider":"deepseek","name":"DeepSeek","icon":"deepseek","windows":null,"balance":"¥ 23.71",
+          {"provider":"deepseek","name":"DeepSeek","icon":"deepseek-color","windows":null,"balance":"¥ 23.71",
            "readAt":"\(rfc(now, -60))","kind":"balance"}
         ]}
         """

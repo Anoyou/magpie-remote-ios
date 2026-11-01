@@ -109,7 +109,7 @@ private struct DockSlotRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Text("\(index + 1)").monospacedDigit().foregroundStyle(.secondary).frame(width: 18)
-            Label(page.title, systemImage: page.symbol)
+            Label(page.title, page: page)
                 .accessibilityIdentifier("dock.slot.\(index)")
             Spacer()
             Menu {
@@ -118,7 +118,7 @@ private struct DockSlotRow: View {
                         Button {
                             dock.place(other, at: index)
                         } label: {
-                            Label(other.title, systemImage: other.symbol)
+                            Label(other.title, page: other)
                         }
                         .accessibilityIdentifier("dock.slot.\(index).use.\(other.rawValue)")
                     }
@@ -161,7 +161,7 @@ private struct DockCandidateRow: View {
                     Text(page.detail).font(.caption).foregroundStyle(.secondary)
                 }
             } icon: {
-                Image(systemName: page.symbol)
+                page.image
             }
             // 整行都能点开菜单（不然只有文字那一小块能点，点行的右半边没反应）。
             .frame(maxWidth: .infinity, alignment: .leading)

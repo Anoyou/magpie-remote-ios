@@ -63,6 +63,14 @@ private struct ProviderRow: View {
     let provider: WebProvider
 
     var body: some View {
+        HStack(spacing: 12) {
+            BrandIcon(provider.officialIcon, size: 22).opacity(provider.off ? 0.5 : 1)
+            details
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var details: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
                 Text(provider.name).foregroundStyle(provider.off ? .secondary : .primary)
@@ -75,7 +83,6 @@ private struct ProviderRow: View {
             Text("\(provider.subtitle) · 开放 \(provider.models.filter(\.on).count)/\(provider.models.count) 个模型")
                 .font(.caption).foregroundStyle(.secondary)
         }
-        .accessibilityElement(children: .combine)
     }
 }
 
