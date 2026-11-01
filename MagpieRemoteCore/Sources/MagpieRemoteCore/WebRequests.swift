@@ -195,6 +195,12 @@ public enum CallerKeyAction: String, Sendable, CaseIterable {
     case resetLimit = "reset-limit-key"
     /// 只读 / 完整权限（官方「设为只读」「恢复完整权限」）。
     case access = "access-key"
+    /// 添加 / 修改 / 删除一条限额（官方「限额」编辑器）。
+    case limit = "limit-key"
+    /// 限定可用模型 / 账号、可看额度（官方「此密钥可用的模型」「额度」）。
+    case models = "models-key"
+    case accounts = "accounts-key"
+    case quotas = "quotas-key"
 }
 
 /// 供应商的操作（对应 `POST /api/provider/{action}`）。
