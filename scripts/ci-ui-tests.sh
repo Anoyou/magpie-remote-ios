@@ -4,6 +4,8 @@
 # 用法：bash scripts/ci-ui-tests.sh <模拟器 UDID 列表文件>
 #   列表文件每行一个 UDID：第 1 行是编译用的那台，其余是它的克隆（simctl clone，见工作流「选择模拟器」）。
 # 需要的环境变量：XCTESTRUN（build-for-testing 产出的 .xctestrun）、RESULTS_DIR（结果包与日志的输出目录）。
+# 可选：UI_JOBS（UI 测试分几个 job，默认 1）、UI_JOB_INDEX（本 job 是第几片，从 1 起，默认 1）。
+#   全部用例先分成 UI_JOBS × 本机台数 份，本 job 的第 i 台跑第 (UI_JOB_INDEX - 1) × 台数 + i 份。
 #
 # 做法：
 # - 用例按 scripts/ui-test-shards.py 的预计耗时均分给 N 台模拟器（按单个用例分，不按类分，N = UDID 行数）；
@@ -26,12 +28,14 @@ UDIDS=()
 while IFS= read -r line; do [ -n "$line" ] && UDIDS+=("$line"); done < "$UDID_FILE"
 N=${#UDIDS[@]}
 [ "$N" -ge 1 ] || { echo "::error::没有可用的模拟器"; exit 1; }
-SHARDS=(python3 "$ROOT/scripts/ui-test-shards.py" --shards "$N")
+JOBS=${UI_JOBS:-1}
+JOB=${UI_JOB_INDEX:-1}
+SHARDS=(python3 "$ROOT/scripts/ui-test-shards.py" --shards $(( JOBS * N )))
 TARGET=MagpieRemoteUITests
 DEST() { echo "platform=iOS Simulator,id=$1"; }
 
 worker() {
-  local i="$1" udid="$2" idx=$(( $1 - 1 ))
+  local i="$1" udid="$2" idx=$(( (JOB - 1) * N + $1 - 1 ))
   local list="$WORK/tests-$i.txt" note="$WORK/note-$i.txt"
   "${SHARDS[@]}" --index "$idx" --list > "$list"
   local warm
@@ -91,8 +95,7 @@ load_line() {
   echo "负载 ${load:-?}，可用内存 ${freep:-?}，已用交换 ${swap:-?}"
 }
 
-echo "$N 台模拟器并行（$(date +%T)，$(load_line)）："
-"${SHARDS[@]}" --summary
+echo "第 $JOB/$JOBS 片，本机 $N 台模拟器（$(date +%T)，$(load_line)）"
 START=$(date +%s)
 PIDS=()
 for i in $(seq 1 "$N"); do
