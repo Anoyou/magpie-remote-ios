@@ -245,4 +245,15 @@ final class AgentControlsTests: XCTestCase {
             XCTAssertEqual(try body(StubURLProtocol.lastRequest)["key"]?.string, "key-1")
         }
     }
+
+    func testProviderTest() async throws {
+        StubURLProtocol.handler = { _ in (200, ["Content-Type": "application/json"], try WebFixture.data("provider-test.json")) }
+        let results = try await client.testProvider("relay-one")
+        XCTAssertEqual(StubURLProtocol.lastRequest?.url?.path, "/api/provider/test")
+        XCTAssertEqual(try body(StubURLProtocol.lastRequest)["id"]?.string, "relay-one")
+        XCTAssertEqual(results.map(\.apiName), ["OpenAI", "Responses", "Anthropic"])
+        XCTAssertEqual(results[0].summary, "412 ms")
+        XCTAssertEqual(results[1].summary, "404 · 404 page not found")
+        XCTAssertEqual(results[2].summary, "已测试 work@example.com：1.5 s")
+    }
 }

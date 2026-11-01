@@ -180,6 +180,18 @@ final class ManageStore {
         await run { service in self.apply(try await service.provider(enabled ? .on : .off, WebRequests.providerID(id))) }
     }
 
+    /// 供应商「测试」：不经过 busy（其它操作照常），失败时弹出错误并返回 nil。
+    func testProvider(_ id: String) async -> [ProviderTestResult]? {
+        guard let service else { return nil }
+        do {
+            return try await service.testProvider(id)
+        } catch {
+            let error = MagpieError.from(error)
+            if error != .cancelled { actionError = error }
+            return nil
+        }
+    }
+
     func refetchModels(_ id: String) async {
         await run { service in self.apply(try await service.provider(.models, WebRequests.providerID(id))) }
     }

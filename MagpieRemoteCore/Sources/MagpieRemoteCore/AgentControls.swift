@@ -420,3 +420,56 @@ extension WebClient {
         WebState(json: try await post("/api/profile/\(action.rawValue)", ["name": .string(name)]))
     }
 }
+
+// MARK: 供应商「测试」（POST /api/provider/test）
+
+/// 向供应商的一个端点发的最小请求的结果（magpie `provider.Result`）。
+public struct ProviderTestResult: Hashable, Sendable {
+    /// 多账号供应商：测的是哪个账号。
+    public var account: String
+    /// chat / responses / anthropic / gemini / decide。
+    public var api: String
+    public var ok: Bool
+    public var status: Int
+    public var millis: Int
+    public var model: String
+    public var error: String
+
+    public init(json: WebJSON) {
+        account = json["account"]?.string ?? ""
+        api = json["protocol"]?.string ?? ""
+        ok = json["ok"]?.bool ?? false
+        status = json["status"]?.int ?? 0
+        millis = json["ms"]?.int ?? 0
+        model = json["model"]?.string ?? ""
+        error = json["error"]?.string ?? ""
+    }
+
+    /// 端点在网页上的名字（官方 PROTOS）。
+    public var apiName: String {
+        switch api {
+        case "chat": "OpenAI"
+        case "responses": "Responses"
+        case "anthropic": "Anthropic"
+        case "gemini": "Gemini"
+        case "decide": "System One"
+        default: api
+        }
+    }
+
+    /// 结果一句话（官方：成功显示用时，失败显示「状态码 · 原因」；多账号前面加「已测试 某账号：」）。
+    public var summary: String {
+        let took = millis < 1000 ? "\(millis) ms" : String(format: millis < 10_000 ? "%.1f s" : "%.0f s", Double(millis) / 1000)
+        let result = ok ? took : status > 0 ? "\(status) · \(error)" : error
+        return account.isEmpty ? result : "已测试 \(account)：\(result)"
+    }
+}
+
+extension WebClient {
+    /// 「测试」：向供应商已保存的每个端点各发一个最小请求（主机最多等 25 秒）。
+    public func testProvider(_ id: String) async throws -> [ProviderTestResult] {
+        var request = try makeRequest("/api/provider/test", method: "POST", body: ["id": .string(id)])
+        request.timeoutInterval = 40
+        return (try await send(request)["results"]?.array ?? []).map(ProviderTestResult.init(json:))
+    }
+}

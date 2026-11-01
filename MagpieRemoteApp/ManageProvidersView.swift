@@ -197,6 +197,8 @@ struct ProviderDetailView: View {
                 }
             }
 
+            ProviderTestSection(store: store, provider: provider)
+
             Section {
                 Toggle("启用", isOn: Binding(get: { !provider.off }, set: { on in
                     Task { await store.setProvider(provider.id, enabled: on) }

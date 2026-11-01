@@ -25,6 +25,8 @@ protocol ManageServing: Sendable {
     func agentAction(_ action: AgentAction, _ id: String) async throws -> WebState
     func agentDisconnectPreview(_ id: String) async throws -> AgentDisconnectPreview
     func profile(_ action: ProfileAction, name: String) async throws -> WebState
+    /// 供应商「测试」：每个端点一个最小请求。
+    func testProvider(_ id: String) async throws -> [ProviderTestResult]
     func callerKeys() async throws -> WebCallerKeys
     func callerKey(_ action: CallerKeyAction, _ body: WebJSON) async throws -> WebCallerKeys
     /// 填了签发密钥才能签发临时密钥。
@@ -65,6 +67,7 @@ struct LiveManageService: ManageServing {
     func agentAction(_ action: AgentAction, _ id: String) async throws -> WebState { try await web.agentAction(action, id) }
     func agentDisconnectPreview(_ id: String) async throws -> AgentDisconnectPreview { try await web.agentDisconnectPreview(id) }
     func profile(_ action: ProfileAction, name: String) async throws -> WebState { try await web.profile(action, name: name) }
+    func testProvider(_ id: String) async throws -> [ProviderTestResult] { try await web.testProvider(id) }
     func callerKeys() async throws -> WebCallerKeys { try await web.callerKeys() }
     func callerKey(_ action: CallerKeyAction, _ body: WebJSON) async throws -> WebCallerKeys { try await web.callerKey(action, body) }
 
@@ -417,6 +420,16 @@ actor FixtureManageService: ManageServing {
     func agentDisconnectPreview(_ id: String) async throws -> AgentDisconnectPreview {
         let path = agentList.first { $0["id"]?.string == id }?["path"]?.string ?? "~/.config"
         return AgentDisconnectPreview(json: ["changes": [["path": .string(path), "lines": [["op": "-", "text": "model_provider = \"magpie\""]]]]])
+    }
+
+    func testProvider(_ id: String) async throws -> [ProviderTestResult] {
+        try await Task.sleep(for: .milliseconds(400))
+        let provider = providerList.first { $0["id"]?.string == id }
+        var results: [WebJSON] = [["protocol": "chat", "ok": true, "status": 200, "ms": 412, "model": "example-model"]]
+        if !(provider?["responses"]?.string ?? "").isEmpty {
+            results.append(["protocol": "responses", "ok": false, "status": 404, "ms": 120, "error": "404 page not found"])
+        }
+        return results.map(ProviderTestResult.init(json:))
     }
 
     func profile(_ action: ProfileAction, name: String) async throws -> WebState {
