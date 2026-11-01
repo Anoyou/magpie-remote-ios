@@ -30,7 +30,7 @@ struct ManageWebPageView: View {
     }
 }
 
-private struct MagpieWebView: UIViewRepresentable {
+struct MagpieWebView: UIViewRepresentable {
     let url: URL
     let cookieName: String
     let key: String

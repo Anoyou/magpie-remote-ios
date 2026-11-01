@@ -72,6 +72,17 @@ struct ManageView: View {
                 HostToolsSection(store: store)
 
                 Section {
+                    NavigationLink {
+                        ManagePluginsView(manage: store)
+                    } label: {
+                        Label("插件", systemImage: "puzzlepiece.extension")
+                    }
+                    .accessibilityIdentifier("manage.plugins")
+                } footer: {
+                    Text("已安装与内置插件：开关、检查更新、添加、移除和选项。")
+                }
+
+                Section {
                     ForEach(MagpieWebPage.allCases) { page in
                         NavigationLink {
                             ManageWebPageView(store: store, page: page)

@@ -833,10 +833,41 @@
      "moved?",
      "added?",
      "had?",
-     "removed?"
+     "removed?",
+     "plugins[].pid",
+     "plugins[].name",
+     "plugins[].spec",
+     "plugins[].options[]?.key",
+     "plugins[].options[]?.label",
+     "plugins[].options[]?.on"
     ]
    },
    "goTags": [
+    {
+     "file": "internal/gui/plugins.go",
+     "tags": [
+      "id",
+      "pid",
+      "name",
+      "icon",
+      "spec",
+      "methods",
+      "signedIn",
+      "models",
+      "options",
+      "on"
+     ]
+    },
+    {
+     "file": "internal/plugin/providers.go",
+     "tags": [
+      "key",
+      "label",
+      "description",
+      "default",
+      "confirm"
+     ]
+    },
     {
      "file": "internal/gui/providers.go",
      "tags": [
@@ -2023,6 +2054,330 @@
      ]
     }
    ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "plugins[].spec",
+     "plugins[].off?",
+     "plugins[].options?",
+     "plugins[].error?",
+     "plugins[].providers",
+     "plugins[].version?",
+     "plugins[].latest?",
+     "plugins[].icon?",
+     "plugins[].package?",
+     "plugins[].ownName?",
+     "plugins[].commit?",
+     "plugins[].head?",
+     "plugins[].optionsExample?",
+     "plugins[].isMiddleware?",
+     "plugins[].isGateway?",
+     "plugins[].isAgent?",
+     "plugins[].page?.title?",
+     "plugins[].page?.reads",
+     "plugins[].panels[]?.slot",
+     "plugins[].tools[]?.name",
+     "bun",
+     "bunVersion",
+     "error?",
+     "mirror"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/plugins.go",
+     "tags": [
+      "plugins",
+      "bun",
+      "bunVersion",
+      "error",
+      "mirror",
+      "providers",
+      "version",
+      "latest",
+      "icon",
+      "package",
+      "ownName",
+      "commit",
+      "head",
+      "optionsExample",
+      "isMiddleware",
+      "isGateway",
+      "isAgent",
+      "page",
+      "panels",
+      "tools",
+      "title",
+      "reads",
+      "slot",
+      "name",
+      "listings",
+      "npm"
+     ]
+    },
+    {
+     "file": "internal/plugin/store.go",
+     "tags": [
+      "spec",
+      "off",
+      "options"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/plugins/{op}",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"POST /api/plugins/{op}\"",
+   "actions": [
+    "add",
+    "remove",
+    "update",
+    "upgrade",
+    "off",
+    "options",
+    "prefer"
+   ],
+   "fields": {
+    "request": [
+     "spec",
+     "off?",
+     "options?",
+     "provider?"
+    ],
+    "response": [
+     "<pluginsJSON>"
+    ]
+   },
+   "note": "untagged struct{ Spec string; Off bool; Options map[string]any; Provider string }; options replaces the whole map; add/update/upgrade may take minutes (Bun download, npm install)"
+  },
+  {
+   "method": "POST",
+   "path": "/api/plugins/check",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"POST /api/plugins/check\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "at",
+     "plugins[].spec",
+     "plugins[].package",
+     "plugins[].version",
+     "plugins[].status",
+     "plugins[].latest?",
+     "plugins[].why?",
+     "plugins[].error?",
+     "state"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/plugin/updates.go",
+     "tags": [
+      "at",
+      "plugins",
+      "spec",
+      "package",
+      "version",
+      "latest",
+      "status",
+      "commit",
+      "head",
+      "why",
+      "error",
+      "limited",
+      "auto"
+     ]
+    }
+   ],
+   "note": "asks npm now; installs nothing"
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/builtin",
+   "source": "internal/gui/builtins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/builtin\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<[]builtinJSON>"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/builtins.go",
+     "tags": [
+      "id",
+      "name",
+      "sub",
+      "on",
+      "chosen",
+      "source",
+      "state",
+      "why",
+      "inUse",
+      "use",
+      "parts",
+      "schema",
+      "config",
+      "broken"
+     ]
+    },
+    {
+     "file": "internal/pluginrt/schema.go",
+     "tags": [
+      "type",
+      "properties",
+      "x-order",
+      "title",
+      "description",
+      "enum",
+      "minimum",
+      "maximum",
+      "default"
+     ]
+    }
+   ],
+   "note": "a JSON array; each: id, name (English), sub, on, chosen, state (off|pending|active|failed|disposed), inUse, schema?, config?"
+  },
+  {
+   "method": "POST",
+   "path": "/api/plugins/builtin",
+   "source": "internal/gui/builtins.go",
+   "anchor": "mux.HandleFunc(\"POST /api/plugins/builtin\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "id",
+     "on?",
+     "config?"
+    ],
+    "response": [
+     "<[]builtinJSON>"
+    ]
+   },
+   "note": "exactly one of on / config; config is merged after schema validation; one in use is refused off"
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/listings",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/listings\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "listings[].package",
+     "listings[].name",
+     "listings[].kind?",
+     "listings[].summary?",
+     "listings[].npm?"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/plugin/market.go",
+     "tags": [
+      "package",
+      "name",
+      "icon",
+      "providers",
+      "community",
+      "replaces",
+      "kind",
+      "summary",
+      "version",
+      "description",
+      "weekly"
+     ]
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugins/agents",
+   "source": "internal/gui/plugins.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugins/agents\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<[]string>"
+    ]
+   },
+   "note": "names of agent plugins in the market that are not installed"
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugin-pages",
+   "source": "internal/gui/pluginpage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugin-pages\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<[]pluginPage>"
+    ]
+   },
+   "goTags": [
+    {
+     "file": "internal/gui/pluginpage.go",
+     "tags": [
+      "spec",
+      "name",
+      "key",
+      "title",
+      "titles",
+      "url",
+      "icon",
+      "replaces",
+      "reads",
+      "slot"
+     ]
+    }
+   ],
+   "note": "a JSON array; open a page in the web shell as /?view=<key> (the page file itself expects the window's bridge)"
+  },
+  {
+   "method": "GET",
+   "path": "/api/plugin-panels",
+   "source": "internal/gui/pluginpage.go",
+   "anchor": "mux.HandleFunc(\"GET /api/plugin-panels\"",
+   "actions": [],
+   "fields": {
+    "request": [],
+    "response": [
+     "<[]pluginPanel>"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/api/settings/plugin-option",
+   "source": "internal/gui/api.go",
+   "anchor": "mux.HandleFunc(\"POST /api/settings/plugin-option\"",
+   "actions": [],
+   "fields": {
+    "request": [
+     "provider",
+     "key",
+     "on"
+    ],
+    "response": [
+     "<settingsJSON>"
+    ]
+   },
+   "note": "untagged struct{ Provider, Key string; On bool }; provider = the plugin's own provider id (pid)"
   }
  ]
 }
