@@ -1,6 +1,7 @@
 name: 模拟器缓存预热
 
-# 在 main 上生成并保存模拟器 dyld 共享缓存（scripts/ci-sim-dyld-cache.sh），供所有 PR 的「iOS」UI 测试分片恢复。
+# 在 main 上生成并保存模拟器 dyld 共享缓存（scripts/ci-sim-dyld-cache.sh），供所有 PR 的「iOS」UI 测试恢复；
+# 同时为 main 的最新源码存一份干净的 Xcode 编译缓存（与 ios.yml 同样的 key），PR 第一次编译就能命中大部分文件。
 # actions/cache 的作用域：main 上保存的缓存所有 PR 都能用；PR 上保存的只有该 PR 自己能用。
 # runner 镜像更新后 key 会变，每天跑一次即可跟上；key 已存在时约 1 分钟就结束。
 on:
@@ -23,12 +24,15 @@ concurrency:
 
 env:
   XCODE_APP: /Applications/Xcode_27.app
+  # 与 ios.yml 保持一致。
+  CAS_DIR: ${{ github.workspace }}/build/CompilationCache
+  CAS_PREFIX: xcode-cas-v1-
 
 jobs:
   warm:
     name: 生成模拟器 dyld 缓存
     runs-on: xcode-27
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -37,6 +41,7 @@ jobs:
         run: |
           sudo xcode-select -s "$XCODE_APP/Contents/Developer"
           echo "dyld_key=$(bash scripts/ci-sim-dyld-cache.sh key)" >> "$GITHUB_OUTPUT"
+          echo "xcode_build=$(xcodebuild -version | awk '/Build version/ {print $3}')" >> "$GITHUB_OUTPUT"
 
       - name: 查找已有缓存
         id: dyld
@@ -64,3 +69,38 @@ jobs:
         with:
           path: ${{ runner.temp }}/sim-dyld
           key: ${{ steps.xcode.outputs.dyld_key }}
+
+      # 编译缓存：main 当前源码的 key 已存在就跳过；否则从空目录编译一遍（测试用 Debug + 打包用 Release），存成干净的一份。
+      - name: 查找已有编译缓存
+        id: cas
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.CAS_DIR }}
+          key: ${{ env.CAS_PREFIX }}${{ steps.xcode.outputs.xcode_build }}-${{ hashFiles('MagpieRemoteApp/**', 'MagpieRemoteUITests/**', 'MagpieRemoteCore/Sources/**', 'MagpieRemoteCore/Package.swift', 'MagpieRemote.xcodeproj/project.pbxproj', 'CHANGELOG.md') }}
+          lookup-only: true
+
+      - name: 编译并生成编译缓存
+        id: cas-build
+        if: steps.cas.outputs.cache-hit != 'true'
+        run: |
+          set -o pipefail
+          START=$(date +%s)
+          # 与 ios.yml 相同：用 XCODE_XCCONFIG_FILE 给所有 xcodebuild 打开编译缓存。
+          printf 'COMPILATION_CACHE_ENABLE_CACHING = YES\nCOMPILATION_CACHE_CAS_PATH = %s\n' "$CAS_DIR" > "$RUNNER_TEMP/ci-cache.xcconfig"
+          export XCODE_XCCONFIG_FILE="$RUNNER_TEMP/ci-cache.xcconfig"
+          UDID=$(python3 scripts/ci-select-simulator.py)
+          xcodebuild build-for-testing \
+            -project MagpieRemote.xcodeproj -scheme MagpieRemote -configuration Debug \
+            -destination "platform=iOS Simulator,id=$UDID" \
+            -derivedDataPath "$GITHUB_WORKSPACE/build/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO > "$RUNNER_TEMP/build.log" 2>&1 \
+            || { tail -n 80 "$RUNNER_TEMP/build.log"; exit 1; }
+          bash scripts/build-unsigned.sh "$GITHUB_WORKSPACE/build/ipa" > "$RUNNER_TEMP/ipa.log" 2>&1 || { tail -n 80 "$RUNNER_TEMP/ipa.log"; exit 1; }
+          echo "编译用时 $(( $(date +%s) - START )) 秒，编译缓存 $(du -sh "$CAS_DIR" | cut -f1)"
+
+      - name: 保存编译缓存
+        if: steps.cas-build.outcome == 'success'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.CAS_DIR }}
+          key: ${{ steps.cas.outputs.cache-primary-key }}

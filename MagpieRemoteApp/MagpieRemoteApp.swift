@@ -1,8 +1,15 @@
 import SwiftUI
+import UIKit
 
 @main
 struct MagpieRemoteApp: App {
     @State private var model = AppModel(environment: .current)
+
+    init() {
+        // UI 测试（--ui-testing）关掉 UIKit 过场动画：页面推入、弹出表单、菜单直接到位，
+        // XCUITest 每次点按后不用再等动画播完才算界面静止。只影响测试，真机与演示不受影响。
+        if RT.uiTesting { UIView.setAnimationsEnabled(false) }
+    }
 
     var body: some Scene {
         WindowGroup {

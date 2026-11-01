@@ -38,45 +38,44 @@ final class AgentSessionsUITests: XCTestCase {
     func testListShowsFixtureSessionsAndOpensTranscript() {
         let app = openSessions()
         let row = element(id: "session.row.fixture-claude-1", in: app)
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "没有列出示例会话")
+        XCTAssertTrue(row.appears(timeout: 10), "没有列出示例会话")
         XCTAssertTrue(element(containing: "修复登录页的样式问题", in: app).exists)
         XCTAssertTrue(element(containing: "写一个周报模板", in: app).exists)
         row.tap()
-        XCTAssertTrue(element(containing: "示例回答", in: app).waitForExistence(timeout: 10), "详情页没有显示对话内容")
+        XCTAssertTrue(element(containing: "示例回答", in: app).appears(timeout: 10), "详情页没有显示对话内容")
         XCTAssertTrue(element(containing: "claude-sonnet-4-5", in: app).exists, "概况里应当显示模型")
     }
 
     func testSwitchAgentShowsItsSessions() {
         let app = openSessions()
-        XCTAssertTrue(element(id: "session.row.fixture-claude-1", in: app).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(id: "session.row.fixture-claude-1", in: app).appears(timeout: 10))
         let picker = element(id: "sessions.agent", in: app)
-        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        XCTAssertTrue(picker.appears(timeout: 5))
         picker.tap()
         let codex = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Codex")).firstMatch
-        XCTAssertTrue(codex.waitForExistence(timeout: 5), "Agent 菜单里没有 Codex")
+        XCTAssertTrue(codex.appears(timeout: 5), "Agent 菜单里没有 Codex")
         codex.tap()
-        XCTAssertTrue(element(id: "session.row.fixture-codex-1", in: app).waitForExistence(timeout: 10), "切换后没有列出 Codex 的会话")
+        XCTAssertTrue(element(id: "session.row.fixture-codex-1", in: app).appears(timeout: 10), "切换后没有列出 Codex 的会话")
         XCTAssertFalse(element(id: "session.row.fixture-claude-1", in: app).exists)
     }
 
     func testDeleteSessionAsksForConfirmation() {
         let app = openSessions()
         let row = element(id: "session.row.fixture-claude-2", in: app)
-        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        XCTAssertTrue(row.appears(timeout: 10))
         row.tap()
         let menu = element(id: "session.menu", in: app)
-        XCTAssertTrue(menu.waitForExistence(timeout: 10))
+        XCTAssertTrue(menu.appears(timeout: 10))
         menu.tap()
         let delete = app.menuItem(id: "session.delete", label: "删除会话")
-        XCTAssertTrue(delete.waitForExistence(timeout: 5))
+        XCTAssertTrue(delete.appears(timeout: 5))
         delete.tap()
         let confirm = app.buttons["移到回收站"].firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "删除前应当先弹出确认")
+        XCTAssertTrue(confirm.appears(timeout: 5), "删除前应当先弹出确认")
         confirm.tap()
         // 删除后回到列表，这个会话不再出现，其它的还在
-        XCTAssertTrue(app.navigationBars["会话记录"].waitForExistence(timeout: 10))
-        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element(id: "session.row.fixture-claude-2", in: app))
-        waitForExpectations(timeout: 10)
+        XCTAssertTrue(app.navigationBars["会话记录"].appears(timeout: 10))
+        XCTAssertTrue(element(id: "session.row.fixture-claude-2", in: app).disappears(timeout: 10), "删除后会话不应还在列表里")
         XCTAssertTrue(element(id: "session.row.fixture-claude-1", in: app).exists)
     }
 }

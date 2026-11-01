@@ -9,6 +9,7 @@
 - 用例直接从 MagpieRemoteUITests/*.swift 解析（`class X: XCTestCase` 下的 `func testXxx()`），
   新增的用例不用改任何配置就会自动分到某一片；
 - 耗时取自下面 DURATIONS（CI 实测秒数，2026-11 xcode-27 runner），没有记录的用例按 DEFAULT_SECONDS 估计；
+- 「分片」现在是同一台 runner 上并行的几台模拟器（scripts/ci-ui-tests.sh），不再是多个 job；
 - 用「最长处理时间优先」的贪心法分配：按耗时从大到小，每个用例放进当前预计总耗时最少的分片；
 - `--extra 0=60` 给某一片预先加上额外耗时（第 0 片还要打未签名 IPA，约 1 分钟），让各片结束时间接近；
 - 结果是确定的：同一份源码、同样参数，每次分法都一样。
@@ -23,29 +24,58 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TEST_DIR = ROOT / "MagpieRemoteUITests"
 TARGET = "MagpieRemoteUITests"
-DEFAULT_SECONDS = 25.0
+DEFAULT_SECONDS = 35.0
 
-# CI 实测耗时（秒）。用例改名或耗时明显变化时可以顺手更新，不更新也只是分得没那么均匀。
+# CI 实测耗时（秒，run 41286600774，单台模拟器串行时）。只用来均衡分配：各用例之间的相对快慢比绝对值重要，
+# 用例改名或耗时明显变化时可以顺手更新，不更新也只是分得没那么均匀。
 DURATIONS = {
-    "MagpieRemoteUITests/testAboutShowsVersionAndChangelog": 39,
-    "MagpieRemoteUITests/testChatCreateAndDeleteSession": 47,
-    "MagpieRemoteUITests/testChatSendsMessageAndStreamsReply": 24,
-    "MagpieRemoteUITests/testFixtureHostConnectsAndShowsQuota": 10,
-    "MagpieRemoteUITests/testDefaultDockTabs": 15,
-    "MagpieRemoteUITests/testHostSheetOpensAndAddForm": 15,
-    "MagpieRemoteUITests/testOfflineHostShowsChineseError": 12,
-    "MagpieRemoteUITests/testSetupGuideOpensFromEmptyState": 16,
-    "MagpieRemoteUITests/testUsageFilterToFailed": 29,
-    "MagpieRemoteUITests/testUsageHeldKeyShowsOwnRequestsOnly": 23,
-    "MagpieRemoteUITests/testUsageOpenRequestDetail": 27,
-    "MagpieRemoteUITests/testUsagePeriodSwitch": 23,
-    "ManageUITests/testCreateGatewayKeyShowsSecretOnce": 27,
-    "ManageUITests/testDeleteProviderAsksForConfirmation": 29,
-    "ManageUITests/testProvidersListShowsFixtureProviders": 18,
-    "QuotaUITests/testEmptyStateWhenNoSubscriptionAccounts": 9,
-    "QuotaUITests/testHeldKeyShowsOwnLimit": 9,
-    "QuotaUITests/testHistoryPickerSwitches": 24,
-    "QuotaUITests/testQuotaCardsRender": 11,
+    "AgentSessionsUITests/testDeleteSessionAsksForConfirmation": 33,
+    "AgentSessionsUITests/testListShowsFixtureSessionsAndOpensTranscript": 21,
+    "AgentSessionsUITests/testSwitchAgentShowsItsSessions": 24,
+    "DockUITests/testCustomizeDockAndRestoreDefault": 99,
+    "DockUITests/testDockedPageOpensFromTabAndLeavesMore": 73,
+    "HomeUITests/testAgentsNotSetUpAndHiddenStartFolded": 29,
+    "HomeUITests/testSegmentsSwitchBetweenAgentsProvidersAndQuota": 52,
+    "HostToolsUITests/testHostUpdateDownloadAndRestart": 46,
+    "HostToolsUITests/testPrivacyModelTurnOnAndPick": 51,
+    "HostToolsUITests/testTuneApplyAllThenUndo": 46,
+    "MagpieRemoteUITests/testAboutShowsVersionAndChangelog": 79,
+    "MagpieRemoteUITests/testChatCreateAndDeleteSession": 81,
+    "MagpieRemoteUITests/testChatSendsMessageAndStreamsReply": 50,
+    "MagpieRemoteUITests/testDefaultDockTabs": 26,
+    "MagpieRemoteUITests/testFixtureHostConnectsAndShowsQuota": 21,
+    "MagpieRemoteUITests/testHostSheetOpensAndAddForm": 20,
+    "MagpieRemoteUITests/testOfflineHostShowsChineseError": 21,
+    "MagpieRemoteUITests/testSetupGuideOpensFromEmptyState": 17,
+    "MagpieRemoteUITests/testUsageFilterToFailed": 87,
+    "MagpieRemoteUITests/testUsageHeldKeyShowsOwnRequestsOnly": 60,
+    "MagpieRemoteUITests/testUsageOpenRequestDetail": 73,
+    "MagpieRemoteUITests/testUsagePeriodSwitch": 29,
+    "ManageUITests/testCreateGatewayKeyShowsSecretOnce": 36,
+    "ManageUITests/testDeleteProviderAsksForConfirmation": 37,
+    "ManageUITests/testProvidersListShowsFixtureProviders": 20,
+    "OfficialIconsUITests/testDockTabsKeepTheirTitles": 14,
+    "OfficialIconsUITests/testProviderRowsShowNameNotIconAsset": 24,
+    "PluginsUITests/testAddPluginFromSpecAsksForConfirmation": 55,
+    "PluginsUITests/testDiscoverShowsCommunitySectionsGitHubAndSearch": 78,
+    "PluginsUITests/testListShowsInstalledAndBuiltinPlugins": 47,
+    "PluginsUITests/testRemovePluginAsksForConfirmationAndTogglesWork": 55,
+    "ProviderDetailUITests/testAddAnotherKey": 30,
+    "ProviderDetailUITests/testSavedBaseURLAndKeyRevealToggle": 32,
+    "QuotaUITests/testAccountsStartCollapsedWithSummary": 19,
+    "QuotaUITests/testEmptyStateWhenNoSubscriptionAccounts": 16,
+    "QuotaUITests/testExpandedStateKeptAcrossTabs": 28,
+    "QuotaUITests/testHeldKeyShowsOwnLimit": 16,
+    "QuotaUITests/testHistoryPickerSwitches": 28,
+    "QuotaUITests/testTapExpandsAndCollapsesAccount": 21,
+    "RoutesUITests/testChangeRoutingFromGroupCard": 29,
+    "RoutesUITests/testEditorShowsMemberSpeedsAndRouting": 35,
+    "RoutesUITests/testLiveStageShowsRouteThroughGroup": 24,
+    "RoutesUITests/testMagpieFliesWithTheRequest": 26,
+    "RoutesUITests/testMaskHidesAccounts": 20,
+    "RoutesUITests/testRequestListFoldsToTen": 24,
+    "UsageTabsUITests/testRequestDetailReadsContent": 65,
+    "UsageTabsUITests/testTabsShowRequestsSessionsAndContext": 67,
 }
 
 CLASS_RE = re.compile(r"^\s*(?:@\w+\s+)*(?:final\s+)?class\s+(\w+)\s*:\s*XCTestCase\b")

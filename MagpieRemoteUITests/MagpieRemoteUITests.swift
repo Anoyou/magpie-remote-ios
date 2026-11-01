@@ -34,14 +34,14 @@ final class MagpieRemoteUITests: XCTestCase {
             XCTAssertTrue(app.tabBars.buttons[title].exists, "缺少标签：\(title)")
         }
         XCTAssertFalse(app.tabBars.buttons["管理"].exists, "旧的「管理」标签应当已经去掉")
-        XCTAssertTrue(app.navigationBars["Agent"].waitForExistence(timeout: 10), "首屏应当是主页的「Agent」分页")
+        XCTAssertTrue(app.navigationBars["Agent"].appears(timeout: 10), "首屏应当是主页的「Agent」分页")
         for title in ["Agent", "供应商", "额度"] {
             XCTAssertTrue(app.homeSegments.buttons[title].exists, "主页分页器缺少「\(title)」")
         }
         XCTAssertFalse(app.tabBars.buttons["Agent"].exists, "Agent 已并入主页，不应再单独在底栏")
         app.openMore()
         for id in ["more.chat", "manage.keys"] {
-            XCTAssertTrue(app.descendants(matching: .any).matching(identifier: id).firstMatch.waitForExistence(timeout: 10), "「更多」里缺少 \(id)")
+            XCTAssertTrue(app.descendants(matching: .any).matching(identifier: id).firstMatch.appears(timeout: 10), "「更多」里缺少 \(id)")
         }
         for id in ["more.home", "more.usage", "manage.groups"] {
             XCTAssertFalse(app.descendants(matching: .any).matching(identifier: id).firstMatch.exists, "在底栏里的页面不应再出现在「更多」里：\(id)")
@@ -51,7 +51,7 @@ final class MagpieRemoteUITests: XCTestCase {
     func testFixtureHostConnectsAndShowsQuota() {
         let app = launch()
         app.openHome("额度")
-        XCTAssertTrue(element(containing: "工作 Claude", in: app).waitForExistence(timeout: 15))
+        XCTAssertTrue(element(containing: "工作 Claude", in: app).appears(timeout: 15))
     }
 
     /// 切换主机只在「更多 › 当前主机」：右上角不再有「主机」按钮。
@@ -59,9 +59,9 @@ final class MagpieRemoteUITests: XCTestCase {
         let app = launch()
         XCTAssertFalse(app.buttons["hosts.open"].exists, "右上角不应再有「主机」按钮")
         app.openFromMore("manage.hosts", title: "主机")
-        XCTAssertTrue(element(containing: "示例 Mac", in: app).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(containing: "示例 Mac", in: app).appears(timeout: 10))
         app.buttons["hosts.add"].tap()
-        XCTAssertTrue(app.navigationBars["添加主机"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["添加主机"].appears(timeout: 10))
         XCTAssertTrue(app.textFields["host.address"].exists)
         XCTAssertTrue(app.secureTextFields["host.secret.gateway-key"].exists)
         // 地址为空时不能保存
@@ -70,21 +70,21 @@ final class MagpieRemoteUITests: XCTestCase {
 
     func testSetupGuideOpensFromEmptyState() {
         let app = launch(["--fixture-empty"])
-        XCTAssertTrue(element(containing: "还没有添加主机", in: app).waitForExistence(timeout: 10), "空状态没有出现「还没有添加主机」")
+        XCTAssertTrue(element(containing: "还没有添加主机", in: app).appears(timeout: 10), "空状态没有出现「还没有添加主机」")
         let guide = element(id: "guide.open", in: app)
-        XCTAssertTrue(guide.waitForExistence(timeout: 10), "空状态里没有「配置引导」按钮（guide.open）")
+        XCTAssertTrue(guide.appears(timeout: 10), "空状态里没有「配置引导」按钮（guide.open）")
         guide.tap()
-        XCTAssertTrue(app.navigationBars["配置引导"].waitForExistence(timeout: 10), "没有打开「配置引导」页")
-        XCTAssertTrue(element(containing: "在局域网共享", in: app).waitForExistence(timeout: 5), "配置引导里缺少「在局域网共享」步骤")
-        XCTAssertTrue(element(containing: "magpie daemon web on --lan", in: app).waitForExistence(timeout: 5), "配置引导里缺少 magpie daemon web on --lan 命令")
+        XCTAssertTrue(app.navigationBars["配置引导"].appears(timeout: 10), "没有打开「配置引导」页")
+        XCTAssertTrue(element(containing: "在局域网共享", in: app).appears(timeout: 5), "配置引导里缺少「在局域网共享」步骤")
+        XCTAssertTrue(element(containing: "magpie daemon web on --lan", in: app).appears(timeout: 5), "配置引导里缺少 magpie daemon web on --lan 命令")
     }
 
     func testOfflineHostShowsChineseError() {
         let app = launch(["--fixture-offline"])
         app.openHome("额度")
-        XCTAssertTrue(element(containing: "连不上主机", in: app).waitForExistence(timeout: 15), "没有出现中文错误标题「连不上主机」")
-        XCTAssertTrue(element(containing: "主机都没有回应", in: app).waitForExistence(timeout: 5), "没有出现超时的中文说明")
-        XCTAssertTrue(element(id: "state.retry", in: app).waitForExistence(timeout: 5), "错误页里没有「重试」按钮（state.retry）")
+        XCTAssertTrue(element(containing: "连不上主机", in: app).appears(timeout: 15), "没有出现中文错误标题「连不上主机」")
+        XCTAssertTrue(element(containing: "主机都没有回应", in: app).appears(timeout: 5), "没有出现超时的中文说明")
+        XCTAssertTrue(element(id: "state.retry", in: app).appears(timeout: 5), "错误页里没有「重试」按钮（state.retry）")
     }
 
     func testAboutShowsVersionAndChangelog() {
@@ -92,13 +92,13 @@ final class MagpieRemoteUITests: XCTestCase {
         // 「关于」在「更多」最下面，列表懒加载：openFromMore 会先滑到它
         app.openFromMore("manage.about", title: "关于")
         app.buttons["about.changelog"].firstMatch.tap()
-        XCTAssertTrue(app.navigationBars["更新日志"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["更新日志"].appears(timeout: 10))
         // 0.1.0 是最早的段落，在最下面（0.3.0、0.4.0 的条目很长，List 懒加载），需要往下滚很多屏。
         let release = element(containing: "0.1.0", in: app)
-        var found = release.waitForExistence(timeout: 5)
+        var found = release.appears(timeout: 5)
         for _ in 0..<30 where !found {
             app.swipeUp(velocity: .fast)
-            found = release.waitForExistence(timeout: 1)
+            found = release.appears(timeout: 1)
         }
         XCTAssertTrue(found, "更新日志里没有 0.1.0")
     }
@@ -108,35 +108,26 @@ final class MagpieRemoteUITests: XCTestCase {
     /// 分段控件里的一段（先按控件 id 找，避免点到别的页面上同名的段）。
     private func segment(_ title: String, of identifier: String, in app: XCUIApplication) -> XCUIElement {
         let control = element(id: identifier, in: app)
-        XCTAssertTrue(control.waitForExistence(timeout: 10), "没有分段控件 \(identifier)")
+        XCTAssertTrue(control.appears(timeout: 10), "没有分段控件 \(identifier)")
         return control.buttons[title].firstMatch
-    }
-
-    private func waitUntil(_ timeout: TimeInterval, _ condition: () -> Bool) -> Bool {
-        let end = Date().addingTimeInterval(timeout)
-        while Date() < end {
-            if condition() { return true }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.3))
-        }
-        return condition()
     }
 
     private func openUsage(_ app: XCUIApplication) {
         app.openDockTab("用量")
-        XCTAssertTrue(element(id: "usage.totalCost", in: app).waitForExistence(timeout: 15), "用量页没有出现总花费（usage.totalCost）")
+        XCTAssertTrue(element(id: "usage.totalCost", in: app).appears(timeout: 15), "用量页没有出现总花费（usage.totalCost）")
     }
 
     private func openRequests(_ app: XCUIApplication) {
         // 概览里合计、图表变多了，「请求记录」入口在下面（列表懒加载）：滑到它出现
         let open = element(id: "usage.requests.open", in: app)
-        _ = open.waitForExistence(timeout: 5)
+        _ = open.appears(timeout: 5)
         app.swipeUpUntilHittable(open)
-        XCTAssertTrue(open.waitForExistence(timeout: 10), "没有「请求记录」入口（usage.requests.open）")
+        XCTAssertTrue(open.appears(timeout: 10), "没有「请求记录」入口（usage.requests.open）")
         open.tap()
-        XCTAssertTrue(app.navigationBars["请求记录"].waitForExistence(timeout: 10), "没有打开「请求记录」")
+        XCTAssertTrue(app.navigationBars["请求记录"].appears(timeout: 10), "没有打开「请求记录」")
         // 「今天」在刚过零点时可能还没有示例请求，固定看 30 天。
         segment("30 天", of: "usage.requests.period", in: app).tap()
-        XCTAssertTrue(element(id: "usage.requests.total", in: app).waitForExistence(timeout: 10), "请求记录没有显示总条数")
+        XCTAssertTrue(element(id: "usage.requests.total", in: app).appears(timeout: 10), "请求记录没有显示总条数")
     }
 
     func testUsagePeriodSwitch() {
@@ -145,9 +136,9 @@ final class MagpieRemoteUITests: XCTestCase {
         XCTAssertTrue(element(containing: "总花费", in: app).exists)
         let before = element(id: "usage.counts", in: app).label
         segment("7 天", of: "usage.period", in: app).tap()
-        XCTAssertTrue(element(containing: "近 7 天", in: app).waitForExistence(timeout: 10), "切换到 7 天后标题没有变成「近 7 天」")
+        XCTAssertTrue(element(containing: "近 7 天", in: app).appears(timeout: 10), "切换到 7 天后标题没有变成「近 7 天」")
         segment("30 天", of: "usage.period", in: app).tap()
-        XCTAssertTrue(element(containing: "近 30 天", in: app).waitForExistence(timeout: 10), "切换到 30 天后标题没有变成「近 30 天」")
+        XCTAssertTrue(element(containing: "近 30 天", in: app).appears(timeout: 10), "切换到 30 天后标题没有变成「近 30 天」")
         let counts = element(id: "usage.counts", in: app)
         XCTAssertTrue(waitUntil(10) { counts.exists && counts.label != before }, "切换时间段后请求数没有变化：\(before)")
         XCTAssertTrue(element(id: "usage.concurrency", in: app).exists || app.swipeUpAndFind(id: "usage.concurrency"), "没有显示当前并发")
@@ -162,9 +153,9 @@ final class MagpieRemoteUITests: XCTestCase {
         element(id: "usage.filter.failed", in: app).tap()
         XCTAssertTrue(waitUntil(10) { total.exists && total.label != before }, "只看失败后总条数没有变化：\(before)")
         let first = element(id: "usage.request.0", in: app)
-        _ = first.waitForExistence(timeout: 3)
+        _ = first.appears(timeout: 3)
         app.swipeUpUntilHittable(first)
-        XCTAssertTrue(first.waitForExistence(timeout: 10), "筛选后没有请求")
+        XCTAssertTrue(first.appears(timeout: 10), "筛选后没有请求")
         XCTAssertTrue(first.label.contains("失败"), "只看失败后第一条不是失败的请求：\(first.label)")
     }
 
@@ -173,27 +164,27 @@ final class MagpieRemoteUITests: XCTestCase {
         openUsage(app)
         openRequests(app)
         let first = element(id: "usage.request.0", in: app)
-        _ = first.waitForExistence(timeout: 3)
+        _ = first.appears(timeout: 3)
         app.swipeUpUntilHittable(first)
-        XCTAssertTrue(first.waitForExistence(timeout: 10), "请求记录是空的")
+        XCTAssertTrue(first.appears(timeout: 10), "请求记录是空的")
         first.tap()
-        XCTAssertTrue(app.navigationBars["请求详情"].waitForExistence(timeout: 10), "没有打开「请求详情」")
+        XCTAssertTrue(app.navigationBars["请求详情"].appears(timeout: 10), "没有打开「请求详情」")
         XCTAssertTrue(element(containing: "耗时", in: app).exists)
         XCTAssertTrue(element(containing: "实际模型", in: app).exists)
         element(id: "usage.detail.done", in: app).tap()
-        XCTAssertTrue(app.navigationBars["请求记录"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["请求记录"].appears(timeout: 10))
     }
 
     func testUsageHeldKeyShowsOwnRequestsOnly() {
         let app = launch(["--fixture-held-key"])
         app.openDockTab("用量")
-        XCTAssertTrue(element(id: "usage.heldNote", in: app).waitForExistence(timeout: 15), "受限密钥没有显示说明")
+        XCTAssertTrue(element(id: "usage.heldNote", in: app).appears(timeout: 15), "受限密钥没有显示说明")
         XCTAssertFalse(element(id: "usage.totalCost", in: app).exists, "受限密钥不应显示总花费")
         openRequests(app)
         let first = element(id: "usage.request.0", in: app)
-        _ = first.waitForExistence(timeout: 3)
+        _ = first.appears(timeout: 3)
         app.swipeUpUntilHittable(first)
-        XCTAssertTrue(first.waitForExistence(timeout: 10), "受限密钥看不到自己的请求记录")
+        XCTAssertTrue(first.appears(timeout: 10), "受限密钥看不到自己的请求记录")
     }
 
     // MARK: 对话（fixture：假模型目录 + 假的流式回答）
@@ -201,54 +192,54 @@ final class MagpieRemoteUITests: XCTestCase {
     private func openChatAndSend(_ text: String, in app: XCUIApplication) {
         app.openFromMore("more.chat", title: "对话")
         let composer = app.descendants(matching: .any)["chat.composer"].firstMatch
-        XCTAssertTrue(composer.waitForExistence(timeout: 15), "没有出现输入框")
+        XCTAssertTrue(composer.appears(timeout: 15), "没有出现输入框")
         // 模型目录加载后自动选中第一个路由组。
-        XCTAssertTrue(element(containing: "示例路由组", in: app).waitForExistence(timeout: 15), "没有自动选中模型")
+        XCTAssertTrue(element(containing: "示例路由组", in: app).appears(timeout: 15), "没有自动选中模型")
         composer.tap()
         composer.typeText(text)
         let send = app.buttons["chat.send"].firstMatch
-        XCTAssertTrue(send.waitForExistence(timeout: 5))
+        XCTAssertTrue(send.appears(timeout: 5))
         send.tap()
     }
 
     func testChatSendsMessageAndStreamsReply() {
         let app = launch()
         openChatAndSend("hello", in: app)
-        XCTAssertTrue(element(containing: "流式回复", in: app).waitForExistence(timeout: 15), "没有出现流式回答")
-        XCTAssertTrue(element(containing: "已收到「hello」", in: app).waitForExistence(timeout: 15), "回答没有完整显示")
-        XCTAssertTrue(element(containing: "由 example/example-model-1 回答", in: app).waitForExistence(timeout: 10), "没有显示实际回答的模型")
-        XCTAssertTrue(app.buttons["chat.send"].waitForExistence(timeout: 10), "回答结束后应恢复发送按钮")
+        XCTAssertTrue(element(containing: "流式回复", in: app).appears(timeout: 15), "没有出现流式回答")
+        XCTAssertTrue(element(containing: "已收到「hello」", in: app).appears(timeout: 15), "回答没有完整显示")
+        XCTAssertTrue(element(containing: "由 example/example-model-1 回答", in: app).appears(timeout: 10), "没有显示实际回答的模型")
+        XCTAssertTrue(app.buttons["chat.send"].appears(timeout: 10), "回答结束后应恢复发送按钮")
     }
 
     func testChatCreateAndDeleteSession() {
         let app = launch()
         openChatAndSend("first chat", in: app)
-        XCTAssertTrue(element(containing: "由 example/example-model-1 回答", in: app).waitForExistence(timeout: 15))
+        XCTAssertTrue(element(containing: "由 example/example-model-1 回答", in: app).appears(timeout: 15))
 
         app.buttons["chat.new"].firstMatch.tap()
-        XCTAssertTrue(app.descendants(matching: .any)["chat.empty"].firstMatch.waitForExistence(timeout: 10), "新对话应为空")
+        XCTAssertTrue(app.descendants(matching: .any)["chat.empty"].firstMatch.appears(timeout: 10), "新对话应为空")
 
         app.buttons["chat.sessions.open"].firstMatch.tap()
-        XCTAssertTrue(app.navigationBars["对话列表"].waitForExistence(timeout: 10))
-        XCTAssertTrue(element(containing: "first chat", in: app).waitForExistence(timeout: 10), "对话列表里没有刚才的对话")
+        XCTAssertTrue(app.navigationBars["对话列表"].appears(timeout: 10))
+        XCTAssertTrue(element(containing: "first chat", in: app).appears(timeout: 10), "对话列表里没有刚才的对话")
 
         let menu = app.buttons["chat.session.menu"].firstMatch
-        XCTAssertTrue(menu.waitForExistence(timeout: 5))
+        XCTAssertTrue(menu.appears(timeout: 5))
         menu.tap()
         let delete = app.buttons["chat.session.delete"].firstMatch
-        XCTAssertTrue(delete.waitForExistence(timeout: 5))
+        XCTAssertTrue(delete.appears(timeout: 5))
         delete.tap()
         let confirm = app.buttons["chat.session.confirmDelete"].firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "删除前应要求确认")
+        XCTAssertTrue(confirm.appears(timeout: 5), "删除前应要求确认")
         confirm.tap()
-        XCTAssertTrue(app.descendants(matching: .any)["chat.sessions.empty"].firstMatch.waitForExistence(timeout: 10), "删除后列表应为空")
+        XCTAssertTrue(app.descendants(matching: .any)["chat.sessions.empty"].firstMatch.appears(timeout: 10), "删除后列表应为空")
     }
 }
 
 private extension XCUIApplication {
     /// 向上滑直到元素出现并可点（合计、图表下面的列表行，懒加载）。
     func swipeUpUntilHittable(_ element: XCUIElement, max: Int = 10) {
-        for _ in 0..<max where !(element.exists && element.isHittable) { swipeUp() }
+        swipeUp(until: element, max: max)
     }
 
     /// 向上滑几次直到找到元素（列表里靠下的内容）。

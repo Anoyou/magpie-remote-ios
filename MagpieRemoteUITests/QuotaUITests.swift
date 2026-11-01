@@ -24,10 +24,8 @@ final class QuotaUITests: XCTestCase {
 
     /// 向上滑动直到元素出现在屏幕上（SwiftUI ScrollView 不会自动滚到屏幕外的元素）。
     private func scrollTo(_ element: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
-        for _ in 0..<8 where !(element.exists && element.isHittable) {
-            app.swipeUp()
-        }
-        XCTAssertTrue(element.waitForExistence(timeout: 5) && element.isHittable, "滚动后仍看不到元素：\(element)", file: file, line: line)
+        app.swipeUp(until: element, max: 8)
+        XCTAssertTrue(element.appears(timeout: 5) && element.isHittable, "滚动后仍看不到元素：\(element)", file: file, line: line)
     }
 
     /// 账号的折叠行（按钮），按账号名找。
@@ -44,7 +42,7 @@ final class QuotaUITests: XCTestCase {
     func testAccountsStartCollapsedWithSummary() {
         let app = launch()
         let work = header("工作 Claude", in: app)
-        XCTAssertTrue(work.waitForExistence(timeout: 15), "没有出现示例账号「工作 Claude」的折叠行")
+        XCTAssertTrue(work.appears(timeout: 15), "没有出现示例账号「工作 Claude」的折叠行")
         XCTAssertTrue(element(containing: "最低剩余 38.5%", in: app).exists, "折叠行没有显示最低剩余百分比")
         XCTAssertTrue(element(containing: "后重置", in: app).exists, "折叠行没有显示最近的重置时间")
         XCTAssertTrue(element(containing: "Claude · 2 个账号", in: app).exists, "同一供应商的多个账号没有分组")
@@ -52,15 +50,15 @@ final class QuotaUITests: XCTestCase {
         XCTAssertEqual(work.value as? String, "已收起")
         let balance = element(containing: "余额 ¥ 23.71", in: app)
         if !balance.exists { app.swipeUp() }
-        XCTAssertTrue(balance.waitForExistence(timeout: 5), "余额账号的折叠行没有显示余额文字")
+        XCTAssertTrue(balance.appears(timeout: 5), "余额账号的折叠行没有显示余额文字")
     }
 
     func testTapExpandsAndCollapsesAccount() {
         let app = launch()
         let work = header("工作 Claude", in: app)
-        XCTAssertTrue(work.waitForExistence(timeout: 15))
+        XCTAssertTrue(work.appears(timeout: 15))
         work.tap()
-        XCTAssertTrue(cards(app).firstMatch.waitForExistence(timeout: 5), "点按后没有展开账号明细")
+        XCTAssertTrue(cards(app).firstMatch.appears(timeout: 5), "点按后没有展开账号明细")
         XCTAssertTrue(element(containing: "剩余 63%", in: app).exists, "展开后 5 小时窗口的剩余百分比没有显示")
         XCTAssertTrue(app.buttons["quota.account.refresh"].firstMatch.exists, "展开后没有「重新读取」按钮")
         XCTAssertEqual(work.value as? String, "已展开")
@@ -68,52 +66,51 @@ final class QuotaUITests: XCTestCase {
         // 折叠行的点按 / 无障碍区域只应是标题这一行，不能被撑成整张卡片（否则点中心会落在明细里）。
         XCTAssertLessThan(work.frame.height, 160, "展开后折叠行的区域覆盖了整张卡片：\(work.frame)")
         work.tap()
-        let collapsed = expectation(for: NSPredicate(format: "value == %@", "已收起"), evaluatedWith: work)
-        wait(for: [collapsed], timeout: 5)
-        XCTAssertTrue(cards(app).firstMatch.waitForNonExistence(timeout: 5), "再次点按后没有收起账号明细")
+        XCTAssertTrue(waitUntil(5) { (work.value as? String) == "已收起" }, "再次点按后折叠行没有变成「已收起」")
+        XCTAssertTrue(cards(app).firstMatch.disappears(timeout: 5), "再次点按后没有收起账号明细")
     }
 
     func testExpandedStateKeptAcrossTabs() {
         let app = launch()
         let work = header("工作 Claude", in: app)
-        XCTAssertTrue(work.waitForExistence(timeout: 15))
+        XCTAssertTrue(work.appears(timeout: 15))
         work.tap()
-        XCTAssertTrue(cards(app).firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(cards(app).firstMatch.appears(timeout: 5))
         // 切到底栏「路由」，再回「主页」：分页器应当还停在额度（不在就重新切过去）。
         app.tabBars.buttons["路由"].tap()
         app.tabBars.buttons["主页"].tap()
-        if !header("工作 Claude", in: app).waitForExistence(timeout: 5) {
+        if !header("工作 Claude", in: app).appears(timeout: 5) {
             app.openHome("额度")
         }
-        XCTAssertTrue(header("工作 Claude", in: app).waitForExistence(timeout: 10))
-        XCTAssertTrue(cards(app).firstMatch.waitForExistence(timeout: 5), "切换标签后展开状态没有保留")
+        XCTAssertTrue(header("工作 Claude", in: app).appears(timeout: 10))
+        XCTAssertTrue(cards(app).firstMatch.appears(timeout: 5), "切换标签后展开状态没有保留")
     }
 
     func testHistoryPickerSwitches() {
         let app = launch()
         let work = header("工作 Claude", in: app)
-        XCTAssertTrue(work.waitForExistence(timeout: 15))
+        XCTAssertTrue(work.appears(timeout: 15))
         work.tap()
-        XCTAssertTrue(cards(app).firstMatch.waitForExistence(timeout: 5), "点按后没有展开账号明细")
+        XCTAssertTrue(cards(app).firstMatch.appears(timeout: 5), "点按后没有展开账号明细")
         let caption = app.staticTexts["quota.history.caption"].firstMatch
         let month = app.buttons["30 天"].firstMatch
         scrollTo(month, in: app)
         XCTAssertEqual(caption.label, "近 7 天")
         month.tap()
-        XCTAssertTrue(element(containing: "近 30 天", in: app).waitForExistence(timeout: 5), "切换到 30 天后标题没有变化")
+        XCTAssertTrue(element(containing: "近 30 天", in: app).appears(timeout: 5), "切换到 30 天后标题没有变化")
         app.buttons["45 天"].firstMatch.tap()
-        XCTAssertTrue(element(containing: "近 45 天", in: app).waitForExistence(timeout: 5), "切换到 45 天后标题没有变化")
+        XCTAssertTrue(element(containing: "近 45 天", in: app).appears(timeout: 5), "切换到 45 天后标题没有变化")
         XCTAssertTrue(app.descendants(matching: .any)["quota.history.chart"].firstMatch.exists, "没有画出历史曲线")
     }
 
     func testEmptyStateWhenNoSubscriptionAccounts() {
         let app = launch(["--fixture-quota-empty"])
-        XCTAssertTrue(element(containing: "还没有订阅账号", in: app).waitForExistence(timeout: 15), "没有订阅账号时没有显示空状态")
+        XCTAssertTrue(element(containing: "还没有订阅账号", in: app).appears(timeout: 15), "没有订阅账号时没有显示空状态")
     }
 
     func testHeldKeyShowsOwnLimit() {
         let app = launch(["--fixture-key-held"])
-        XCTAssertTrue(element(containing: "这把密钥的限额", in: app).waitForExistence(timeout: 15), "受限密钥没有显示自己的限额卡片")
+        XCTAssertTrue(element(containing: "这把密钥的限额", in: app).appears(timeout: 15), "受限密钥没有显示自己的限额卡片")
         XCTAssertTrue(element(containing: "每 1 小时", in: app).exists, "限额周期没有显示")
         XCTAssertFalse(element(containing: "主机返回错误", in: app).exists, "受限密钥不应显示错误")
     }

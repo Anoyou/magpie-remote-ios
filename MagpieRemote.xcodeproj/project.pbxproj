@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		042B6CDB3B8E20BADBB4A8F5 /* RoutesLiveModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD02FB5DF5AB6DC37E6577F /* RoutesLiveModel.swift */; };
+		0467E16AE20ADE425AEFC607 /* UITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2AB522EEAB5ECDDE0BC37F /* UITestSupport.swift */; };
 		090B69224BF8F761AF961E19 /* RoutesMagpie.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */; };
 		0C31645EFE7E1AA4A62861B4 /* UsageContextPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B15913582DE6332FF94AE0 /* UsageContextPane.swift */; };
 		0C3D212091FFFBD88D1DEF05 /* QuotaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */; };
@@ -172,6 +173,7 @@
 		F3E878152FDB5534070169FA /* UsageTabsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageTabsUITests.swift; sourceTree = "<group>"; };
 		FA5767857C60806660E639B6 /* PluginComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginComponents.swift; sourceTree = "<group>"; };
 		FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassStyle.swift; sourceTree = "<group>"; };
+		FB2AB522EEAB5ECDDE0BC37F /* UITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestSupport.swift; sourceTree = "<group>"; };
 		FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaView.swift; sourceTree = "<group>"; };
 		FE62C8F309D9EBA62A434C4E /* HomeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -232,6 +234,7 @@
 				726F02F062C85BC63F1B4072 /* QuotaUITests.swift */,
 				0F83110DBDE962E7997275A8 /* RoutesSnapshotUITests.swift */,
 				E67EC9FC2AEF26D72DE745B5 /* RoutesUITests.swift */,
+				FB2AB522EEAB5ECDDE0BC37F /* UITestSupport.swift */,
 				F3E878152FDB5534070169FA /* UsageTabsUITests.swift */,
 			);
 			path = MagpieRemoteUITests;
@@ -417,6 +420,7 @@
 				B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */,
 				74C9670F243518177245F839 /* RoutesSnapshotUITests.swift in Sources */,
 				E1520A79C1F021F0116D828E /* RoutesUITests.swift in Sources */,
+				0467E16AE20ADE425AEFC607 /* UITestSupport.swift in Sources */,
 				520E04DFFAD8676BAA5F5F78 /* UsageTabsUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
