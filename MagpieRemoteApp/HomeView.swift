@@ -16,6 +16,12 @@ struct HomeView: View {
         page
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaBar(edge: .top, spacing: 0) { picker }
+            // 点「额度」小组件打开时切到额度分页。
+            .onChange(of: model.requestedHomeSegment, initial: true) { _, request in
+                guard let request else { return }
+                choose(request)
+                model.requestedHomeSegment = nil
+            }
     }
 
     @ViewBuilder private var page: some View {

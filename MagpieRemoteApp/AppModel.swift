@@ -30,11 +30,17 @@ final class AppModel {
     let chat: ChatController
     /// 底栏放哪些页面（存本机 UserDefaults，不分主机）。
     let dock: DockStore
+    /// 主屏 / 锁屏小组件的快照（App Group）。
+    let widgets: WidgetBridge
 
     private(set) var hosts: HostList
     private(set) var connection: ConnectionState = .noHost
     var selectedTab: AppTab = .more
     var sheet: AppSheet?
+    /// 点小组件打开时：要「主页」切到的分页（HomeView 读到后清掉）。
+    var requestedHomeSegment: HomeSegment?
+    /// 点小组件打开、而目标页面在「更多」里时：要推入的页面（MoreView 读到后推入）。
+    var morePush: AppPage?
 
     var activeHost: HostProfile? { hosts.active }
     var isFixture: Bool { environment.isFixture }
@@ -56,17 +62,24 @@ final class AppModel {
                 .appendingPathComponent("fixture-chats-\(UUID().uuidString)", isDirectory: true)), defaults: nil)
             // 示例模式不读写真实设置：每次启动都是默认底栏，UI 测试互不影响。
             dock = DockStore(defaults: nil)
+            widgets = WidgetBridge(enabled: false)
         } else {
             store = HostStore(persistence: UserDefaultsHostListPersistence(), keychain: SystemKeychainStore())
             service = LiveRemoteService()
             chat = ChatController(store: .applicationSupport(), defaults: .standard)
             dock = DockStore(defaults: .standard)
+            widgets = WidgetBridge(enabled: true)
         }
         hosts = store.load()
         selectedTab = dock.layout.pages.first.map(AppTab.page) ?? .more
     }
 
     func start() async {
+        // UI 测试模拟「点小组件打开」：`--ui-open-url magpieremote://widget/…`（只在示例模式里认）。
+        let args = ProcessInfo.processInfo.arguments
+        if isFixture, let i = args.firstIndex(of: "--ui-open-url"), i + 1 < args.count, let url = URL(string: args[i + 1]) {
+            open(url)
+        }
         await reconnect()
     }
 
@@ -74,6 +87,7 @@ final class AppModel {
     func reconnect() async {
         guard let host = activeHost else {
             connection = .noHost
+            await refreshWidgets(force: true)
             return
         }
         connection = .connecting
@@ -81,6 +95,7 @@ final class AppModel {
             let report = try await service.testConnection(host: host, gatewayKey: store.secret(.gatewayKey, host: host.id))
             guard activeHost?.id == host.id else { return }
             connection = .connected(report)
+            await refreshWidgets(force: true)
         } catch {
             guard activeHost?.id == host.id else { return }
             connection = .failed(MagpieError.from(error))
