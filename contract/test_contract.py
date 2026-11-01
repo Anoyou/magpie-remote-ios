@@ -417,7 +417,9 @@ WEB_GETS = [("web-settings", "/api/settings", "/api/settings"), ("web-state", "/
             ("web-caller-keys-models", "/api/caller-keys/models", "/api/caller-keys/models"),
             # 主机工具：更新状态（不带 fresh，不访问发布源）、自动调优、本地脱敏模型
             ("web-update", "/api/update?lang=zh", "/api/update"), ("web-tune", "/api/tune?days=7", "/api/tune"),
-            ("web-privacy-model", "/api/privacy-model", "/api/privacy-model")]
+            ("web-privacy-model", "/api/privacy-model", "/api/privacy-model"),
+            ("web-model-speeds", "/api/model-speeds", "/api/model-speeds"),
+            ("web-gateway-trace", "/api/gateway/trace?after=0", "/api/gateway/trace")]
 
 
 def t_web(errs):
@@ -441,6 +443,16 @@ def t_web(errs):
         if route == "/api/privacy-model":
             ids = [m.get("model") for m in (r.json or {}).get("models") or []]
             expect(set(ids) <= {"privacy-filter", "astrlink-guard"} and ids, f"web /api/privacy-model: 模型 id 应为 privacy-filter / astrlink-guard，实际 {ids}", errs)
+        if path == "/api/model-speeds":
+            expect(isinstance(r.json, dict), "web /api/model-speeds: 应为对象（provider/model → 速度）", errs)
+            for ref, sp in (r.json or {}).items() if isinstance(r.json, dict) else []:
+                expect(isinstance(sp, dict) and isinstance(sp.get("n"), int), f"web /api/model-speeds: {ref} 缺少整数 n", errs)
+        if path.startswith("/api/gateway/trace"):
+            d = r.json or {}
+            expect(isinstance(d.get("seq"), int) and isinstance(d.get("routes"), list), "web /api/gateway/trace: 应有整数 seq 与 routes 列表", errs)
+            expect(isinstance(d.get("mine"), bool), "web /api/gateway/trace: 应有布尔 mine", errs)
+            if d.get("mine"):
+                expect(len(d.get("routes") or []) > 0, "web /api/gateway/trace: 前面发过 chat，trace 里应有请求", errs)
         if path == "/api/caller-keys":
             names = [k.get("name") for k in (r.json or {}).get("keys") or []]
             expect("Magpie" in names, f"web /api/caller-keys: 开启共享后应有名为 Magpie 的 lan 密钥，实际 {names}", errs)
@@ -635,6 +647,36 @@ def t_plugins(errs):
     errs += check_web_fields(("GET", "/api/settings"), r.json or {}, "web POST /api/settings/plugin-option")
     r = web("err-web-plugin-option", "POST", "/api/settings/plugin-option", {"provider": "example", "key": "Not A Key!"})
     expect(r.status == 400, f"web /api/settings/plugin-option: 不合法的 key 应得 400，实际 {r.status}", errs)
+GROUP_COMPUTED = ["ready", "memberInfo", "holds", "offers", "shared", "picked", "patterns", "decides", "ref", "classifierFailed", "auto", "matched"]
+
+
+def t_web_groups(errs):
+    """路由组整组保存：只改路由方式 / 会话保持 / 关掉的成员，其余字段原样保留（App 的 WebRequests.groupSave 同样做法）。"""
+    r = call("web-groups-before", "GET", WEB + "/api/groups", remote=False, cookie=COOKIE)
+    groups = {g.get("id"): g for g in (r.json or {}).get("groups") or []}
+    g = groups.get("fast")
+    if not g:
+        errs.append("web /api/groups: 没有 fixture 路由组 fast")
+        return
+    body = {k: v for k, v in g.items() if k not in GROUP_COMPUTED}
+    body.update({"routing": "fast", "affinity": "session", "off": ["mock/mock-gpt-mini"], "placed": g.get("members") or [], "firstToken": 60})
+    r = call("web-groups-save", "POST", WEB + "/api/groups/save", remote=False, cookie=COOKIE, body=body)
+    status_is(r, 200, "application/json", errs, "web POST /api/groups/save")
+    errs += check_web_fields(("GET", "/api/groups"), r.json or {}, "web POST /api/groups/save")
+    saved = {x.get("id"): x for x in (r.json or {}).get("groups") or []}.get("fast") or {}
+    expect(saved.get("routing") == "fast", f"保存后 routing 应为 fast，实际 {saved.get('routing')!r}", errs)
+    expect(saved.get("affinity") == "session", f"保存后 affinity 应为 session，实际 {saved.get('affinity')!r}", errs)
+    expect(saved.get("off") == ["mock/mock-gpt-mini"], f"保存后 off 应为 [mock/mock-gpt-mini]，实际 {saved.get('off')!r}", errs)
+    expect(saved.get("firstToken") == 60, f"保存后 firstToken 应为 60，实际 {saved.get('firstToken')!r}", errs)
+    expect(saved.get("members") == g.get("members"), f"成员不应改变：{saved.get('members')!r}", errs)
+    r = call("web-groups-arrange", "POST", WEB + "/api/groups/arrange", remote=False, cookie=COOKIE, body={"order": list(groups)})
+    status_is(r, 200, "application/json", errs, "web POST /api/groups/arrange")
+    # 还原，免得影响后面的网关测试
+    restore = {k: v for k, v in g.items() if k not in GROUP_COMPUTED}
+    r = call("web-groups-restore", "POST", WEB + "/api/groups/save", remote=False, cookie=COOKIE, body=restore)
+    status_is(r, 200, "application/json", errs, "web POST /api/groups/save（还原）")
+    back = {x.get("id"): x for x in (r.json or {}).get("groups") or []}.get("fast") or {}
+    expect(back.get("routing") == g.get("routing") and not back.get("off"), f"还原后应回到原来的设置：{back}", errs)
 
 
 def t_sharing_off(errs):
@@ -652,7 +694,7 @@ def t_sharing_off(errs):
     status_is(r, 200, "application/json", errs, "重新共享后 GET /v1")
 
 
-TESTS = [t_info, t_auth, t_models, t_chat, t_responses, t_usage, t_quotas_limit, t_keys, t_web, t_sessions, t_plugins, t_sharing_off]
+TESTS = [t_info, t_auth, t_models, t_chat, t_responses, t_usage, t_quotas_limit, t_keys, t_web, t_web_groups, t_sessions, t_plugins, t_sharing_off]
 
 
 def main() -> int:

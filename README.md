@@ -56,4 +56,4 @@ App 里「管理 › 配置引导」有同样的图文说明。
 
 ## 许可
 
-MIT（与 magpie 相同）。
+MIT（与 magpie 相同）。「路由」页移植自 magpie 网页的路由页，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

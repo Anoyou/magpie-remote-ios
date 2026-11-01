@@ -40,7 +40,7 @@ struct ManageView: View {
                     NavigationLink {
                         ManageGroupsView(store: store)
                     } label: {
-                        row("路由组", symbol: "arrow.triangle.branch", detail: store.groups.map { "\($0.groups.count) 个" })
+                        row("路由", symbol: "arrow.triangle.branch", detail: store.groups.map { "\($0.visible.count) 个路由组" })
                     }
                     .accessibilityIdentifier("manage.groups")
                     NavigationLink {
