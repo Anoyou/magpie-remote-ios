@@ -290,7 +290,8 @@ final class RoutesLiveModel {
                 let t = RoutesClock.shared.now
                 if self.replay != nil { self.stepReplay(now: t) }
                 self.feedSays(now: t)
-                self.caption.tick(now: t)
+                // 只在该换句时动它：每帧都写会让整张卡片每帧重画
+                if let due = self.caption.due, t > due { self.caption.tick(now: t) }
                 self.lastTick = t
                 if self.replay == nil && self.dueSays.isEmpty && !self.caption.pending {
                     self.ticker = nil

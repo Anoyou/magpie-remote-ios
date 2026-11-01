@@ -467,6 +467,7 @@ private struct StoryLog: View {
     let agentName: (String) -> String
     let mask: AccountMask?
     var onViewUsage: ((TraceRoute) -> Void)?
+    @State private var stepsHeight: CGFloat = 0
 
     var body: some View {
         let pinned = model.pinned != nil
@@ -499,6 +500,7 @@ private struct StoryLog: View {
             }
             .buttonStyle(TextButtonStyle())
             .padding(.top, 10)
+            // .rt-steps：最高 200，再多就在里面滚
             ScrollView {
                 VStack(alignment: .leading, spacing: 5) {
                     ForEach(Array(RouteStory.steps(route, agentName: agentName).enumerated()), id: \.offset) { _, step in
@@ -506,10 +508,10 @@ private struct StoryLog: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { stepsHeight = $0 }
             }
             .scrollBounceBehavior(.basedOnSize)
-            .frame(maxHeight: 200)
-            .fixedSize(horizontal: false, vertical: true)
+            .frame(height: min(max(stepsHeight, 18), 200))
             .padding(.top, 6)
             .accessibilityIdentifier("routes.steps")
         }

@@ -85,8 +85,9 @@ struct StageCanvas: View {
                         itemView(item, tag: tag, onWire: onWireItems.contains(item.id))
                             .offset(x: stillSky ? 0 : MagpieMotion.hitOffset(hit.map { t - $0.at } ?? -1))
                     }
-                    .padding(.leading, CGFloat(item.depth) * 18)
+                    // 位置记的是缩进之后的那一块（网页 margin-left: depth × 18 不算在 li 的框里）
                     .stageNode(.row(item.id))
+                    .padding(.leading, CGFloat(item.depth) * 18)
                 }
                 if layout.items.isEmpty {
                     Text(stage.mode.isEmpty ? "没有可用的账号" : RouteWords.t("No request yet"))
@@ -706,6 +707,9 @@ struct SeatRow: View {
             if seat.fast { badge(RouteWords.t("fast")).padding(.leading, 6) }
             if seat.fallback { badge(RouteWords.t("fallback")).padding(.leading, 6) }
         }
+        .lineLimit(1)
+        .truncationMode(.tail)
+        .clipped()
     }
 
     func badge(_ text: String) -> some View {
@@ -825,6 +829,9 @@ struct HeadingRow: View {
                             .padding(.horizontal, 5).background(RT.card2, in: .rect(cornerRadius: 5)).padding(.trailing, 7)
                         if !item.count.isEmpty { Text(item.count).font(.system(size: 12)).foregroundStyle(on ? RT.fg : RT.muted) }
                     }
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .clipped()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     if !item.mode.isEmpty {
                         Text(item.mode).font(.system(size: 10.5, weight: .medium)).foregroundStyle(RT.fg2).lineLimit(1)
@@ -892,6 +899,9 @@ struct FoldRow: View {
                                     .padding(.horizontal, 6).overlay(Capsule().strokeBorder(RT.line)).padding(.leading, 6)
                             }
                         }
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .clipped()
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .frame(height: 20.5)
                         ChevronShape().stroke(RT.muted, style: StrokeStyle(lineWidth: 1.7 * 12 / 16, lineCap: .round, lineJoin: .round))
