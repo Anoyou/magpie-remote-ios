@@ -373,7 +373,7 @@ struct UsageSessionsPane: View {
     @ViewBuilder
     private func sessionDetail(_ item: UsageSessionItem) -> some View {
         if let sessionsService = AgentSessionsServices.make(from: manage.service) {
-            AgentSessionDetailView(store: AgentSessionsStore(service: sessionsService), session: item.session)
+            UsageSessionDetailHost(service: sessionsService, session: item.session)
         } else {
             UsageSessionInfo(item: item)
         }
@@ -411,6 +411,21 @@ struct UsageSessionsPane: View {
         } catch {
             // 读不到概要时，合计里的会话数等显示「—」，其它照常。
         }
+    }
+}
+
+/// 点开一个会话：沿用「Agent 会话记录」的详情页（对话内容、分享、删除），store 只建一次。
+private struct UsageSessionDetailHost: View {
+    @State private var store: AgentSessionsStore
+    let session: AgentSession
+
+    init(service: any AgentSessionsServing, session: AgentSession) {
+        _store = State(initialValue: AgentSessionsStore(service: service))
+        self.session = session
+    }
+
+    var body: some View {
+        AgentSessionDetailView(store: store, session: session)
     }
 }
 
