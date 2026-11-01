@@ -84,6 +84,9 @@ public enum RouteStory {
         w.kind == "provider" || w.who.isEmpty ? (w.name.isEmpty ? w.provider : w.name) : "\(w.name.isEmpty ? w.provider : w.name) · \(w.who)"
     }
 
+    /// 网页 clock()：今天的「HH:mm」，别的日子前面加星期。
+    public static func clockText(_ date: Date?) -> String { clock(date) }
+
     static func clock(_ date: Date?) -> String {
         guard let date else { return "" }
         let f = DateFormatter()

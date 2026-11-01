@@ -496,6 +496,14 @@ public struct StageAgent: Hashable, Sendable, Identifiable {
     public var hue: String
     /// 卡片上的小字（网页 a.sub）：它最近一个请求的模型；同时在几个文件夹里干活时是这些文件夹的最后一级。
     public var sub: String = ""
+
+    public init(id: String, name: String, busy: Bool, hue: String, sub: String = "") {
+        self.id = id
+        self.name = name
+        self.busy = busy
+        self.hue = hue
+        self.sub = sub
+    }
 }
 
 /// 一次舞台画面：左边的 Agent、中间的 magpie、下面的账号行、上方的标题和说明、底部的计数。
