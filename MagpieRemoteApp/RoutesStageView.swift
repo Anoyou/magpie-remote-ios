@@ -412,8 +412,26 @@ private struct StageCanvas: View {
         let flow = stillSky ? 0 : CGFloat(time.truncatingRemainder(dividingBy: 0.7) / 0.7) * 8
         let phase = flow == 0 ? 0 : 8 - flow
         // 网页 render()：点在线上飞的 Agent 也算在发
+        // 网页 render() 的 onWire：从飞向一个座位起、到从那里飞回为止（去程、在座位等回答、回程、退回 magpie），
+        // 那一行的线一直在流动、用这个 Agent 的颜色，它的 Agent 也算在发
         var onWire = Set<String>()
-        for play in plays { if let segment = play.segment(at: time), case .fly = segment.kind { onWire.insert(play.agent) } }
+        var seatOnWire: [String: String] = [:]
+        for play in plays {
+            guard let segment = play.segment(at: time) else { continue }
+            switch segment.kind {
+            case .fly(let leg, _):
+                onWire.insert(play.agent)
+                switch leg {
+                case .out(let seat, _), .home(let seat), .bounce(let seat): seatOnWire[seat] = play.agent
+                case .toHub: break
+                }
+            case .holdSeat(let seat, _):
+                onWire.insert(play.agent)
+                seatOnWire[seat] = play.agent
+            case .holdHub:
+                break
+            }
+        }
         // 网页：流动的线是 .rt-flows 里的副本，那一层在所有 .rt-wires 之上（原来的那条 .flown 藏起来）；
         // 其余的线按先后画在 .rt-wires 里。所以先画不动的，再画流动的——车道是几条线共用的，后画的灰线不能盖住流动的那条。
         var live: [(Path, Color)] = []
@@ -430,6 +448,10 @@ private struct StageCanvas: View {
             guard let rect = layout.row(row.id) else { continue }
             let path = Wires.row(rect, hub: layout.hub, agentsBottom: layout.low)
             let hue = row.agent.map(RT.hue) ?? RT.muted
+            if row.state != .resting, row.state != .answering, let by = seatOnWire[row.id] {
+                live.append((path, RT.hue(by)))
+                continue
+            }
             switch row.state {
             case .answering:
                 live.append((path, hue))

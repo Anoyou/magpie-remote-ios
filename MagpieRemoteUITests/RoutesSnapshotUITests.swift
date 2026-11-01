@@ -25,7 +25,7 @@ final class RoutesSnapshotUITests: XCTestCase {
         defer { XCUIDevice.shared.appearance = .light }
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--routes-fliers", "--routes-snapshot=\(start)",
-                               "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
+                               "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"] + (dark ? ["--ui-dark"] : [])
         app.launch()
         XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "没有出现底栏「更多」")
         app.openDockTab("路由")
