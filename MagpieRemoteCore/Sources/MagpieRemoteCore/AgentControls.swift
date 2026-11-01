@@ -117,6 +117,11 @@ public struct AgentUpdateRun: Hashable, Sendable {
     public struct Failure: Hashable, Sendable {
         public var name: String
         public var message: String
+
+        public init(name: String, message: String) {
+            self.name = name
+            self.message = message
+        }
     }
 
     public var total: Int

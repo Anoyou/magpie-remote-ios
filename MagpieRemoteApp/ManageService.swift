@@ -436,11 +436,17 @@ actor FixtureManageService: ManageServing {
         try await pause()
         switch action {
         case .save:
-            let current: WebJSON = ["name": .string(name), "summary": "", "agents": .array(agentList.map { agent in
-                ["id": agent["id"] ?? "", "name": agent["name"] ?? "", "fields": .array((agent["fields"]?.array ?? []).map { field in
-                    ["key": field["key"] ?? "", "label": field["label"] ?? "", "value": field["value"] ?? ""]
-                })]
-            })]
+            var saved: [WebJSON] = []
+            for agent in agentList {
+                var fields: [WebJSON] = []
+                for field in agent["fields"]?.array ?? [] {
+                    let item: WebJSON = ["key": field["key"] ?? "", "label": field["label"] ?? "", "value": field["value"] ?? ""]
+                    fields.append(item)
+                }
+                let entry: WebJSON = ["id": agent["id"] ?? "", "name": agent["name"] ?? "", "fields": .array(fields)]
+                saved.append(entry)
+            }
+            let current: WebJSON = ["name": .string(name), "summary": "", "agents": .array(saved)]
             profileList.removeAll { $0["name"]?.string == name }
             profileList.append(current)
             profileList.sort { ($0["name"]?.string ?? "") < ($1["name"]?.string ?? "") }
