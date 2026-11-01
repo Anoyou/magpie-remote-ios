@@ -6,7 +6,8 @@ import MagpieRemoteCore
 // MIT，Copyright (c) 2026 yetone，见 THIRD_PARTY_NOTICES.md）。手机上用网页的窄屏布局（.rt.max560）：
 // Agent 与 magpie 并排，账号 / Key 在它们下面，沿左侧一条线连到每一行。
 // 线：默认灰；有请求在路上时按 Agent 的颜色虚线流动（3 5，每 0.7 秒流 8 点）；回答完亮着不动；休息中的虚线变淡。
-// 每个请求由一个点飞过去（实心，Agent 的颜色），回答由另一个点飞回来（空心圈；失败是红圈，只飞回 magpie）。
+// 每个请求由一只喜鹊衔着一个点飞过去（实心，Agent 的颜色），回答由另一只衔回来（空心圈；失败是红圈，只飞回 magpie）；
+// 喜鹊与 magpie 标志的图形见 RoutesMagpie.swift。
 
 // MARK: 颜色（routing.css / app.css 的变量）
 
@@ -87,20 +88,6 @@ private enum Wires {
         p.addLine(to: CGPoint(x: x, y: max(y + 24, a.midY - 10)))
         p.addQuadCurve(to: CGPoint(x: a.minX, y: a.midY), control: CGPoint(x: x, y: a.midY))
         return p
-    }
-
-    static func reversed(_ path: Path) -> Path {
-        // 回程：沿同一条线反着飞。用足够密的点采样后反向连起来。
-        var points: [CGPoint] = []
-        let steps = 48
-        for i in 0...steps {
-            if let point = path.trimmedPath(from: 0, to: CGFloat(i) / CGFloat(steps)).currentPoint { points.append(point) }
-        }
-        var out = Path()
-        guard let first = points.last else { return out }
-        out.move(to: first)
-        for point in points.reversed().dropFirst() { out.addLine(to: point) }
-        return out
     }
 }
 
@@ -271,40 +258,55 @@ private struct StageCanvas: View {
             }
         }
         guard !reduceMotion else { return }
-        // 飞行的点：去程 Agent → magpie → 座位，1.4 秒；回程反过来（失败只到 magpie）
+        // 飞行：一只喜鹊把请求衔出去（Agent → 穿过 magpie → 座位），另一只把回答衔回来（座位 → magpie → Agent；
+        // 失败只回到 magpie）。点在它嘴尖上；到了就松开点，向上飞走（client.js play() / pose() / bird()）。
         for flight in model.flights {
             let elapsed = time.timeIntervalSince(flight.start)
             let duration: TimeInterval = 1.4
-            guard elapsed >= 0, elapsed <= duration,
+            guard elapsed >= 0, elapsed <= duration + MagpieMotion.away,
                   let agentAnchor = anchors[.agent(flight.agent)], let rowAnchor = anchors[.row(flight.seat)] else { continue }
-            let toHub = Wires.agent(proxy[agentAnchor], hub: hub)
-            let toRow = Wires.row(proxy[rowAnchor], hub: hub, agentsBottom: low)
-            var way = Path()
-            if flight.back {
-                way.addPath(Wires.reversed(toRow))
-                if !flight.failed { way.addPath(Wires.reversed(toHub)) }
-            } else {
-                way.addPath(toHub)
-                way.addPath(toRow)
-            }
-            let t = CGFloat(ease(elapsed / duration))
-            guard let point = way.trimmedPath(from: 0, to: max(0.001, t)).currentPoint else { continue }
-            let dot = Path(ellipseIn: CGRect(x: point.x - 4.5, y: point.y - 4.5, width: 9, height: 9))
+            let way = flightLine(flight, agent: proxy[agentAnchor], row: proxy[rowAnchor], hub: hub, agentsBottom: low)
+            guard !way.isEmpty else { continue }
             let hue = RT.hue(flight.agent)
-            if flight.back {
-                gc.fill(dot, with: .color(flight.failed ? hue : RT.card))
-                gc.stroke(dot, with: .color(flight.failed ? RT.red : hue), lineWidth: 2.25)
-            } else {
-                var glow = gc
-                glow.addFilter(.shadow(color: hue, radius: 3))
-                glow.fill(dot, with: .color(hue))
+            if elapsed <= duration {
+                // 每个 Agent 的请求和回答用它的颜色飞：请求实心，回答空心圈，失败红圈
+                let point = way.dot(at: CGFloat(MagpieMotion.glide(elapsed / duration)))
+                let radius: CGFloat = flight.back && !flight.failed ? 4 : 4.5
+                let dot = Path(ellipseIn: CGRect(x: point.x - radius, y: point.y - radius, width: radius * 2, height: radius * 2))
+                if flight.back {
+                    gc.fill(dot, with: .color(flight.failed ? hue : RT.card))
+                    gc.stroke(dot, with: .color(flight.failed ? RT.red : hue), lineWidth: 2.25)
+                } else {
+                    var glow = gc
+                    glow.addFilter(.shadow(color: hue, radius: 3))
+                    glow.fill(dot, with: .color(hue))
+                }
+            }
+            if let lift = MagpieMotion.lift(elapsed: elapsed, landed: duration) {
+                let pose = MagpiePose.of(way, elapsed: elapsed, duration: duration, leftward: flight.back)
+                MagpieFlier.draw(in: gc, pose: pose, lift: lift, flapTime: elapsed, ink: RT.fg, card: RT.card)
             }
         }
     }
 
-    private func ease(_ x: Double) -> Double {
-        let x = min(max(x, 0), 1)
-        return x < 0.5 ? 2 * x * x : 1 - pow(-2 * x + 2, 2) / 2
+    /// 这次飞行的整条路线：线 + 穿过 magpie 的弧（网页 via()）+ 线；回程沿同样的线反着飞（网页 home()）。
+    private func flightLine(_ flight: RoutesLiveModel.Flight, agent: CGRect, row: CGRect, hub: CGRect, agentsBottom low: CGFloat) -> FlightLine {
+        let toHub = FlightLine(Wires.agent(agent, hub: hub))
+        let toRow = FlightLine(Wires.row(row, hub: hub, agentsBottom: low))
+        guard let hubIn = toHub.end, let hubOut = toRow.start else { return FlightLine() }
+        if flight.back {
+            var way = toRow.reversed()
+            if flight.failed { return way } // 失败：只飞回 magpie，由它交给下一个
+            let home = toHub.reversed()
+            guard let from = way.end, let to = home.start else { return way }
+            way.append(FlightLine.via(from: from, heading: way.endHeading, to: to, heading: home.startHeading, hub: hub))
+            way.append(home)
+            return way
+        }
+        var way = toHub
+        way.append(FlightLine.via(from: hubIn, heading: toHub.endHeading, to: hubOut, heading: toRow.startHeading, hub: hub))
+        way.append(toRow)
+        return way
     }
 }
 
@@ -340,7 +342,7 @@ private struct HubNode: View {
 
     var body: some View {
         VStack(spacing: 2) {
-            Image(systemName: "bird.fill").font(.system(size: 22)).foregroundStyle(RT.fg).frame(width: 26, height: 26).padding(.bottom, 3)
+            MagpieLogo().fill(RT.fg, style: FillStyle(eoFill: true)).frame(width: 26, height: 26).padding(.bottom, 3)
             Text("magpie").font(.system(size: 13, weight: .semibold)).foregroundStyle(RT.fg)
             Text("网关").font(.system(size: 11)).foregroundStyle(RT.muted)
             if !chipHidden {

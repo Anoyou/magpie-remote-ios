@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		042B6CDB3B8E20BADBB4A8F5 /* RoutesLiveModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD02FB5DF5AB6DC37E6577F /* RoutesLiveModel.swift */; };
+		090B69224BF8F761AF961E19 /* RoutesMagpie.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */; };
 		0C3D212091FFFBD88D1DEF05 /* QuotaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */; };
 		10CBE185B772E40CBFC3322B /* DockNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 539E56C3200203FA4B1DE6B0 /* DockNavigation.swift */; };
 		11E8AFC6D13D95573FC05019 /* GlassStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */; };
@@ -130,6 +131,7 @@
 		D8FF93AA7A2D9498A020FDE3 /* DockCustomizeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockCustomizeView.swift; sourceTree = "<group>"; };
 		D90D4267EF9983628F5A705C /* PluginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginService.swift; sourceTree = "<group>"; };
 		DC159FECE3AE2C80CE293EBA /* RemoteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteService.swift; sourceTree = "<group>"; };
+		DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesMagpie.swift; sourceTree = "<group>"; };
 		DFA9472625D556D20B30C141 /* SetupGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupGuideView.swift; sourceTree = "<group>"; };
 		E4F2981ECFC5419AD87AB50B /* UsageRequestsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRequestsView.swift; sourceTree = "<group>"; };
 		E67EC9FC2AEF26D72DE745B5 /* RoutesUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesUITests.swift; sourceTree = "<group>"; };
@@ -240,6 +242,7 @@
 				DC159FECE3AE2C80CE293EBA /* RemoteService.swift */,
 				ED21306234672F3C88C45E0E /* RoutesFixture.swift */,
 				EFD02FB5DF5AB6DC37E6577F /* RoutesLiveModel.swift */,
+				DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */,
 				D735EF3971F23500E9C63F87 /* RoutesStageView.swift */,
 				DFA9472625D556D20B30C141 /* SetupGuideView.swift */,
 				CE47489B641118574213CF4B /* StateViews.swift */,
@@ -405,6 +408,7 @@
 				12BAE742E07FE831CB20E33F /* RemoteService.swift in Sources */,
 				29993AA6C81736A24927F80A /* RoutesFixture.swift in Sources */,
 				042B6CDB3B8E20BADBB4A8F5 /* RoutesLiveModel.swift in Sources */,
+				090B69224BF8F761AF961E19 /* RoutesMagpie.swift in Sources */,
 				F6870649F243121EE5F5A4AB /* RoutesStageView.swift in Sources */,
 				6F993518B8F8F51B4EFE11B7 /* SetupGuideView.swift in Sources */,
 				C6DE229BF1A03CDAF48362D1 /* StateViews.swift in Sources */,

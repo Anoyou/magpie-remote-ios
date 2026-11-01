@@ -9,6 +9,11 @@
 对应代码：`MagpieRemoteApp/RoutesStageView.swift`、`MagpieRemoteApp/ManageGroupsView.swift`、
 `MagpieRemoteCore/Sources/MagpieRemoteCore/RouteTrace.swift`、`GroupRouting.swift`。
 
+路由舞台上飞行的喜鹊图形与动作（client.js 的 `FLIER` 路径、routing.css 的 `.rt-flier` / `rtflap` /
+`.rt-lift`、飞行路线 `pose()` / `via()`），以及 magpie 的喜鹊标志（`internal/gui/assets/index.html` 的
+`#bird` 路径），均取自 magpie 原作，路径数据原样保留，适用下方同一份 MIT 许可。
+对应代码：`MagpieRemoteApp/RoutesMagpie.swift`、`MagpieRemoteApp/RoutesStageView.swift`。
+
 来源：https://github.com/yetone/magpie
 
 ```
