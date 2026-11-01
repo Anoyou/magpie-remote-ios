@@ -64,6 +64,7 @@
 		9E7415EC73D396F9C776BFB7 /* ChatController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B078F07A52896FF08A607 /* ChatController.swift */; };
 		A68F99FCE8F4A672FEEB0E14 /* ManageKeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1BFA63809ED4BF7D265B80 /* ManageKeysView.swift */; };
 		ACB33B7408218952BAB7DCEA /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */; };
+		AF5A351B63781ABD368C4EE6 /* WidgetsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB846BC95EF9F98069F65F4 /* WidgetsUITests.swift */; };
 		B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 726F02F062C85BC63F1B4072 /* QuotaUITests.swift */; };
 		B88A7A879E326108B19B78CA /* WidgetProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A522998429764710306A89D9 /* WidgetProvider.swift */; };
 		BE07FE492CF20ADED83A0B4F /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 793F539829F0FF3C2E4C218C /* MoreView.swift */; };
@@ -177,6 +178,7 @@
 		8EE4369A26D958415F43833E /* MagpieRemote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MagpieRemote.entitlements; sourceTree = "<group>"; };
 		920C3FE60DF8536524B583C5 /* ChatFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatFixture.swift; sourceTree = "<group>"; };
 		956776CE0C93C73B96065EF2 /* ManagePluginsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagePluginsView.swift; sourceTree = "<group>"; };
+		9AB846BC95EF9F98069F65F4 /* WidgetsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetsUITests.swift; sourceTree = "<group>"; };
 		A22DB1B3CA4B1806EC581871 /* HostSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostSettingsView.swift; sourceTree = "<group>"; };
 		A3FC619A941C0D64DF0F8A56 /* DockUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockUITests.swift; sourceTree = "<group>"; };
 		A522998429764710306A89D9 /* WidgetProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetProvider.swift; sourceTree = "<group>"; };
@@ -283,6 +285,7 @@
 				0F83110DBDE962E7997275A8 /* RoutesSnapshotUITests.swift */,
 				E67EC9FC2AEF26D72DE745B5 /* RoutesUITests.swift */,
 				F3E878152FDB5534070169FA /* UsageTabsUITests.swift */,
+				9AB846BC95EF9F98069F65F4 /* WidgetsUITests.swift */,
 			);
 			path = MagpieRemoteUITests;
 			sourceTree = "<group>";
@@ -517,6 +520,7 @@
 				74C9670F243518177245F839 /* RoutesSnapshotUITests.swift in Sources */,
 				E1520A79C1F021F0116D828E /* RoutesUITests.swift in Sources */,
 				520E04DFFAD8676BAA5F5F78 /* UsageTabsUITests.swift in Sources */,
+				AF5A351B63781ABD368C4EE6 /* WidgetsUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

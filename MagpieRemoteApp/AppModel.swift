@@ -75,6 +75,11 @@ final class AppModel {
     }
 
     func start() async {
+        // UI 测试模拟「点小组件打开」：`--ui-open-url magpieremote://widget/…`（只在示例模式里认）。
+        let args = ProcessInfo.processInfo.arguments
+        if isFixture, let i = args.firstIndex(of: "--ui-open-url"), i + 1 < args.count, let url = URL(string: args[i + 1]) {
+            open(url)
+        }
         await reconnect()
     }
 

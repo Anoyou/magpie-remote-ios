@@ -31,6 +31,7 @@ App 里「更多 › 配置引导」有同样的图文说明。
 2. 用自签工具安装，例如电脑上的 [Sideloadly](https://sideloadly.io/) 或 [AltStore](https://altstore.io/)：
    - 选择这个 `.ipa`，登录你的 Apple ID（免费的就可以），连接 iPhone，开始安装；
    - Bundle ID 默认是 `com.magpieremote.personal`，工具提示冲突时可以改成你自己的。
+   - 包里带主屏 / 锁屏小组件：**不要勾选「移除扩展 / Remove app extensions」**。每次安装占用 2 个 App ID（免费 Apple ID 每 7 天 10 个）。小组件的添加方法和自签注意事项见 [docs/widgets.md](docs/widgets.md)。
 3. 第一次打开时，在 iPhone 的 **设置 › 通用 › VPN 与设备管理** 里信任你的开发者证书；iOS 16 以上还需要在 **设置 › 隐私与安全性** 里打开「开发者模式」。
 4. **免费 Apple ID 签的 App 7 天后会失效**，到期前用同一个工具重新签名安装即可（数据和钥匙串里的密钥会保留）。付费开发者账号签名有效期为一年。
 
@@ -46,7 +47,7 @@ App 里「更多 › 配置引导」有同样的图文说明。
 
 ## 开发
 
-- 结构：`MagpieRemoteApp/`（SwiftUI App）、`MagpieRemoteCore/`（只依赖 Foundation 的 Swift 包，含模型、主机与钥匙串、网关客户端、错误中文提示、SSE 解析）、`MagpieRemoteUITests/`、`scripts/`、`.github/workflows/`。
+- 结构：`MagpieRemoteApp/`（SwiftUI App）、`MagpieRemoteWidgets/`（WidgetKit 小组件扩展，只读 App 写进 App Group 的快照）、`MagpieRemoteCore/`（只依赖 Foundation 的 Swift 包，含模型、主机与钥匙串、网关客户端、错误中文提示、SSE 解析）、`MagpieRemoteUITests/`、`scripts/`、`.github/workflows/`。
 - 构建：Xcode 27（iOS 27 SDK），部署目标 iOS 26。
 - 单元测试：`swift test --package-path MagpieRemoteCore`（macOS，也能在 Linux 上跑，钥匙串部分只在 Apple 平台编译）。
 - UI 测试使用 fixture 模式：启动参数 `--ui-testing`（或环境变量 `MAGPIE_REMOTE_FIXTURE=1`），不需要真实主机；`--fixture-empty` 模拟没有主机，`--fixture-offline` 模拟连不上。
