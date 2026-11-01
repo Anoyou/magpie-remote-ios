@@ -1,0 +1,8 @@
+{"models": [
+  {"id": "relay-one/gpt-4.1", "name": "GPT 4.1", "group": "Relay One", "icon": "openai", "logo": "openai", "context": 1047576, "inUse": true},
+  {"id": "group/smart", "name": "聪明组", "group": "Routing groups", "icons": ["openai", "deepseek-color"]},
+  {"id": "relay-one/o3", "name": "o3", "group": "Relay One", "icon": "openai", "context": 200000, "hidden": true},
+  {"id": "codex/gpt-5", "name": "GPT-5", "group": "Codex", "icon": "codex-color", "own": true},
+  {"id": "deepseek/deepseek-chat", "name": "DeepSeek Chat", "group": "DeepSeek", "icon": "deepseek-color", "context": 128000}
+ ],
+ "ordered": false, "only": false, "own": true, "ownHidden": false}

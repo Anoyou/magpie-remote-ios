@@ -78,4 +78,16 @@ final class AgentSessionsUITests: XCTestCase {
         XCTAssertTrue(element(id: "session.row.fixture-claude-2", in: app).disappears(timeout: 10), "删除后会话不应还在列表里")
         XCTAssertTrue(element(id: "session.row.fixture-claude-1", in: app).exists)
     }
+
+    /// 「回收站」：示例里有一个以前删掉的会话，点「恢复」后它回到列表。
+    func testTrashRestoresSession() {
+        let app = openSessions()
+        let trash = element(id: "sessions.trash", in: app)
+        XCTAssertTrue(trash.waitForExistence(timeout: 10), "右上角应当有「回收站」")
+        trash.tap()
+        let restore = element(id: "trash.restore.old-session", in: app)
+        XCTAssertTrue(restore.waitForExistence(timeout: 10), "回收站里应当有示例会话")
+        restore.tap()
+        XCTAssertTrue(element(id: "trash.empty", in: app).waitForExistence(timeout: 10), "恢复后回收站应当是空的")
+    }
 }

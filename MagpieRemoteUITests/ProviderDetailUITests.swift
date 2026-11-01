@@ -82,4 +82,15 @@ final class ProviderDetailUITests: XCTestCase {
         let value = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "provider.key.value.fx-key-new")).firstMatch
         XCTAssertFalse(value.label.contains("EXAMPLE"))
     }
+
+    /// 「端点 · 测试」：每个端点一行结果（fixture：OpenAI 成功，Responses 404）。
+    func testEndpointTestShowsEachResult() {
+        let app = openRelay()
+        let test = element(id: "provider.test", in: app)
+        scrollTo(test, in: app)
+        XCTAssertTrue(test.waitForExistence(timeout: 10), "供应商详情应当有「测试」")
+        test.tap()
+        XCTAssertTrue(element(id: "provider.test.result.chat", in: app).waitForExistence(timeout: 10), "测试后应当显示 OpenAI 端点的结果")
+        XCTAssertTrue(element(id: "provider.test.result.responses", in: app).exists, "测试后应当显示 Responses 端点的结果")
+    }
 }

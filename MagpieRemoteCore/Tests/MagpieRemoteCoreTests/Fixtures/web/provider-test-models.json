@@ -1,0 +1,5 @@
+{"results": [
+  {"protocol": "chat", "ok": true, "status": 200, "ms": 640, "model": "gpt-4.1"},
+  {"protocol": "responses", "ok": false, "status": 404, "ms": 210, "model": "o3", "error": "model not found"},
+  {"ok": false, "ms": 0, "model": "gpt-5-preview", "error": "model relay-one/gpt-5-preview is disabled in magpie (it matches \"*preview*\" in Settings › Models › Disabled models)"}
+ ]}

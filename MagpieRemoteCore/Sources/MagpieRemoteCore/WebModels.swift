@@ -13,6 +13,14 @@ public struct WebSettings: Hashable, Sendable {
     /// Agent 列表的顺序与手动隐藏的 Agent（magpie 自己的设置，网页版拖动 / 隐藏后保存；可能是 null）。
     public var agentOrder: [String]
     public var agentsHidden: [String]
+    /// 手动显示的 Agent（官方 agentsShown；网页版现在总是存 []，原样带回）。
+    public var agentsShown: [String]
+    /// 「停用的模型」：经过 magpie 的请求一律拒绝（id 或 *fable* 这样的通配符）。
+    public var disabledModels: [String]
+    /// 每个停用规则现在匹配到的模型。
+    public var disabledHits: [String: [String]]
+    /// 可以选来停用的模型（官方「停用…」的选择器用 titleModels 里有供应商的那些）。
+    public var titleModels: [SettingsModelRef]
 
     public init(json: WebJSON) {
         version = json["version"]?.string
@@ -21,6 +29,29 @@ public struct WebSettings: Hashable, Sendable {
         lanURLs = json["lanURLs"]?.strings ?? []
         agentOrder = json["agentOrder"]?.strings ?? []
         agentsHidden = json["agentsHidden"]?.strings ?? []
+        agentsShown = json["agentsShown"]?.strings ?? []
+        disabledModels = json["disabledModels"]?.strings ?? []
+        var hits: [String: [String]] = [:]
+        for (pattern, list) in json["disabledHits"]?.object ?? [:] { hits[pattern] = list.strings }
+        disabledHits = hits
+        titleModels = (json["titleModels"]?.array ?? []).compactMap(SettingsModelRef.init(json:))
+    }
+}
+
+/// 设置里列出的模型（magpie `modelRef`）。
+public struct SettingsModelRef: Hashable, Identifiable, Sendable {
+    public var id: String
+    public var name: String
+    /// 空 = 路由组。
+    public var provider: String
+    public var providerName: String
+
+    public init?(json: WebJSON) {
+        guard let id = json["id"]?.string, !id.isEmpty else { return nil }
+        self.id = id
+        name = json["name"]?.string.flatMap { $0.isEmpty ? nil : $0 } ?? id
+        provider = json["provider"]?.string ?? ""
+        providerName = json["providerName"]?.string ?? provider
     }
 }
 
@@ -234,10 +265,19 @@ public struct WebState: Hashable, Sendable {
     public var agents: [WebAgent]
     /// 需要重启 Agent 等提示（英文原文）。
     public var notice: String?
+    /// 保存的方案（网页「方案」那一排）。
+    public var profiles: [WebProfile]
+    /// 打开「接入」开关时，magpie 选模型的方式（`connected.how`）。
+    public var connectedHow: String?
+    /// 应用方案时改了几项（`POST /api/profile/use` 的 `changed`）。
+    public var changed: Int?
 
     public init(json: WebJSON) {
         agents = (json["agents"]?.array ?? []).map(WebAgent.init(raw:))
         notice = json["notice"]?.string.flatMap { $0.isEmpty ? nil : $0 }
+        profiles = (json["profiles"]?.array ?? []).map(WebProfile.init(json:))
+        connectedHow = json["connected"]?["how"]?.string
+        changed = json["changed"]?.int
     }
 }
 
@@ -289,9 +329,12 @@ public struct WebCallerKeys: Hashable, Sendable {
     public var keys: [WebCallerKey]
     /// 刚创建 / 轮换 / 复制得到的明文（只出现这一次）；其余操作为 nil。
     public var secret: String?
+    /// 账号 id（`<provider>/<id>`）→ 显示名。
+    public var accountNames: [String: String]
 
     public init(json: WebJSON) {
         keys = (json["keys"]?.array ?? []).map(WebCallerKey.init(raw:))
+        accountNames = Self.accountNames(json)
         secret = json["secret"]?.string.flatMap { $0.isEmpty ? nil : $0 }
     }
 }

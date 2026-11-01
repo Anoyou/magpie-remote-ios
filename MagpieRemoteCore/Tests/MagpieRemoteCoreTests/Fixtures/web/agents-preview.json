@@ -1,0 +1,6 @@
+{
+  "changes": [
+    {"path": "~/.codex/config.toml", "lines": [{"op": "-", "text": "model_provider = \"magpie\""}, {"op": "-", "text": "model = \"relay-example/gpt-4.1\"", "was": "model = \"gpt-5\""}]},
+    {"path": "~/.codex/magpie-catalog.json", "removed": true, "lines": []}
+  ]
+}

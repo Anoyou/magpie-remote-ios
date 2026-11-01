@@ -1,0 +1,9 @@
+{
+  "agents": {
+    "codex": {"version": "0.163.0", "latest": "0.164.2", "via": "npm", "command": "npm install -g @openai/codex", "update": true, "app": "26.1.0", "path": "/opt/homebrew/bin/codex"},
+    "claude": {"version": "2.1.40", "latest": "2.1.42", "via": "self", "command": "claude update", "update": true, "path": "/Users/someone/.local/bin/claude"},
+    "gemini": {"version": "0.21.0", "latest": "0.21.0", "via": "brew", "command": "brew upgrade gemini-cli", "path": "/opt/homebrew/bin/gemini"},
+    "pi": {"version": "1.0.9", "offPath": true, "path": "/Users/someone/.nvm/versions/node/v22.0.0/bin/pi"}
+  },
+  "pending": true
+}
