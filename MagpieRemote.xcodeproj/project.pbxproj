@@ -11,6 +11,8 @@
 		11E8AFC6D13D95573FC05019 /* GlassStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */; };
 		12BAE742E07FE831CB20E33F /* RemoteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC159FECE3AE2C80CE293EBA /* RemoteService.swift */; };
 		2265F3977CF475D57E7FB17B /* QuotaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DD330AB025C638D38D7F4B2 /* QuotaService.swift */; };
+		23D6E8399F69EA559F9B8DD0 /* HostTuneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE8F1E3AAD18758C5FF55CC /* HostTuneView.swift */; };
+		2B8283D8CC115EDE7165B0D0 /* HostToolsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E7401B70153C04ECA16C7A /* HostToolsUITests.swift */; };
 		3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */; };
 		35D255575382D36B60E6A361 /* ManageGroupsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 068941B029A4B89038CE9F9F /* ManageGroupsView.swift */; };
 		4461AAA05215104827D8F5CB /* UsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B3684D1FBFD9F309DF04EE /* UsageView.swift */; };
@@ -26,6 +28,7 @@
 		69142301CA8F2F563180E40F /* ManageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 389C0198DFDDB6F053E5B0F4 /* ManageStore.swift */; };
 		6F993518B8F8F51B4EFE11B7 /* SetupGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA9472625D556D20B30C141 /* SetupGuideView.swift */; };
 		7992886DB34CB4F2EA75D5AB /* ManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */; };
+		878A35BAC4EDA886ABCB2A00 /* HostUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA685B0A7948AA062BF1218E /* HostUpdateView.swift */; };
 		915FEEF1B6DAAC51D0831145 /* UsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778AD74AE35795A31AAC5EF5 /* UsageService.swift */; };
 		9C3D6FAD32863EB8F27CA822 /* ChatModelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */; };
 		9E7415EC73D396F9C776BFB7 /* ChatController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B078F07A52896FF08A607 /* ChatController.swift */; };
@@ -33,11 +36,14 @@
 		ACB33B7408218952BAB7DCEA /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */; };
 		B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 726F02F062C85BC63F1B4072 /* QuotaUITests.swift */; };
 		C6DE229BF1A03CDAF48362D1 /* StateViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE47489B641118574213CF4B /* StateViews.swift */; };
+		CA28EE580CBDB8410AAC842B /* HostPrivacyModelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A671F154A4F44DCB5F605A5B /* HostPrivacyModelView.swift */; };
 		D7C5EBC022010B9B427677A5 /* ChatFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920C3FE60DF8536524B583C5 /* ChatFixture.swift */; };
+		D9FD6CCBC2A131D4E2930432 /* HostToolsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2186BECFDE7592BD0DB2621C /* HostToolsSection.swift */; };
 		DD521DD87C92F1A377CCCDE9 /* CHANGELOG.md in Resources */ = {isa = PBXBuildFile; fileRef = 788E39132F8D99761903C1B9 /* CHANGELOG.md */; };
 		E7CB34A969EA832028A86108 /* ChatEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86AA82BDA306FEE58D7F8194 /* ChatEntryView.swift */; };
 		EF574E67CC0B0E018D50A65C /* ManageProvidersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9D47C7DA414F1BE4697C6DA /* ManageProvidersView.swift */; };
 		EF80407E0147C1DF6F320FC7 /* HostSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A22DB1B3CA4B1806EC581871 /* HostSettingsView.swift */; };
+		F32B9BE6865E41627EA988A8 /* HostToolsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9F55FC75D9D3F7BFDD1FC3 /* HostToolsService.swift */; };
 		F94960CEA4249CC3B13ABFCA /* UsageRequestsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F2981ECFC5419AD87AB50B /* UsageRequestsView.swift */; };
 		F9AB72B1384D0F39D65D4857 /* ChatSessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8557DBC761BFF4F7F4FD457B /* ChatSessionsView.swift */; };
 		FAAB278A01FFEDFE162E560D /* MagpieRemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E63161272BA6285AB49CEDD /* MagpieRemoteApp.swift */; };
@@ -60,6 +66,7 @@
 		0E63161272BA6285AB49CEDD /* MagpieRemoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagpieRemoteApp.swift; sourceTree = "<group>"; };
 		19FC2DD80AE7DF7087FB1460 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		1E1BFA63809ED4BF7D265B80 /* ManageKeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageKeysView.swift; sourceTree = "<group>"; };
+		2186BECFDE7592BD0DB2621C /* HostToolsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostToolsSection.swift; sourceTree = "<group>"; };
 		21B2D092F7FDAB32A6B31E82 /* ManageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageService.swift; sourceTree = "<group>"; };
 		266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageView.swift; sourceTree = "<group>"; };
 		2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageUITests.swift; sourceTree = "<group>"; };
@@ -71,7 +78,9 @@
 		58959F16F79E9B000864BC3D /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		5DD330AB025C638D38D7F4B2 /* QuotaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaService.swift; sourceTree = "<group>"; };
 		6048AA6534925611CC245088 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		6B9F55FC75D9D3F7BFDD1FC3 /* HostToolsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostToolsService.swift; sourceTree = "<group>"; };
 		726F02F062C85BC63F1B4072 /* QuotaUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaUITests.swift; sourceTree = "<group>"; };
+		74E7401B70153C04ECA16C7A /* HostToolsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostToolsUITests.swift; sourceTree = "<group>"; };
 		778AD74AE35795A31AAC5EF5 /* UsageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageService.swift; sourceTree = "<group>"; };
 		788E39132F8D99761903C1B9 /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
 		78C3B92FB2353A6F4894F947 /* MainTabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabs.swift; sourceTree = "<group>"; };
@@ -82,16 +91,19 @@
 		8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagpieRemoteUITests.swift; sourceTree = "<group>"; };
 		920C3FE60DF8536524B583C5 /* ChatFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatFixture.swift; sourceTree = "<group>"; };
 		A22DB1B3CA4B1806EC581871 /* HostSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostSettingsView.swift; sourceTree = "<group>"; };
+		A671F154A4F44DCB5F605A5B /* HostPrivacyModelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostPrivacyModelView.swift; sourceTree = "<group>"; };
 		A9D47C7DA414F1BE4697C6DA /* ManageProvidersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageProvidersView.swift; sourceTree = "<group>"; };
 		AA94709041B2267F5A16D011 /* MagpieRemoteCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MagpieRemoteCore; path = MagpieRemoteCore; sourceTree = SOURCE_ROOT; };
 		B7CCE5AB6E8CB53877120CC9 /* MagpieRemoteUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MagpieRemoteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BACFB0DEB196C348FB485867 /* ChatModelPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModelPicker.swift; sourceTree = "<group>"; };
 		C638097B82CFCE192E68F6B3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CA685B0A7948AA062BF1218E /* HostUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostUpdateView.swift; sourceTree = "<group>"; };
 		CE47489B641118574213CF4B /* StateViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateViews.swift; sourceTree = "<group>"; };
 		D0D0018F229A70CBA54BFECD /* ManageWebPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageWebPageView.swift; sourceTree = "<group>"; };
 		DC159FECE3AE2C80CE293EBA /* RemoteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteService.swift; sourceTree = "<group>"; };
 		DFA9472625D556D20B30C141 /* SetupGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupGuideView.swift; sourceTree = "<group>"; };
 		E4F2981ECFC5419AD87AB50B /* UsageRequestsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRequestsView.swift; sourceTree = "<group>"; };
+		ECE8F1E3AAD18758C5FF55CC /* HostTuneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostTuneView.swift; sourceTree = "<group>"; };
 		FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassStyle.swift; sourceTree = "<group>"; };
 		FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -139,6 +151,7 @@
 		C62FC932859A024338961F60 /* MagpieRemoteUITests */ = {
 			isa = PBXGroup;
 			children = (
+				74E7401B70153C04ECA16C7A /* HostToolsUITests.swift */,
 				8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */,
 				2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */,
 				726F02F062C85BC63F1B4072 /* QuotaUITests.swift */,
@@ -160,7 +173,12 @@
 				8557DBC761BFF4F7F4FD457B /* ChatSessionsView.swift */,
 				6048AA6534925611CC245088 /* ChatView.swift */,
 				FACE9181F8DE2DA9414422C6 /* GlassStyle.swift */,
+				A671F154A4F44DCB5F605A5B /* HostPrivacyModelView.swift */,
 				A22DB1B3CA4B1806EC581871 /* HostSettingsView.swift */,
+				2186BECFDE7592BD0DB2621C /* HostToolsSection.swift */,
+				6B9F55FC75D9D3F7BFDD1FC3 /* HostToolsService.swift */,
+				ECE8F1E3AAD18758C5FF55CC /* HostTuneView.swift */,
+				CA685B0A7948AA062BF1218E /* HostUpdateView.swift */,
 				0E63161272BA6285AB49CEDD /* MagpieRemoteApp.swift */,
 				78C3B92FB2353A6F4894F947 /* MainTabs.swift */,
 				8A354639D6D9E50E5C0A09EA /* ManageAgentsView.swift */,
@@ -284,6 +302,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2B8283D8CC115EDE7165B0D0 /* HostToolsUITests.swift in Sources */,
 				FF51B2EAE72A2A70428D3694 /* MagpieRemoteUITests.swift in Sources */,
 				3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */,
 				B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */,
@@ -304,7 +323,12 @@
 				F9AB72B1384D0F39D65D4857 /* ChatSessionsView.swift in Sources */,
 				6192FC374175FDDD000BC5CB /* ChatView.swift in Sources */,
 				11E8AFC6D13D95573FC05019 /* GlassStyle.swift in Sources */,
+				CA28EE580CBDB8410AAC842B /* HostPrivacyModelView.swift in Sources */,
 				EF80407E0147C1DF6F320FC7 /* HostSettingsView.swift in Sources */,
+				D9FD6CCBC2A131D4E2930432 /* HostToolsSection.swift in Sources */,
+				F32B9BE6865E41627EA988A8 /* HostToolsService.swift in Sources */,
+				23D6E8399F69EA559F9B8DD0 /* HostTuneView.swift in Sources */,
+				878A35BAC4EDA886ABCB2A00 /* HostUpdateView.swift in Sources */,
 				FAAB278A01FFEDFE162E560D /* MagpieRemoteApp.swift in Sources */,
 				54705930CAB370F66C589891 /* MainTabs.swift in Sources */,
 				5EC564D854E790E1ECC5BC92 /* ManageAgentsView.swift in Sources */,

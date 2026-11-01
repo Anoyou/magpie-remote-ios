@@ -61,6 +61,8 @@ struct ManageView: View {
                     Text("模型的开关在各个供应商里。")
                 }
 
+                HostToolsSection(store: store)
+
                 Section {
                     ForEach(MagpieWebPage.allCases) { page in
                         NavigationLink {
