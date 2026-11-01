@@ -1,7 +1,7 @@
 import XCTest
 
-/// 新底栏的导航：前 4 个是可自定义的页面（默认 Agent、会话、供应商、路由），第 5 个固定是「更多」。
-/// 不在底栏里的页面（额度、用量、对话、网关密钥、插件、主机工具、关于…）都从「更多」进入。
+/// 新底栏的导航：前 4 个是可自定义的页面（默认主页、会话、路由、用量），第 5 个固定是「更多」。
+/// 「主页」顶部分页器里是 Agent、供应商、额度；不在底栏里的页面（对话、网关密钥、插件、主机工具、关于…）都从「更多」进入。
 @MainActor
 extension XCUIApplication {
     /// 等底栏出现（以固定的「更多」为准）。
@@ -16,6 +16,25 @@ extension XCUIApplication {
         tab.tap()
         let expected = navigationTitle ?? title
         XCTAssertTrue(navigationBars[expected].waitForExistence(timeout: 10), "没有打开「\(expected)」", file: file, line: line)
+    }
+
+    /// 打开「主页」并切到分页器里的一页（Agent / 供应商 / 额度），等这一页的导航栏标题出现。
+    func openHome(_ segment: String, file: StaticString = #filePath, line: UInt = #line) {
+        let tab = tabBars.buttons["主页"]
+        XCTAssertTrue(tab.waitForExistence(timeout: 15), "底栏里没有「主页」", file: file, line: line)
+        tab.tap()
+        let control = homeSegments
+        XCTAssertTrue(control.waitForExistence(timeout: 10), "主页顶部没有分页器", file: file, line: line)
+        let button = control.buttons[segment]
+        XCTAssertTrue(button.waitForExistence(timeout: 5), "分页器里没有「\(segment)」", file: file, line: line)
+        if !button.isSelected { button.tap() }
+        XCTAssertTrue(navigationBars[segment].waitForExistence(timeout: 10), "没有切到「\(segment)」", file: file, line: line)
+    }
+
+    /// 「主页」顶部的分页器。
+    var homeSegments: XCUIElement {
+        let byID = segmentedControls["home.segment"]
+        return byID.exists ? byID : segmentedControls.firstMatch
     }
 
     /// 打开底栏「更多」的根列表。

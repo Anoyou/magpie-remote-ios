@@ -1,21 +1,29 @@
 import Foundation
 
-/// App 里能放进底栏或「更多」的页面。`rawValue` 会存进 UserDefaults，改名前要考虑旧值。
+/// App 里能放进底栏或「更多」的页面。`rawValue` 会存进 UserDefaults，改名前要考虑旧值（见 `init(storedValue:)`）。
 public enum AppPage: String, CaseIterable, Identifiable, Hashable, Sendable {
-    case agents, sessions, providers, routes
-    case quota, usage, chat
+    /// 「主页」：Agent、供应商、额度三页合在一起，顶部分页器切换（0.4.0 起）。
+    case home
+    case sessions, routes
+    case usage, chat
     case keys, plugins, hostTools, web, hosts, about
 
     public var id: String { rawValue }
 
+    /// 从保存的字符串恢复，兼容旧版本存下的值：0.3 的 Agent / 供应商 / 额度（agents / providers / quota）都并入「主页」。
+    public init?(storedValue: String) {
+        switch storedValue {
+        case "agents", "providers", "quota": self = .home
+        default: self.init(rawValue: storedValue)
+        }
+    }
+
     /// 底栏与「更多」里显示的名称（尽量短，底栏放得下）。
     public var title: String {
         switch self {
-        case .agents: "Agent"
+        case .home: "主页"
         case .sessions: "会话"
-        case .providers: "供应商"
         case .routes: "路由"
-        case .quota: "额度"
         case .usage: "用量"
         case .chat: "对话"
         case .keys: "网关密钥"
@@ -30,11 +38,9 @@ public enum AppPage: String, CaseIterable, Identifiable, Hashable, Sendable {
     /// 「自定义底栏」里的说明。
     public var detail: String {
         switch self {
-        case .agents: "切换各个 Agent 用的模型"
+        case .home: "Agent、供应商与额度"
         case .sessions: "Agent 会话记录"
-        case .providers: "供应商与模型开关"
         case .routes: "实时路由与路由组"
-        case .quota: "订阅与套餐的剩余额度"
         case .usage: "花费、请求数与请求记录"
         case .chat: "经由网关和模型对话"
         case .keys: "网关密钥与临时密钥"
@@ -48,11 +54,9 @@ public enum AppPage: String, CaseIterable, Identifiable, Hashable, Sendable {
 
     public var symbol: String {
         switch self {
-        case .agents: "terminal"
+        case .home: "house"
         case .sessions: "bubble.left.and.text.bubble.right"
-        case .providers: "server.rack"
         case .routes: "arrow.triangle.branch"
-        case .quota: "gauge.with.dots.needle.67percent"
         case .usage: "chart.bar.xaxis"
         case .chat: "bubble.left.and.bubble.right"
         case .keys: "key"
@@ -65,10 +69,32 @@ public enum AppPage: String, CaseIterable, Identifiable, Hashable, Sendable {
     }
 }
 
+/// 「主页」顶部分页器的三页。`rawValue` 存进 UserDefaults（记住上次选的）。
+public enum HomeSegment: String, CaseIterable, Identifiable, Hashable, Sendable {
+    case agents, providers, quota
+
+    public static let defaultsKey = "home.segment"
+
+    public var id: String { rawValue }
+
+    public var title: String {
+        switch self {
+        case .agents: "Agent"
+        case .providers: "供应商"
+        case .quota: "额度"
+        }
+    }
+
+    /// 读保存的值；没有或无法识别时是 Agent。
+    public init(stored: String?) {
+        self = stored.flatMap(HomeSegment.init(rawValue:)) ?? .agents
+    }
+}
+
 /// 底栏前 4 个位置放哪些页面（第 5 个固定是「更多」）。纯数据，便于测试；保存由 App 负责。
 public struct DockLayout: Equatable, Sendable {
     public static let slotCount = 4
-    public static let defaultPages: [AppPage] = [.agents, .sessions, .providers, .routes]
+    public static let defaultPages: [AppPage] = [.home, .sessions, .routes, .usage]
     public static let `default` = DockLayout(pages: defaultPages)
 
     /// 恰好 `slotCount` 个、互不重复的页面。
@@ -87,9 +113,10 @@ public struct DockLayout: Equatable, Sendable {
     }
 
     /// 从保存的字符串恢复；没有保存过或内容无法识别时用默认布局。
+    /// 旧版本的 agents / providers / quota 会换成「主页」，重复的只留第一个，空位用默认页面补满。
     public init(stored: [String]?) {
         guard let stored else { self = .default; return }
-        let pages = stored.compactMap(AppPage.init(rawValue:))
+        let pages = stored.compactMap(AppPage.init(storedValue:))
         self = pages.isEmpty ? .default : DockLayout(pages: pages)
     }
 

@@ -27,24 +27,30 @@ final class MagpieRemoteUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
     }
 
-    /// 默认底栏：Agent、会话、供应商、路由、更多；额度 / 用量 / 对话改从「更多」进入。
+    /// 默认底栏：主页、会话、路由、用量、更多；主页顶部分页器里是 Agent、供应商、额度；对话从「更多」进入。
     func testDefaultDockTabs() {
         let app = launch()
-        for title in ["Agent", "会话", "供应商", "路由", "更多"] {
+        for title in ["主页", "会话", "路由", "用量", "更多"] {
             XCTAssertTrue(app.tabBars.buttons[title].exists, "缺少标签：\(title)")
         }
         XCTAssertFalse(app.tabBars.buttons["管理"].exists, "旧的「管理」标签应当已经去掉")
-        XCTAssertTrue(app.navigationBars["Agent"].waitForExistence(timeout: 10), "首屏应当是底栏第一个页面「Agent」")
+        XCTAssertTrue(app.navigationBars["Agent"].waitForExistence(timeout: 10), "首屏应当是主页的「Agent」分页")
+        for title in ["Agent", "供应商", "额度"] {
+            XCTAssertTrue(app.homeSegments.buttons[title].exists, "主页分页器缺少「\(title)」")
+        }
+        XCTAssertFalse(app.tabBars.buttons["Agent"].exists, "Agent 已并入主页，不应再单独在底栏")
         app.openMore()
-        for id in ["more.quota", "more.usage", "more.chat", "manage.keys"] {
+        for id in ["more.chat", "manage.keys"] {
             XCTAssertTrue(app.descendants(matching: .any).matching(identifier: id).firstMatch.waitForExistence(timeout: 10), "「更多」里缺少 \(id)")
         }
-        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "manage.providers").firstMatch.exists, "在底栏里的页面不应再出现在「更多」里")
+        for id in ["more.home", "more.usage", "manage.groups"] {
+            XCTAssertFalse(app.descendants(matching: .any).matching(identifier: id).firstMatch.exists, "在底栏里的页面不应再出现在「更多」里：\(id)")
+        }
     }
 
     func testFixtureHostConnectsAndShowsQuota() {
         let app = launch()
-        app.openFromMore("more.quota", title: "额度")
+        app.openHome("额度")
         XCTAssertTrue(element(containing: "工作 Claude", in: app).waitForExistence(timeout: 15))
     }
 
@@ -76,7 +82,7 @@ final class MagpieRemoteUITests: XCTestCase {
 
     func testOfflineHostShowsChineseError() {
         let app = launch(["--fixture-offline"])
-        app.openFromMore("more.quota", title: "额度")
+        app.openHome("额度")
         XCTAssertTrue(element(containing: "连不上主机", in: app).waitForExistence(timeout: 15), "没有出现中文错误标题「连不上主机」")
         XCTAssertTrue(element(containing: "主机都没有回应", in: app).waitForExistence(timeout: 5), "没有出现超时的中文说明")
         XCTAssertTrue(element(id: "state.retry", in: app).waitForExistence(timeout: 5), "错误页里没有「重试」按钮（state.retry）")
@@ -117,7 +123,7 @@ final class MagpieRemoteUITests: XCTestCase {
     }
 
     private func openUsage(_ app: XCUIApplication) {
-        app.openFromMore("more.usage", title: "用量")
+        app.openDockTab("用量")
         XCTAssertTrue(element(id: "usage.totalCost", in: app).waitForExistence(timeout: 15), "用量页没有出现总花费（usage.totalCost）")
     }
 
@@ -174,7 +180,7 @@ final class MagpieRemoteUITests: XCTestCase {
 
     func testUsageHeldKeyShowsOwnRequestsOnly() {
         let app = launch(["--fixture-held-key"])
-        app.openFromMore("more.usage", title: "用量")
+        app.openDockTab("用量")
         XCTAssertTrue(element(id: "usage.heldNote", in: app).waitForExistence(timeout: 15), "受限密钥没有显示说明")
         XCTAssertFalse(element(id: "usage.totalCost", in: app).exists, "受限密钥不应显示总花费")
         openRequests(app)

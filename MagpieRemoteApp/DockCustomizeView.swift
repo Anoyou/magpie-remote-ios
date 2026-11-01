@@ -14,7 +14,12 @@ final class DockStore {
     init(defaults: UserDefaults?) {
         self.defaults = defaults
         // 0.2 及以前的底栏（额度 / 用量 / 对话 / 管理）是固定的、没有保存过，所以老用户第一次打开就是新的默认底栏。
-        layout = DockLayout(stored: defaults?.stringArray(forKey: Self.defaultsKey))
+        let stored = defaults?.stringArray(forKey: Self.defaultsKey)
+        layout = DockLayout(stored: stored)
+        // 0.3 存下的 Agent / 供应商 / 额度已并入「主页」：整理后的布局写回去，下次不用再换。
+        if let stored, stored != layout.stored {
+            if layout.isDefault { defaults?.removeObject(forKey: Self.defaultsKey) } else { defaults?.set(layout.stored, forKey: Self.defaultsKey) }
+        }
     }
 
     func move(fromOffsets source: IndexSet, toOffset destination: Int) {

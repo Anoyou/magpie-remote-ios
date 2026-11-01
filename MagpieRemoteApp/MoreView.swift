@@ -8,8 +8,8 @@ struct MoreView: View {
     @Environment(ManageStore.self) private var store
 
     private var more: [AppPage] { model.dock.layout.morePages }
-    private var magpiePages: [AppPage] { [.agents, .sessions, .providers, .routes, .keys].filter(more.contains) }
-    private var gatewayPages: [AppPage] { [.quota, .usage, .chat].filter(more.contains) }
+    private var magpiePages: [AppPage] { [.home, .sessions, .routes, .keys].filter(more.contains) }
+    private var gatewayPages: [AppPage] { [.usage, .chat].filter(more.contains) }
 
     var body: some View {
         List {
@@ -39,7 +39,7 @@ struct MoreView: View {
                 } header: {
                     Text("magpie")
                 } footer: {
-                    Text("模型的开关在各个供应商里。")
+                    Text("「主页」里是 Agent、供应商与额度；模型的开关在各个供应商里。")
                 }
             }
 
@@ -97,9 +97,7 @@ struct MoreView: View {
 
     private func detail(_ page: AppPage) -> String? {
         switch page {
-        case .providers: store.phase == .ready ? "\(store.providers.count) 个" : nil
         case .routes: store.groups.map { "\($0.visible.count) 个路由组" }
-        case .agents: store.phase == .ready ? "\(store.agents.count) 个" : nil
         case .keys: store.phase == .ready ? "\(store.keys.count) 把" : nil
         default: nil
         }
@@ -137,8 +135,8 @@ struct AppPageView: View {
 
     var body: some View {
         switch page {
-        case .quota:
-            QuotaView().navigationTitle(page.title)
+        case .home:
+            HomeView()
         case .usage:
             UsageView().navigationTitle(page.title)
         case .chat:
@@ -147,10 +145,6 @@ struct AppPageView: View {
             AboutView()
         case .hosts:
             HostListContent()
-        case .agents:
-            ManageGate(title: page.title) { ManageAgentsView(store: $0) }
-        case .providers:
-            ManageGate(title: page.title) { ManageProvidersView(store: $0) }
         case .routes:
             ManageGate(title: page.title) { store in
                 ManageGroupsView(store: store).id(store.configurationKey)
@@ -194,9 +188,8 @@ extension AppPage {
     /// 「更多」里这一行的 identifier。沿用原来「管理」页的名字，UI 测试依赖它们。
     var moreIdentifier: String {
         switch self {
-        case .agents: "manage.agents"
+        case .home: "more.home"
         case .sessions: "manage.sessions"
-        case .providers: "manage.providers"
         case .routes: "manage.groups"
         case .keys: "manage.keys"
         case .plugins: "manage.plugins"
@@ -204,7 +197,6 @@ extension AppPage {
         case .web: "manage.web"
         case .hosts: "manage.hosts"
         case .about: "manage.about"
-        case .quota: "more.quota"
         case .usage: "more.usage"
         case .chat: "more.chat"
         }

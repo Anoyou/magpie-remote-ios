@@ -10,12 +10,17 @@ public struct WebSettings: Hashable, Sendable {
     public var lan: Bool
     public var gateway: String?
     public var lanURLs: [String]
+    /// Agent 列表的顺序与手动隐藏的 Agent（magpie 自己的设置，网页版拖动 / 隐藏后保存；可能是 null）。
+    public var agentOrder: [String]
+    public var agentsHidden: [String]
 
     public init(json: WebJSON) {
         version = json["version"]?.string
         lan = json["lan"]?.bool ?? false
         gateway = json["gateway"]?.string
         lanURLs = json["lanURLs"]?.strings ?? []
+        agentOrder = json["agentOrder"]?.strings ?? []
+        agentsHidden = json["agentsHidden"]?.strings ?? []
     }
 }
 
