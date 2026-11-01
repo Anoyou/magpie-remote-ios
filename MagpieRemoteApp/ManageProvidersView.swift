@@ -118,6 +118,7 @@ struct ProviderDetailView: View {
         }
         .navigationTitle(provider?.name ?? "供应商")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) { ManageStatusLine(store: store) }
         .onAppear(perform: load)
         .manageAlerts(store: store, id: "provider.\(id)")
     }

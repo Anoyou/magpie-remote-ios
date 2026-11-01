@@ -356,8 +356,10 @@ private struct AgentSection: View {
             switch place {
             case .hidden:
                 Button { Task { await store.setAgentHidden(agent, hide: false) } } label: { Label("显示", systemImage: "eye") }
+                    .accessibilityIdentifier("agent.show")
             case .notSetUp:
                 Button { Task { await store.setAgentHidden(agent, hide: true) } } label: { Label("隐藏", systemImage: "eye.slash") }
+                    .accessibilityIdentifier("agent.hide")
             case .shown(let index, let count):
                 Section {
                     Button { Task { await store.moveAgent(agent.id, to: index - 1) } } label: { Label("上移", systemImage: "arrow.up") }
@@ -386,6 +388,7 @@ private struct AgentSection: View {
                 }
                 Section {
                     Button { Task { await store.setAgentHidden(agent, hide: true) } } label: { Label("隐藏", systemImage: "eye.slash") }
+                    .accessibilityIdentifier("agent.hide")
                 }
             }
         } label: {

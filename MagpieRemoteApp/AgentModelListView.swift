@@ -147,12 +147,12 @@ struct AgentModelListView: View {
 
     @ViewBuilder
     private func groupSection(_ group: AgentModelList.Group) -> some View {
-        let rows = rows(of: group)
-        if !rows.isEmpty {
+        let visible = rows(of: group)
+        if !visible.isEmpty {
             let isFolded = search.isEmpty && folded.contains(group.name)
             Section {
                 if !isFolded {
-                    ForEach(rows) { model in modelRow(model) }
+                    ForEach(visible) { model in modelRow(model) }
                 }
             } header: {
                 HStack {

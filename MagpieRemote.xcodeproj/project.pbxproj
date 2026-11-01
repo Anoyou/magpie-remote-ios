@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		042B6CDB3B8E20BADBB4A8F5 /* RoutesLiveModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD02FB5DF5AB6DC37E6577F /* RoutesLiveModel.swift */; };
+		081C5121C048F627784522BD /* ParityGaps2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B05A223444B8A29F73817B /* ParityGaps2UITests.swift */; };
 		090B69224BF8F761AF961E19 /* RoutesMagpie.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3ECA9E0F2B3757B7634A38 /* RoutesMagpie.swift */; };
 		0C31645EFE7E1AA4A62861B4 /* UsageContextPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B15913582DE6332FF94AE0 /* UsageContextPane.swift */; };
 		0C3D212091FFFBD88D1DEF05 /* QuotaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC0EC6ECE79BAA10E97DB2C /* QuotaView.swift */; };
@@ -114,6 +115,7 @@
 		2186BECFDE7592BD0DB2621C /* HostToolsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostToolsSection.swift; sourceTree = "<group>"; };
 		21B15913582DE6332FF94AE0 /* UsageContextPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageContextPane.swift; sourceTree = "<group>"; };
 		21B2D092F7FDAB32A6B31E82 /* ManageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageService.swift; sourceTree = "<group>"; };
+		23B05A223444B8A29F73817B /* ParityGaps2UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParityGaps2UITests.swift; sourceTree = "<group>"; };
 		24348292E0203F581FA0B9CC /* ProviderModelTestRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderModelTestRows.swift; sourceTree = "<group>"; };
 		251C3B145D0B03072705F992 /* UsageTabsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageTabsView.swift; sourceTree = "<group>"; };
 		266FCFCA56DDCE23AA6EAA86 /* ManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageView.swift; sourceTree = "<group>"; };
@@ -242,6 +244,7 @@
 				8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */,
 				2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */,
 				55952D448E60FDA0346ED597 /* OfficialIconsUITests.swift */,
+				23B05A223444B8A29F73817B /* ParityGaps2UITests.swift */,
 				0D6DB79AF3E4D0FC04E2BFAD /* PluginsUITests.swift */,
 				48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */,
 				726F02F062C85BC63F1B4072 /* QuotaUITests.swift */,
@@ -434,6 +437,7 @@
 				FF51B2EAE72A2A70428D3694 /* MagpieRemoteUITests.swift in Sources */,
 				3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */,
 				46691A0663D2E79200332052 /* OfficialIconsUITests.swift in Sources */,
+				081C5121C048F627784522BD /* ParityGaps2UITests.swift in Sources */,
 				224F756965E44160F0793E7D /* PluginsUITests.swift in Sources */,
 				868CD4E99FACF3A03D4300D4 /* ProviderDetailUITests.swift in Sources */,
 				B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */,

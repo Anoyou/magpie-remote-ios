@@ -24,7 +24,7 @@ final class ProviderModelTests {
         }
         let run = UUID().uuidString.lowercased()
         self.run = run
-        results = Dictionary(uniqueKeysWithValues: ids.map { ($0, nil) })
+        results = Dictionary(uniqueKeysWithValues: ids.map { ($0, ProviderTestResult?.none) })
         task = Task {
             let answer = await store.testProviderModels(provider.id, models: ids, run: run)
             guard self.run == run else { return }
@@ -35,7 +35,8 @@ final class ProviderModelTests {
             }
             for (i, result) in answer.enumerated() where i < ids.count { results[ids[i]] = result }
             let summary = ProviderModelTest.summary(ids: ids, results: answer)
-            if summary.ok { store.status = summary.text } else { store.actionError = .webRejected(message: summary.text, code: nil) }
+            // 同官方：结果写在底部状态栏（失败的也是），不弹窗；每个模型旁边有圆点和原因
+            store.status = summary.text
         }
     }
 
