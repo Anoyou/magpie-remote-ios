@@ -24,8 +24,9 @@ struct ManageAgentsView: View {
                 }
             }
             AgentUpdatesBar(store: store)
-            ForEach(arrangement.shown) { agent in
-                AgentSection(store: store, agent: agent, disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
+            ForEach(Array(arrangement.shown.enumerated()), id: \.element.id) { index, agent in
+                AgentSection(store: store, agent: agent, place: .shown(index: index, count: arrangement.shown.count),
+                             disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
             }
             if arrangement.foldedCount > 0 {
                 Section {
@@ -49,13 +50,13 @@ struct ManageAgentsView: View {
                     if !arrangement.notSetUp.isEmpty {
                         FoldCaption(text: "未设置")
                         ForEach(arrangement.notSetUp) { agent in
-                            AgentSection(store: store, agent: agent, disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
+                            AgentSection(store: store, agent: agent, place: .notSetUp, disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
                         }
                     }
                     if !arrangement.hidden.isEmpty {
                         FoldCaption(text: "已隐藏")
                         ForEach(arrangement.hidden) { agent in
-                            AgentSection(store: store, agent: agent, disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
+                            AgentSection(store: store, agent: agent, place: .hidden, disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
                         }
                     }
                 }
@@ -99,9 +100,17 @@ struct ManageAgentsView: View {
     private func foldedFooter(_ arrangement: AgentArrangement) -> String {
         var parts: [String] = []
         if !arrangement.notSetUp.isEmpty { parts.append("\(arrangement.notSetUp.count) 个还没设置") }
-        if !arrangement.hidden.isEmpty { parts.append("\(arrangement.hidden.count) 个在网页版里隐藏了") }
+        if !arrangement.hidden.isEmpty { parts.append("\(arrangement.hidden.count) 个已隐藏") }
         return parts.joined(separator: "，") + "。"
     }
+}
+
+/// 一个 Agent 在列表里的位置：决定「更多操作」里有什么（官方 openAgentMenu：上面那组有上移 / 下移 / 隐藏，
+/// 折叠的「未设置」只有隐藏，「已隐藏」只有显示）。
+enum AgentPlace: Equatable {
+    case shown(index: Int, count: Int)
+    case notSetUp
+    case hidden
 }
 
 /// 折叠组里「未设置」「已隐藏」的小标题（和网页版的分组标题一样）。
@@ -194,6 +203,7 @@ private struct AgentUpdatesBar: View {
 private struct AgentSection: View {
     let store: ManageStore
     let agent: WebAgent
+    let place: AgentPlace
     /// 问「断开 X 和 magpie？」（弹窗挂在整页上，避免挂在 Section 上被每一行重复）。
     let disconnect: (WebAgent) -> Void
     /// 解释连不上 magpie 的原因。
@@ -207,6 +217,7 @@ private struct AgentSection: View {
             if agent.cliMissing {
                 Text("找不到它的命令行程序，可能已经卸载。重新安装后这里会再显示它的设置。").foregroundStyle(.secondary)
                 if agent.wired && agent.connectable { connectToggle }
+                moreActions
             } else {
                 if let drift = agent.drift { driftRow(drift) }
                 if agent.connectable { connectToggle }
@@ -217,8 +228,9 @@ private struct AgentSection: View {
                 ForEach(fields) { field in
                     AgentFieldPicker(store: store, agent: agent, field: field)
                 }
+                if let count = agent.modelCount { modelListRow(count) }
                 if let cli, cli.update || busy { updateRow(cli) }
-                if hasMoreActions { moreActions }
+                moreActions
             }
         } header: {
             HStack(spacing: 6) {
@@ -320,24 +332,60 @@ private struct AgentSection: View {
         .accessibilityIdentifier("agent.update.\(agent.id)")
     }
 
-    // MARK: 更多操作（官方右键菜单）
+    // MARK: 模型列表
 
-    private var hasMoreActions: Bool { agent.canReapply && agent.drift == nil || agent.wired }
+    /// 「全部 N 个模型」/「显示 x / y 个模型」：点开选这个 Agent 的列表里放哪些 magpie 模型（官方 ag-models）。
+    private func modelListRow(_ count: AgentModelCount) -> some View {
+        NavigationLink {
+            AgentModelListView(store: store, agent: agent)
+        } label: {
+            LabeledContent {
+                Text(count.entry)
+            } label: {
+                Label("模型列表", systemImage: "list.bullet.rectangle")
+            }
+        }
+        .accessibilityHint("选择 \(agent.name) 列出哪些模型")
+        .accessibilityIdentifier("agent.models.\(agent.id)")
+    }
+
+    // MARK: 更多操作（官方右键菜单）
 
     private var moreActions: some View {
         Menu {
-            if agent.canReapply && agent.drift == nil {
-                Button {
-                    Task { await store.reapplyAgent(agent.id) }
-                } label: {
-                    Label("重新应用", systemImage: "arrow.clockwise")
+            switch place {
+            case .hidden:
+                Button { Task { await store.setAgentHidden(agent, hide: false) } } label: { Label("显示", systemImage: "eye") }
+            case .notSetUp:
+                Button { Task { await store.setAgentHidden(agent, hide: true) } } label: { Label("隐藏", systemImage: "eye.slash") }
+            case .shown(let index, let count):
+                Section {
+                    Button { Task { await store.moveAgent(agent.id, to: index - 1) } } label: { Label("上移", systemImage: "arrow.up") }
+                        .disabled(index <= 0)
+                    Button { Task { await store.moveAgent(agent.id, to: index + 1) } } label: { Label("下移", systemImage: "arrow.down") }
+                        .disabled(index >= count - 1)
                 }
-            }
-            if agent.wired {
-                Button(role: .destructive) {
-                    disconnect(agent)
-                } label: {
-                    Label("断开 magpie（还原配置）", systemImage: "powerplug")
+                if agent.canReapply {
+                    Section {
+                        Button {
+                            Task { await store.reapplyAgent(agent.id) }
+                        } label: {
+                            Label("重新应用", systemImage: "arrow.clockwise")
+                        }
+                        if agent.drift?.kind == "replaced" {
+                            Button { Task { await store.keepAgent(agent.id) } } label: { Label("保留当前设置", systemImage: "checkmark") }
+                        }
+                    }
+                }
+                if agent.wired {
+                    Button(role: .destructive) {
+                        disconnect(agent)
+                    } label: {
+                        Label("断开 magpie（还原配置）", systemImage: "powerplug")
+                    }
+                }
+                Section {
+                    Button { Task { await store.setAgentHidden(agent, hide: true) } } label: { Label("隐藏", systemImage: "eye.slash") }
                 }
             }
         } label: {

@@ -16,6 +16,9 @@ struct ManageKeysView: View {
     @State private var newName = ""
     /// 等确认「重置额度」的密钥。
     @State private var pendingReset: WebCallerKey?
+    /// 正在编辑限额 / 可用模型的密钥。
+    @State private var editingLimit: WebCallerKey?
+    @State private var editingModels: WebCallerKey?
 
     var body: some View {
         List {
@@ -24,7 +27,7 @@ struct ManageKeysView: View {
                     Text(store.phase == .ready ? "还没有网关密钥。" : "正在读取…").foregroundStyle(.secondary)
                 }
                 ForEach(store.keys) { key in
-                    KeyRow(key: key)
+                    KeyRow(key: key, accountNames: store.keyAccountNames)
                         .contextMenu { menu(for: key) }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button("删除", role: .destructive) { pendingRemove = key }
@@ -83,6 +86,8 @@ struct ManageKeysView: View {
         .safeAreaInset(edge: .bottom) { ManageStatusLine(store: store) }
         .sheet(isPresented: $creating) { NewKeySheet(store: store) }
         .sheet(isPresented: $issuing) { IssueKeySheet(store: store) }
+        .sheet(item: $editingLimit) { key in KeyLimitSheet(store: store, keyID: key.id) }
+        .sheet(item: $editingModels) { key in KeyModelsSheet(store: store, keyID: key.id) }
         .confirmationDialog("删除密钥「\(pendingRemove?.name ?? "")」？", isPresented: present($pendingRemove), titleVisibility: .visible, presenting: pendingRemove) { key in
             Button("删除密钥", role: .destructive) {
                 Task { await store.callerKey(.remove, WebRequests.callerKey(key.id)) }
@@ -101,6 +106,7 @@ struct ManageKeysView: View {
         .confirmationDialog("重置 \(pendingReset?.name ?? "") 的额度？", isPresented: present($pendingReset), titleVisibility: .visible, presenting: pendingReset) { key in
             Button("重置额度", role: .destructive) {
                 Task {
+                    // 菜单里的「重置额度」重置全部限额（不带 index）
                     if await store.callerKey(.resetLimit, WebRequests.callerKey(key.id)).ok {
                         store.status = "已重置 \(key.name) 的额度"
                     }
@@ -108,7 +114,7 @@ struct ManageKeysView: View {
             }
             .accessibilityIdentifier("key.reset.confirm")
         } message: { key in
-            Text("\(key.name) 已用的 Token 和费用一起清零，本周期内此前的调用不再计入。")
+            Text(key.usages.count > 1 ? "\(key.name) 的 \(key.usages.count) 条限额已用的 Token 和费用都一起清零。" : key.resetLimitMessage(index: 0))
         }
         .alert("重命名", isPresented: present($renaming), presenting: renaming) { key in
             TextField("网关密钥名称", text: $newName)
@@ -144,8 +150,30 @@ struct ManageKeysView: View {
                 Label("设为只读", systemImage: "eye.slash")
             }
         }
-        if key.limitSummary != nil {
-            Button { pendingReset = key } label: { Label("重置额度", systemImage: "arrow.counterclockwise") }
+        Section {
+            Button { editingLimit = key } label: {
+                Label(key.limits.isEmpty ? "设置限额" : "修改限额", systemImage: "gauge.with.dots.needle.33percent")
+            }
+            .accessibilityIdentifier("key.limit.edit")
+            if !key.limits.isEmpty {
+                Button { pendingReset = key } label: { Label("重置额度", systemImage: "arrow.counterclockwise") }
+            }
+            Button { editingModels = key } label: { Label("此密钥可用的模型", systemImage: "cpu") }
+                .accessibilityIdentifier("key.models.edit")
+            Button {
+                let on = !key.quotas
+                Task {
+                    if await store.callerKey(.quotas, WebRequests.callerKeyQuotas(key.id, on: on)).ok {
+                        store.status = on ? "\(key.name) 现在能看到它可用部分的额度" : "\(key.name) 看不到额度了"
+                    }
+                }
+            } label: {
+                Label(key.quotas ? "不让它看额度" : "让这个密钥查看额度", systemImage: key.quotas ? "chart.bar.xaxis" : "chart.bar")
+            }
+            .accessibilityHint(key.quotas
+                ? "这个密钥能看到它可用全部模型的供应商、以及它可用账号的额度，包括账号名称。点击即可关闭。"
+                : "限定了额度、模型或账号的密钥看不到任何额度。点击后，它能看到可用全部模型的供应商、以及它可用账号的额度，包括账号名称。")
+            .accessibilityIdentifier("key.quotas")
         }
         Button { pendingRotate = key } label: { Label("轮换", systemImage: "arrow.triangle.2.circlepath") }
         Button { Task { await store.callerKey(key.off ? .on : .off, WebRequests.callerKey(key.id)) } } label: {
@@ -162,6 +190,7 @@ func present<T>(_ binding: Binding<T?>) -> Binding<Bool> {
 
 private struct KeyRow: View {
     let key: WebCallerKey
+    var accountNames: [String: String] = [:]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -171,13 +200,22 @@ private struct KeyRow: View {
                 if key.readOnly { badge("只读", .blue) }
                 if key.lan { badge("共享", .green) }
                 if key.issues { badge("可签发", .purple) }
+                if key.quotas { badge("可看额度", .teal) }
             }
             Text(key.masked).font(.caption.monospaced()).foregroundStyle(.secondary)
-            if let limit = key.limitSummary {
-                Text(limit).font(.caption).foregroundStyle(.secondary)
+            if !key.limits.isEmpty {
+                Text(key.limitBadge).font(.caption)
+                    .foregroundStyle(key.bindingUsage?.spent == true ? .red : .secondary)
+                    .accessibilityIdentifier("key.row.limit")
+                if let used = key.bindingUsage {
+                    Text(key.limitLine(used)).font(.caption2).foregroundStyle(.secondary).lineLimit(2)
+                }
             }
-            if !key.models.isEmpty {
-                Text("仅限：" + key.models.joined(separator: "、")).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            if !key.models.isEmpty || !key.accounts.isEmpty {
+                Text(key.modelsBadge(accountNames: accountNames)).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                    .accessibilityLabel(key.models.isEmpty ? "仅限这些账号：" + key.accounts.map { accountNames[$0] ?? $0 }.joined(separator: ", ")
+                                                           : "仅限这些模型：" + key.models.joined(separator: ", "))
+                    .accessibilityIdentifier("key.row.models")
             }
         }
         .padding(.trailing, 36)
