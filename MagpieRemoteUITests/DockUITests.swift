@@ -98,9 +98,9 @@ final class DockUITests: XCTestCase {
         let back = app.navigationBars["自定义底栏"].buttons.element(boundBy: 0)
         if back.waitForExistence(timeout: 5) { back.tap() }
         XCTAssertTrue(app.navigationBars["更多"].waitForExistence(timeout: 10), "没有回到「更多」")
+        // 「更多」列表停在上次滑到的位置（打开「自定义底栏」时滑到了底部），路由组在上面的「magpie」一节里。
         let routes = element(id: "manage.groups", in: app)
-        _ = routes.waitForExistence(timeout: 5)
-        scrollTo(routes, in: app)
+        if !routes.waitForExistence(timeout: 3) { scrollBack(to: routes, in: app) }
         XCTAssertTrue(routes.exists, "换下来的「路由」应当出现在「更多」里")
         XCTAssertFalse(element(id: "more.usage", in: app).exists, "放进底栏的「用量」不应还在「更多」里")
     }

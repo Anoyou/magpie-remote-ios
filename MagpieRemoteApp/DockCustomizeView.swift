@@ -163,6 +163,9 @@ private struct DockCandidateRow: View {
             } icon: {
                 Image(systemName: page.symbol)
             }
+            // 整行都能点开菜单（不然只有文字那一小块能点，点行的右半边没反应）。
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(.rect)
         }
         .accessibilityIdentifier("dock.candidate.\(page.rawValue)")
     }

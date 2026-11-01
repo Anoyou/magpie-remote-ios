@@ -45,6 +45,8 @@ struct ManageGroupsView: View {
                 }
                 ForEach(groups) { group in
                     GroupCard(store: store, group: group, open: { editing = group }, delete: { pendingDelete = group })
+                        // 先声明为容器：否则行的 identifier 会盖掉卡片里每个按钮 / 开关自己的 identifier。
+                        .accessibilityElement(children: .contain)
                         .accessibilityIdentifier("group.row.\(group.id)")
                 }
                 .onMove { source, destination in Task { await store.moveGroups(from: source, to: destination) } }
