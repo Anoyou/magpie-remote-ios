@@ -145,7 +145,7 @@ enum SVGPathParser {
     }
 
     static func parse(_ d: String) -> [SVGPathCommand] {
-        let tokens = tokens(d)
+        let tokens = Self.tokens(d)
         var out: [SVGPathCommand] = []
         var i = 0
         var command: UInt8 = 0
