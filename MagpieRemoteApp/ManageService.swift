@@ -110,6 +110,9 @@ actor FixtureManageService: ManageServing {
              "fields": [["key": "model", "label": "model", "value": "relay-example/gpt-4.1", "options": options]]],
             ["id": "claude", "name": "Claude Code", "path": "~/.claude/settings.json", "wired": nil,
              "fields": [["key": "model", "label": "model", "value": "", "options": options]]],
+            // 在网页版里手动隐藏的（见 settings 的 agentsHidden）：和未设置的 Claude Code 一起默认折叠。
+            ["id": "gemini", "name": "Gemini CLI", "path": "~/.gemini/settings.json", "wired": nil,
+             "fields": [["key": "model", "label": "model", "value": "", "options": options]]],
         ]
         keyList = [
             ["id": "key-iphone", "name": "iPhone", "masked": "sk-magpie-key-…EXMP01", "limit": ["period": "month", "cost": 20],
@@ -132,7 +135,9 @@ actor FixtureManageService: ManageServing {
         return "sk-magpie-key-EXAMPLE-NEW\(counter)"
     }
 
-    func settings() async throws -> WebSettings { WebSettings(json: ["version": "v0.1.2438", "lan": true]) }
+    func settings() async throws -> WebSettings {
+        WebSettings(json: ["version": "v0.1.2438", "lan": true, "agentOrder": nil, "agentsHidden": ["gemini"]])
+    }
     func providers() async throws -> WebProviders { try await pause(); return providersJSON }
 
     func provider(_ action: ProviderAction, _ body: WebJSON) async throws -> WebProviders {

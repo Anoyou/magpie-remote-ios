@@ -1,6 +1,6 @@
 import XCTest
 
-/// 供应商（默认在底栏）与网关密钥（在「更多」里）：fixture 模式下的示例数据（`FixtureManageService`）。
+/// 供应商（在「主页」分页器里）与网关密钥（在「更多」里）：fixture 模式下的示例数据（`FixtureManageService`）。
 @MainActor
 final class ManageUITests: XCTestCase {
     private var launchTimeout: TimeInterval {
@@ -35,7 +35,7 @@ final class ManageUITests: XCTestCase {
 
     func testProvidersListShowsFixtureProviders() {
         let app = launchManage()
-        app.openDockTab("供应商")
+        app.openHome("供应商")
         XCTAssertTrue(element(containing: "示例中转", in: app).waitForExistence(timeout: 10))
         XCTAssertTrue(element(containing: "示例 DeepSeek", in: app).exists)
         XCTAssertTrue(element(containing: "示例 Codex 订阅", in: app).exists)
@@ -43,7 +43,7 @@ final class ManageUITests: XCTestCase {
 
     func testDeleteProviderAsksForConfirmation() {
         let app = launchManage()
-        app.openDockTab("供应商")
+        app.openHome("供应商")
         let row = element(id: "provider.row.relay-example", in: app)
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
