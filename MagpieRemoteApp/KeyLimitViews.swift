@@ -222,7 +222,7 @@ struct KeyModelsSheet: View {
                             Section(block.title) {
                                 ForEach(block.options) { option in
                                     Button {
-                                        if picked.contains(option.value) { picked.remove(option.value) } else { picked.insert(option.value) }
+                                        if picked.contains(option.value) { _ = picked.remove(option.value) } else { _ = picked.insert(option.value) }
                                     } label: {
                                         optionLabel(option, on: picked.contains(option.value))
                                     }

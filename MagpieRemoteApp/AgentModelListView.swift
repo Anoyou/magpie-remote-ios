@@ -157,7 +157,7 @@ struct AgentModelListView: View {
             } header: {
                 HStack {
                     Button {
-                        withAnimation { if folded.contains(group.name) { folded.remove(group.name) } else { folded.insert(group.name) } }
+                        withAnimation { toggleFold(group.name) }
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "chevron.right")
@@ -194,10 +194,14 @@ struct AgentModelListView: View {
         }
     }
 
+    private func toggleFold(_ name: String) {
+        if folded.contains(name) { _ = folded.remove(name) } else { _ = folded.insert(name) }
+    }
+
     private func modelRow(_ model: AgentModelList.Model) -> some View {
         Button {
             guard !model.inUse else { return }
-            if !model.hidden { kept.insert(model.id) }
+            if !model.hidden { _ = kept.insert(model.id) }
             change { $0.toggle(model.id) }
         } label: {
             HStack(spacing: 8) {
