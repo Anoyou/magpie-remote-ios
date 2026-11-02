@@ -1,0 +1,9 @@
+{"path": "/opt/homebrew/bin/rtk", "version": "0.50.1", "latest": "0.52.0", "upgrade": "brew upgrade rtk",
+ "gain": {"commands": 1280, "input": 9800000, "saved": 7350000, "pct": 75.2},
+ "agents": [
+  {"id": "claude", "name": "Claude Code", "icon": "claudecode-color", "on": true},
+  {"id": "codex", "name": "Codex", "icon": "codex-color", "on": false},
+  {"id": "opencode", "name": "OpenCode", "icon": "opencode", "on": false, "blocked": "OpenCode 2 needs RTK 0.52 or newer"},
+  {"id": "grok", "name": "Grok Build", "icon": "grok", "on": false, "noHook": true}
+ ],
+ "url": "https://rtk-ai.app", "restart": ["claude"]}
