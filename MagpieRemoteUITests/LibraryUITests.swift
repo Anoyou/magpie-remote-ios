@@ -53,6 +53,8 @@ final class LibraryUITests: XCTestCase {
         let row = element("library.skill.docx", in: app)
         _ = row.appears(timeout: 10)
         app.swipeUp(until: row, max: 6)
+        // 技能列表还在加载时先滑会滑过头（懒加载，滑走的行不在无障碍树里），找不到就往回滑。
+        if !(row.exists && row.isHittable) { app.swipeDown(until: row, max: 6) }
         XCTAssertTrue(row.appears(timeout: 10), "应列出示例技能 docx")
         row.tap()
         XCTAssertTrue(app.navigationBars["docx"].appears(timeout: 10))

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import MagpieRemoteCore
 
 /// 「主页」：原来的 Agent、供应商、额度三页合成一页，顶部分页器切换。
@@ -47,7 +48,15 @@ struct HomeView: View {
     }
 
     private func choose(_ next: HomeSegment) {
+        let changed = next != segment
         chosen = next
         defaults?.set(next.rawValue, forKey: HomeSegment.defaultsKey)
+        guard changed else { return }
+        // 换分页时导航栏标题是原地改的（Agent → 供应商），iOS 26 的大标题画出了新名字，
+        // 无障碍树里却还是旧名字（VoiceOver 会读「Agent」）。整页内容都换了，告诉系统「换屏」让它重新读一遍。
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(350))
+            UIAccessibility.post(notification: .screenChanged, argument: nil)
+        }
     }
 }

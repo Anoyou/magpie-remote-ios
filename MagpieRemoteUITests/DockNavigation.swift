@@ -61,6 +61,8 @@ extension XCUIApplication {
         // 懒加载的列表里靠下的行一开始不在无障碍树里：短等一下，没有就往下滑（找到即停）。
         _ = link.appears(timeout: 2)
         swipeUp(until: link, max: 8)
+        // 「更多」的根列表会停在上次滑到的位置（例如刚从底部的「自定义底栏」回来），靠上的行要往回滑。
+        if !(link.exists && link.isHittable) { swipeDown(until: link, max: 10) }
         XCTAssertTrue(link.appears(timeout: 10), "「更多」里没有入口 \(identifier)", file: file, line: line)
         link.tap()
         XCTAssertTrue(navigationBars[title].appears(timeout: 10), "没有打开「\(title)」", file: file, line: line)
