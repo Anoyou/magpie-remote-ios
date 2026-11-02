@@ -24,6 +24,8 @@ final class LibraryStore {
     var failure: String?
     /// 在 Agent 页隐藏的 Agent（官方 isHidden）：这里也不列出，已有的东西留着。
     var hidden: [String] = []
+    /// 有资格弹出失败弹窗的页面（最上面的那个弹，见 libraryAlerts）。
+    var presenters: [String] = []
 
     var tab: LibraryTab {
         didSet { UserDefaults.standard.set(tab.rawValue, forKey: LibraryTab.defaultsKey) }
