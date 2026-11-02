@@ -23,6 +23,17 @@ extension View {
     }
 }
 
+extension View {
+    /// 搜索的统一规则（DESIGN.md「搜索」）：一律用系统的 `.searchable`，放在系统默认位置（和「会话」页一样，
+    /// iOS 26 的 iPhone 上在底部工具栏），不用 `.navigationBarDrawer` 把搜索栏钉在导航栏下面。
+    /// 页面主体就是那张可搜索的列表时（会话、插件、发现、选模型的表单）显示完整的搜索栏；
+    /// 页面上还有分页器 / 筛选 / 图表、搜索只是其中一个工具时（用量 › 请求、用量 › 会话、Agent 的模型列表），
+    /// 再加上这个修饰符，把搜索收成工具栏里的放大镜按钮，点开才展开。
+    func minimizedSearch() -> some View {
+        searchToolbarBehavior(.minimize)
+    }
+}
+
 private struct PageHeaderModifier: ViewModifier {
     let title: String
     let subtitle: String?
@@ -51,14 +62,16 @@ private struct PageSubtitle: ViewModifier {
 /// 各页面的官方副标题（magpie 网页插件清单 `Sub` 的官方简体中文译文，见 internal/gui/assets/i18n.js）。
 /// 网页上没有副标题的页面（Agent、供应商、插件、设置…）这里也不写。
 enum PageSubtitles {
-    /// plugins/usage：Sub
-    static let usage = "你的额度、花费及其去向、每个请求，以及上下文窗口里装了什么"
-    /// plugins/sessions：Sub（官方原文「查看、搜索、继续和导出」；手机上不能继续会话，去掉「继续」）
-    static let sessions = "Agent 的历史对话：查看、搜索和导出"
-    /// plugins/budget（密钥限额）：Sub
-    static let keys = "让每个网关密钥只用到你为它设的 Token 数或估算费用"
-    /// plugins/library：Sub（给「资源库」页用）
-    static let library = "指令、MCP 服务器、技能和 Hooks，统一管理，分发给每个 Agent"
+    // 0.6.2：原来的官方原文太长，393 pt 宽的 iPhone 上一行放不下、被截断（收起成小标题时更挤）。
+    // 现在每条压到一行能放下的长度（约 12 个字以内），意思仍取自官方原文。
+    /// plugins/usage：Sub「你的额度、花费及其去向、每个请求，以及上下文窗口里装了什么」（额度已在「主页」）
+    static let usage = "花费、请求和上下文窗口"
+    /// plugins/sessions：Sub「Agent 的历史对话：查看、搜索、继续和导出」（手机上不能继续会话）
+    static let sessions = "查看、搜索和导出历史对话"
+    /// plugins/budget（密钥限额）：Sub「让每个网关密钥只用到你为它设的 Token 数或估算费用」
+    static let keys = "给每个网关密钥设用量上限"
+    /// plugins/library：Sub「指令、MCP 服务器、技能和 Hooks，统一管理，分发给每个 Agent」
+    static let library = "统一管理，分发给每个 Agent"
 }
 
 extension AppPage {

@@ -17,10 +17,15 @@ struct QuotaView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                HostStatusCard()
-                ConnectedContent {
-                    content
+                // 「主页」的分页器：滚动内容的第一行（跟着内容滚，不钉在导航栏下面）。
+                PageTopStripView()
+                Group {
+                    HostStatusCard()
+                    ConnectedContent {
+                        content
+                    }
                 }
+                .pageTopStrip(nil)
             }
             .padding()
         }

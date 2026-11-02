@@ -176,12 +176,12 @@ struct AppPageView: View {
             }
         case .hostTools:
             ManageGate(title: page.title, subtitle: page.headerSubtitle) { store in
-                List { HostToolsSection(store: store) }
+                List { PageTopStripSection(); HostToolsSection(store: store) }
                     .pageHeader(page.title)
             }
         case .web:
             ManageGate(title: page.title, subtitle: page.headerSubtitle) { store in
-                List { MagpieWebSection(store: store) }
+                List { PageTopStripSection(); MagpieWebSection(store: store) }
                     .pageHeader(page.title)
             }
         case .library:

@@ -83,6 +83,8 @@ struct AgentModelListView: View {
             }
         }
         .searchable(text: $search, prompt: "搜索模型")
+        // 这一页还有「显示 / 排序」分段和批量开关：搜索收成工具栏里的放大镜（见 DESIGN.md「搜索」）。
+        .minimizedSearch()
         .environment(\.editMode, .constant(mode == .order ? .active : .inactive))
         .confirmationDialog(confirmTitle(list), isPresented: present($asksAll), titleVisibility: .visible, presenting: asksAll) { hide in
             Button(hide ? "全部隐藏" : "全部显示", role: hide ? .destructive : nil) {

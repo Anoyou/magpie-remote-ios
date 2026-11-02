@@ -31,6 +31,7 @@ struct ManageGroupsView: View {
     var body: some View {
         ScrollViewReader { scroller in
         List {
+            PageTopStripSection()
             Section {
                 // 打码时不写主机地址（网页在本机，写的是 127.0.0.1；手机上是远处主机的地址，截图分享时不该露出来）
                 RoutesStageView(model: live, agentName: agentName, gateway: live.masked ? "" : gateway, onPickRouting: { route in

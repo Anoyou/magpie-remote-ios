@@ -18,6 +18,7 @@ struct UsageContextPane: View {
 
     var body: some View {
         List {
+            PageTopStripSection()
             Section {
                 Picker("范围", selection: $days) {
                     ForEach(ContextReport.dayOptions, id: \.self) { Text(ContextReport.dayTitle($0)).tag($0) }

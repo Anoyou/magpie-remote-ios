@@ -75,7 +75,18 @@ struct AgentSessionsView: View {
     @ViewBuilder
     private var content: some View {
         switch store.phase {
-        case .loading:
+        case .loading, .failed:
+            PageTopStripStack { notReady }
+        case .ready:
+            list
+        }
+    }
+
+    /// 读取中 / 读取失败（外层的条放在上面，见 PageTopStrip）。
+    @ViewBuilder
+    private var notReady: some View {
+        switch store.phase {
+        case .loading, .ready:
             ProgressView("正在读取会话记录…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .accessibilityIdentifier("sessions.loading")
@@ -91,13 +102,12 @@ struct AgentSessionsView: View {
             }
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("sessions.error")
-        case .ready:
-            list
         }
     }
 
     private var list: some View {
         List {
+            PageTopStripSection()
             if !store.blockedReads.isEmpty {
                 ReadsBlockedSection(store: store) { confirmingReads = true }
             }

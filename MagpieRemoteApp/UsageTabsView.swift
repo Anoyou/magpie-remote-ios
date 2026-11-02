@@ -43,14 +43,12 @@ struct UsageView: View {
                 }
             }
         }
-        // 和「主页」的分页器一样放在导航栏下方的 safeAreaBar 里（大标题在导航栏里，不会被分页器挤掉）。
-        .safeAreaBar(edge: .top, spacing: 0) {
+        // 和「主页」一样：分页器是每个标签列表的第一行，跟着内容滚（钉在导航栏下面会和大标题抢位置，顶部会抖）。
+        .pageTopStrip {
             Picker("用量", selection: $tab) {
                 ForEach(UsageTab.allCases) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.vertical, 8)
             .accessibilityIdentifier("usage.tab")
         }
         .pageHeader(AppPage.usage.title, subtitle: AppPage.usage.headerSubtitle)

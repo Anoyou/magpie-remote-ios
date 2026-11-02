@@ -12,7 +12,17 @@ struct ConnectedContent<Content: View>: View {
 
     var body: some View {
         switch model.connection {
-        case .noHost:
+        case .connected:
+            content
+        default:
+            // 还没连上时外层的分页器（PageTopStrip）放在状态上面，照样能切换。
+            PageTopStripStack { state }
+        }
+    }
+
+    @ViewBuilder private var state: some View {
+        switch model.connection {
+        case .noHost, .connected:
             NoHostView()
         case .connecting:
             ProgressView("正在连接 \(model.activeHost?.name ?? "主机")…")
@@ -20,8 +30,6 @@ struct ConnectedContent<Content: View>: View {
                 .accessibilityIdentifier("state.connecting")
         case .failed(let error):
             ErrorStateView(error: error) { Task { await model.reconnect() } }
-        case .connected:
-            content
         }
     }
 }

@@ -22,6 +22,7 @@ struct ManageKeysView: View {
 
     var body: some View {
         List {
+            PageTopStripSection()
             Section {
                 if store.keys.isEmpty {
                     Text(store.phase == .ready ? "还没有网关密钥。" : "正在读取…").foregroundStyle(.secondary)

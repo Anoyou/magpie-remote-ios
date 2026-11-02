@@ -26,6 +26,7 @@ struct ManageAgentsView: View {
         let arrangement = AgentArrangement(agents: store.agents, order: store.settings?.agentOrder ?? [],
                                            hidden: store.settings?.agentsHidden ?? [])
         List {
+            PageTopStripSection()
             if store.agents.isEmpty {
                 Section {
                     Text(store.phase == .ready ? "magpie 还没有在这台 Mac 上发现 Agent。" : "正在读取…").foregroundStyle(.secondary)

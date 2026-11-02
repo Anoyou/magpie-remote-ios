@@ -18,13 +18,15 @@ struct ManageGate<Content: View>: View {
         return nil
     }
 
+    /// 外层交来的条（「主页」「用量」的分页器）。
+    @Environment(\.pageTopStrip) private var outerStrip
+
     var body: some View {
         Group {
             if store.service != nil, failure == nil || store.settings != nil {
+                // 读取失败的提示和外层的分页器一起，作为页面列表的第一行（不再用 safeAreaInset 钉在导航栏下面）。
                 content(store)
-                    .safeAreaInset(edge: .top, spacing: 0) {
-                        if let failure { ManageFailureBanner(error: failure, store: store) }
-                    }
+                    .environment(\.pageTopStrip, strip)
             } else {
                 placeholder
                     .pageHeader(title, subtitle: subtitle)
@@ -33,12 +35,23 @@ struct ManageGate<Content: View>: View {
         .onAppear { Task { await store.configure(model: model) } }
     }
 
+    private var strip: PageTopStrip? {
+        guard let failure else { return outerStrip }
+        let banner = ManageFailureBanner(error: failure, store: store)
+        guard let outer = outerStrip else { return PageTopStrip(view: AnyView(banner)) }
+        return PageTopStrip(view: AnyView(VStack(spacing: 8) {
+            outer.view
+            banner
+        }))
+    }
+
     @ViewBuilder private var placeholder: some View {
         switch store.phase {
         case .noHost where model.activeHost == nil:
-            NoHostView()
+            PageTopStripStack { NoHostView() }
         case .noWebKey:
             List {
+                PageTopStripSection()
                 Section {
                     WebKeyGuide()
                 } header: {
@@ -47,12 +60,14 @@ struct ManageGate<Content: View>: View {
             }
         case .failed(let error):
             // 密钥不对时用右上角「主机」按钮更新 Web 密钥。
-            ErrorStateView(error: error) { Task { await store.refresh() } }
+            PageTopStripStack { ErrorStateView(error: error) { Task { await store.refresh() } } }
         case .noHost, .loading, .ready:
             // 刚启动、还没按当前主机配置好时也显示读取中，不闪一下「还没有添加主机」。
-            ProgressView("正在读取 magpie 设置…")
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .accessibilityIdentifier("manage.loading")
+            PageTopStripStack {
+                ProgressView("正在读取 magpie 设置…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityIdentifier("manage.loading")
+            }
         }
     }
 }
@@ -75,8 +90,6 @@ private struct ManageFailureBanner: View {
         }
         .padding(12)
         .glassEffect(.regular, in: .rect(cornerRadius: 16))
-        .padding(.horizontal)
-        .padding(.top, 4)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("manage.error.banner")
     }
