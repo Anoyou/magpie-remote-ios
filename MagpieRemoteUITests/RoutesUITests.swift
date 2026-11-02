@@ -34,6 +34,26 @@ final class RoutesUITests: XCTestCase {
         }
     }
 
+    /// 一小段一小段地往下挪，直到元素完整地落在导航栏和底栏之间（整屏 swipeUp 会滑过头，懒加载的行随即被拆掉）。
+    private func reveal(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 10) {
+        let window = app.windows.firstMatch.frame
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        for _ in 0..<attempts {
+            let bar = app.navigationBars.firstMatch
+            let tabs = app.tabBars.firstMatch
+            let top = bar.exists ? bar.frame.maxY : window.minY
+            let bottom = tabs.exists && !tabs.frame.isEmpty ? tabs.frame.minY : window.maxY
+            let middle = (top + bottom) / 2
+            var shift: CGFloat = -220
+            if element.exists, let f = try? element.snapshot().frame, !f.isEmpty {
+                if f.minY > top + 4 && f.maxY < bottom - 4 { return }
+                shift = max(-220, min(220, middle - f.midY))
+            }
+            origin.withOffset(CGVector(dx: window.midX, dy: middle))
+                .press(forDuration: 0.05, thenDragTo: origin.withOffset(CGVector(dx: window.midX, dy: middle + shift)))
+        }
+    }
+
     func testLiveStageShowsRouteThroughGroup() {
         let app = launchRoutes()
         let stage = element(id: "routes.stage", in: app)
@@ -143,9 +163,9 @@ final class RoutesUITests: XCTestCase {
         // 请求卡片在舞台下面，懒加载：滑到它之前它不在无障碍树里（页头是导航栏里的大标题后，舞台占满一屏），所以先滑再找。
         let all = element(id: "routes.replay.all", in: app)
         _ = all.appears(timeout: 2)
-        scrollTo(all, in: app, attempts: 5)
+        reveal(all, in: app)
         XCTAssertTrue(all.appears(timeout: 15), "没有「全部重放」")
-        scrollTo(all, in: app, attempts: 2)
+        reveal(all, in: app, attempts: 3)
         all.tap()
         let speed = element(id: "routes.replay.speed", in: app)
         app.swipeDown(until: speed, max: 4)
