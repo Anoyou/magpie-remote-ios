@@ -99,6 +99,8 @@ private struct ManageFailureBanner: View {
 struct ManageStatusSection: View {
     @Environment(AppModel.self) private var model
     let store: ManageStore
+    /// 读到版本时也单独显示一组「magpie 版本」（「更多」把版本放进了「主机」一组，传 false）。
+    var showsVersion = true
 
     var body: some View {
         switch store.phase {
@@ -140,7 +142,7 @@ struct ManageStatusSection: View {
                     .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("manage.incompatible")
                 }
-            } else if let version = store.settings?.version {
+            } else if showsVersion, let version = store.settings?.version {
                 Section {
                     LabeledContent("magpie 版本", value: version)
                     if model.isFixture {
@@ -148,6 +150,18 @@ struct ManageStatusSection: View {
                     }
                 }
             }
+        }
+    }
+}
+
+extension MagpieWebPage {
+    /// 「设置」样式图标方块的颜色。
+    var tint: Color {
+        switch self {
+        case .accounts: .blue
+        case .backup: .teal
+        case .masking: .gray
+        case .library: .brown
         }
     }
 }
@@ -162,14 +176,7 @@ struct MagpieWebSection: View {
                 NavigationLink {
                     ManageWebPageView(store: store, page: page)
                 } label: {
-                    Label {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(page.title)
-                            Text(page.detail).font(.caption).foregroundStyle(.secondary)
-                        }
-                    } icon: {
-                        Image(systemName: page.symbol)
-                    }
+                    SettingsLabel(page.title, detail: page.detail, icon: Image(systemName: page.symbol), color: page.tint)
                 }
                 .accessibilityIdentifier("manage.web.\(page.rawValue)")
             }

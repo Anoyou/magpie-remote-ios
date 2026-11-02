@@ -38,6 +38,7 @@
 		4461AAA05215104827D8F5CB /* UsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B3684D1FBFD9F309DF04EE /* UsageView.swift */; };
 		46691A0663D2E79200332052 /* OfficialIconsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55952D448E60FDA0346ED597 /* OfficialIconsUITests.swift */; };
 		48C06B76D88866821E061143 /* AgentSessionsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDF3F3ED69DBC6AF4B0861E /* AgentSessionsUITests.swift */; };
+		491E804CFFD3E10A1C4E810A /* PageTopStripUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843E0FBE4EEC4D7A9018DEFF /* PageTopStripUITests.swift */; };
 		4B61D5B1A09F2430742A3519 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58959F16F79E9B000864BC3D /* AppModel.swift */; };
 		4C67294CFC0AA0F7B3D0B5D5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4276B4618D4C2849903B8C78 /* PrivacyInfo.xcprivacy */; };
 		4D9485D18D6FF11ACC483D05 /* MagpieRemoteCore in Frameworks */ = {isa = PBXBuildFile; productRef = 99141DF8C9D127E968BBFCA4 /* MagpieRemoteCore */; };
@@ -202,6 +203,7 @@
 		78FA878BBA76AA7F8933F959 /* MagpieRemote.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MagpieRemote.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		793F539829F0FF3C2E4C218C /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
 		7C14CFBE50A3F7C11EE0F973 /* QuotaWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaWidget.swift; sourceTree = "<group>"; };
+		843E0FBE4EEC4D7A9018DEFF /* PageTopStripUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageTopStripUITests.swift; sourceTree = "<group>"; };
 		8557DBC761BFF4F7F4FD457B /* ChatSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSessionsView.swift; sourceTree = "<group>"; };
 		869A9301B1FB574BDC11E4BF /* LibrarySkillViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrarySkillViews.swift; sourceTree = "<group>"; };
 		86AA82BDA306FEE58D7F8194 /* ChatEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatEntryView.swift; sourceTree = "<group>"; };
@@ -327,6 +329,7 @@
 				2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */,
 				55952D448E60FDA0346ED597 /* OfficialIconsUITests.swift */,
 				CE86000AD568E7D738D33A75 /* PageHeadersUITests.swift */,
+				843E0FBE4EEC4D7A9018DEFF /* PageTopStripUITests.swift */,
 				23B05A223444B8A29F73817B /* ParityGaps2UITests.swift */,
 				0D6DB79AF3E4D0FC04E2BFAD /* PluginsUITests.swift */,
 				48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */,
@@ -584,6 +587,7 @@
 				3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */,
 				46691A0663D2E79200332052 /* OfficialIconsUITests.swift in Sources */,
 				A9A09336B65C34CEBE779D8F /* PageHeadersUITests.swift in Sources */,
+				491E804CFFD3E10A1C4E810A /* PageTopStripUITests.swift in Sources */,
 				081C5121C048F627784522BD /* ParityGaps2UITests.swift in Sources */,
 				224F756965E44160F0793E7D /* PluginsUITests.swift in Sources */,
 				868CD4E99FACF3A03D4300D4 /* ProviderDetailUITests.swift in Sources */,
@@ -797,7 +801,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MAGPIE_APP_GROUP = group.com.magpieremote.personal;
-				MARKETING_VERSION = 0.6.1;
+				MARKETING_VERSION = 0.6.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -904,7 +908,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MAGPIE_APP_GROUP = group.com.magpieremote.personal;
-				MARKETING_VERSION = 0.6.1;
+				MARKETING_VERSION = 0.6.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

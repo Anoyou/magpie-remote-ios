@@ -11,19 +11,19 @@ struct HostToolsSection: View {
                 NavigationLink {
                     HostUpdateView(service: service)
                 } label: {
-                    Label("主机更新", systemImage: "arrow.down.app")
+                    SettingsLabel("主机更新", icon: Image(systemName: "arrow.down.app"), color: .green)
                 }
                 .accessibilityIdentifier("manage.update")
                 NavigationLink {
                     HostTuneView(service: service)
                 } label: {
-                    Label("自动调优", systemImage: "dial.medium")
+                    SettingsLabel("自动调优", icon: Image(systemName: "dial.medium"), color: .orange)
                 }
                 .accessibilityIdentifier("manage.tune")
                 NavigationLink {
                     HostPrivacyModelView(service: service)
                 } label: {
-                    Label("隐私模型", systemImage: "eye.slash.circle")
+                    SettingsLabel("隐私模型", icon: Image(systemName: "eye.slash.circle"), color: .indigo)
                 }
                 .accessibilityIdentifier("manage.privacyModel")
                 NavigationLink {
@@ -32,7 +32,7 @@ struct HostToolsSection: View {
                     LabeledContent {
                         if let count = store.settings?.disabledModels.count, count > 0 { Text("\(count) 条") }
                     } label: {
-                        Label("已停用的模型", systemImage: "nosign")
+                        SettingsLabel("已停用的模型", icon: Image(systemName: "nosign"), color: .red)
                     }
                 }
                 .accessibilityIdentifier("manage.disabledModels")

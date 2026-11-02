@@ -32,6 +32,8 @@ final class UsageTabsUITests: XCTestCase {
 
     private func tab(_ title: String, in app: XCUIApplication) {
         let control = element(id: "usage.tab", in: app)
+        // 分段是列表的第一行（跟着内容滚）：往下滚过之后先滚回顶部。
+        if !control.appears(timeout: 3) || !control.isHittable { app.swipeDown(until: control, max: 8) }
         XCTAssertTrue(control.appears(timeout: 10), "没有「概览 | 请求 | 会话 | 上下文」分段")
         let segment = control.buttons[title].firstMatch
         XCTAssertTrue(segment.appears(timeout: 5), "分段里没有「\(title)」")

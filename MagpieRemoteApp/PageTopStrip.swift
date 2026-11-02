@@ -12,7 +12,8 @@ import SwiftUI
 /// - 还没有列表的状态（读取中、出错、没有主机）用 `PageTopStripStack` 把条放在最上面（这些状态不能滚，不会抖）。
 ///
 /// 推入的详情页、弹出的表单不显示外层的条（`.pageTopStrip(nil)` 清掉）。
-struct PageTopStrip {
+/// 只在主线程上的 SwiftUI 环境里传递（AnyView 本身不是 Sendable）。
+struct PageTopStrip: @unchecked Sendable {
     let view: AnyView
 }
 

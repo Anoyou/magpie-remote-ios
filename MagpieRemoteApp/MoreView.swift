@@ -3,43 +3,64 @@ import MagpieRemoteCore
 
 /// 底栏第 5 个「更多」：列出不在底栏里的所有页面（点开都是 App 内原生页面），以及配置引导和「自定义底栏」。
 /// 取代原来的「管理」标签页，原来管理页里的入口都还在这里（或在底栏里）。
+///
+/// 0.6.2 起照 iOS「设置」的样式排：分组圆角列表，每组有标题（主机 · 页面 · 主机工具 · 在网页中打开 · App），
+/// 每一行是彩色圆角方块图标 + 名字 + 可选的值 + 右箭头（`SettingsIcon`）。
 struct MoreView: View {
     @Environment(AppModel.self) private var model
     @Environment(ManageStore.self) private var store
 
     private var more: [AppPage] { model.dock.layout.morePages }
-    private var magpiePages: [AppPage] { [.home, .sessions, .routes, .keys].filter(more.contains) }
-    private var gatewayPages: [AppPage] { [.usage, .chat].filter(more.contains) }
+    /// 「页面」一组：不在底栏里的页面，按这个顺序。
+    private var pages: [AppPage] { [.home, .sessions, .routes, .usage, .chat, .keys, .library, .plugins].filter(more.contains) }
+    /// 读到了、而且兼容时的 magpie 版本（其余状态由 ManageStatusSection 单独显示）。
+    private var magpieVersion: String? {
+        guard store.phase == .ready, store.incompatible == nil else { return nil }
+        return store.settings?.version
+    }
 
     var body: some View {
         List {
-            if more.contains(.hosts) {
-                Section("主机") {
-                    MorePageLink(page: .hosts) {
-                        Text(model.activeHost?.name ?? "未添加")
+            if more.contains(.hosts) || magpieVersion != nil {
+                Section {
+                    if more.contains(.hosts) {
+                        MorePageLink(page: .hosts) {
+                            Text(model.activeHost?.name ?? "未添加")
+                        }
+                    }
+                    if let magpieVersion {
+                        LabeledContent {
+                            Text(magpieVersion)
+                        } label: {
+                            SettingsLabel("magpie 版本", icon: Image(systemName: "bird.fill"), color: .indigo)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("more.magpieVersion")
+                    }
+                } header: {
+                    Text("主机")
+                } footer: {
+                    if model.isFixture, magpieVersion != nil {
+                        Text("示例数据：修改只保存在这次运行里。")
                     }
                 }
             }
 
-            ManageStatusSection(store: store)
+            ManageStatusSection(store: store, showsVersion: false)
 
-            if !gatewayPages.isEmpty {
-                Section("网关") {
-                    ForEach(gatewayPages) { MorePageLink(page: $0) }
-                }
-            }
-
-            if !magpiePages.isEmpty {
+            if !pages.isEmpty {
                 Section {
-                    ForEach(magpiePages) { page in
+                    ForEach(pages) { page in
                         MorePageLink(page: page) {
                             if let detail = detail(page) { Text(detail) }
                         }
                     }
                 } header: {
-                    Text("magpie")
+                    Text("页面")
                 } footer: {
-                    Text("「主页」里是 Agent、供应商与额度；模型的开关在各个供应商里。")
+                    if pages.contains(.home) {
+                        Text("「主页」里是 Agent、供应商与额度；模型的开关在各个供应商里。")
+                    }
                 }
             }
 
@@ -48,22 +69,6 @@ struct MoreView: View {
                     HostToolsSection(store: store)
                 } else {
                     Section("主机工具") { MorePageLink(page: .hostTools) }
-                }
-            }
-
-            if more.contains(.library) {
-                Section {
-                    MorePageLink(page: .library)
-                } footer: {
-                    Text("指令、MCP 服务器、技能、Hooks、子代理只需添加一次，再为需要的 Agent 打开。")
-                }
-            }
-
-            if more.contains(.plugins) {
-                Section {
-                    MorePageLink(page: .plugins)
-                } footer: {
-                    Text("已安装与内置插件：开关、检查更新、添加、移除和选项。")
                 }
             }
 
@@ -80,7 +85,7 @@ struct MoreView: View {
                 NavigationLink {
                     SetupGuideView(showsDone: false)
                 } label: {
-                    Label("配置引导", systemImage: "list.number")
+                    SettingsLabel("配置引导", icon: Image(systemName: "list.number"), color: .green)
                 }
                 .accessibilityIdentifier("manage.guide")
                 NavigationLink {
@@ -89,7 +94,7 @@ struct MoreView: View {
                     LabeledContent {
                         if !model.dock.layout.isDefault { Text("已自定义") }
                     } label: {
-                        Label("自定义底栏", systemImage: "dock.rectangle")
+                        SettingsLabel("自定义底栏", icon: Image(systemName: "dock.rectangle"), color: .blue)
                     }
                 }
                 .accessibilityIdentifier("more.customize")
@@ -97,6 +102,7 @@ struct MoreView: View {
                 Text("App")
             }
         }
+        .listStyle(.insetGrouped)
         .pageHeader("更多")
         // 点小组件打开、而对应页面在「更多」里时：直接推入那个页面。
         .navigationDestination(item: Binding(get: { model.morePush }, set: { model.morePush = $0 })) { page in
@@ -128,7 +134,7 @@ private struct MorePageLink<Detail: View>: View {
             LabeledContent {
                 detail
             } label: {
-                Label(page.moreTitle, page: page)
+                SettingsLabel(page.moreTitle, icon: page.image, color: page.tint)
             }
         }
         .accessibilityIdentifier(page.moreIdentifier)
@@ -215,6 +221,76 @@ extension AppPage {
         case .usage: "more.usage"
         case .chat: "more.chat"
         case .library: "more.library"
+        }
+    }
+}
+
+// MARK: - 「设置」样式的行
+
+/// iOS「设置」样式的行图标：彩色圆角方块里一个白色图标。
+struct SettingsIcon: View {
+    let image: Image
+    let color: Color
+
+    var body: some View {
+        image
+            .resizable()
+            .scaledToFit()
+            .fontWeight(.semibold)
+            .foregroundStyle(.white)
+            .frame(width: 18, height: 18)
+            .frame(width: 30, height: 30)
+            .background(color.gradient, in: .rect(cornerRadius: 7, style: .continuous))
+            .accessibilityHidden(true)
+    }
+}
+
+/// 「设置」样式的一行：彩色图标 + 名字（可选第二行说明）。
+struct SettingsLabel: View {
+    let title: String
+    var detail: String? = nil
+    let icon: Image
+    let color: Color
+
+    init(_ title: String, detail: String? = nil, icon: Image, color: Color) {
+        self.title = title
+        self.detail = detail
+        self.icon = icon
+        self.color = color
+    }
+
+    var body: some View {
+        Label {
+            if let detail {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                    Text(detail).font(.caption).foregroundStyle(.secondary)
+                }
+            } else {
+                Text(title)
+            }
+        } icon: {
+            SettingsIcon(image: icon, color: color)
+        }
+    }
+}
+
+extension AppPage {
+    /// 「更多」里这一页图标方块的颜色（和 iOS「设置」一样每类一种颜色）。
+    var tint: Color {
+        switch self {
+        case .home: .blue
+        case .sessions: .green
+        case .routes: .orange
+        case .usage: .purple
+        case .chat: .teal
+        case .keys: .yellow
+        case .library: .brown
+        case .plugins: .pink
+        case .hostTools: .gray
+        case .web: .cyan
+        case .hosts: .indigo
+        case .about: .gray
         }
     }
 }
