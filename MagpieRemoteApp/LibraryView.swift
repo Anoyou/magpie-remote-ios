@@ -32,6 +32,36 @@ private struct LibraryRoot: View {
 
     var body: some View {
         Group {
+            if store.turnedOff {
+                ContentUnavailableView {
+                    Label("资源库已关闭", systemImage: "books.vertical")
+                } description: {
+                    Text("magpie 的「插件 › 内置」里关掉了资源库。启用后，指令、MCP 服务器和技能只需添加一次，就能给每个 Agent。")
+                } actions: {
+                    Button("启用资源库") { Task { await store.enable() } }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(store.busy)
+                        .accessibilityIdentifier("library.enable")
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("library.off")
+            } else {
+                phaseContent
+            }
+        }
+        .libraryTitle()
+        .environment(store)
+        .task {
+            store.hidden = manage.settings?.agentsHidden ?? []
+            await store.load()
+        }
+        .refreshable { await store.load() }
+        .safeAreaInset(edge: .bottom) { LibraryStatusLine(store: store) }
+        .libraryAlerts(store: store, id: "library")
+    }
+
+    @ViewBuilder private var phaseContent: some View {
+        Group {
             switch store.phase {
             case .loading where store.page == nil:
                 ProgressView("正在读取资源库…")
@@ -55,15 +85,6 @@ private struct LibraryRoot: View {
                 }
             }
         }
-        .libraryTitle()
-        .environment(store)
-        .task {
-            store.hidden = manage.settings?.agentsHidden ?? []
-            await store.load()
-        }
-        .refreshable { await store.refresh() }
-        .safeAreaInset(edge: .bottom) { LibraryStatusLine(store: store) }
-        .libraryAlerts(store: store, id: "library")
     }
 }
 

@@ -15,6 +15,8 @@ final class LibraryStore {
     let service: any LibraryServing
     private(set) var phase: Phase = .loading
     private(set) var page: LibrarySnapshot?
+    /// magpie 里把资源库关掉了（官方此时导航里没有资源库，只有「启用资源库」）。
+    private(set) var turnedOff = false
     /// 正在跑的改动（按钮变灰，和官方 change() 期间禁用按钮一样）。
     private(set) var busy = false
     /// 底部状态栏的一句话（官方 status）。
@@ -57,6 +59,21 @@ final class LibraryStore {
         tab = LibraryTab(stored: UserDefaults.standard.string(forKey: LibraryTab.defaultsKey))
     }
 
+    /// 「启用资源库」。
+    func enable() async {
+        guard !busy else { return }
+        busy = true
+        do {
+            try await service.enableLibrary()
+            busy = false
+            say("资源库已启用")
+            await load()
+        } catch {
+            busy = false
+            failure = MagpieError.from(error).message
+        }
+    }
+
     func say(_ text: String, warn: Bool = false) {
         statusIsWarning = warn
         status = text
@@ -68,6 +85,8 @@ final class LibraryStore {
 
     /// 先读「一瞥」马上显示，再读整页（官方 load：glance 后 full）。
     func load() async {
+        turnedOff = await service.libraryEnabled() == false
+        if turnedOff { phase = .ready; return }
         if page == nil {
             phase = .loading
             if let glance = try? await service.page(glance: true) { take(glance) }

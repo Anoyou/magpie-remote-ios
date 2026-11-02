@@ -17,6 +17,10 @@ protocol LibraryServing: Sendable {
     func rtk() async throws -> LibraryRTK
     func setRTK(agent: String, on: Bool) async throws -> LibraryRTK
     func rtk(_ step: LibraryRTKStep) async throws -> LibraryRTK
+    /// 资源库这个内置插件开着没有（官方关掉时导航里没有资源库）；读不到时为 nil。
+    func libraryEnabled() async -> Bool?
+    /// 「启用资源库」（POST /api/plugins/builtin {id: library, on: true}）。
+    func enableLibrary() async throws
 }
 
 enum LibraryServices {
@@ -61,6 +65,8 @@ struct LiveLibraryService: LibraryServing {
     func rtk() async throws -> LibraryRTK { try await web.libraryRTK() }
     func setRTK(agent: String, on: Bool) async throws -> LibraryRTK { try await web.setLibraryRTK(agent: agent, on: on) }
     func rtk(_ step: LibraryRTKStep) async throws -> LibraryRTK { try await web.libraryRTK(step) }
+    func libraryEnabled() async -> Bool? { (try? await web.builtinPlugins())?["library"]?.on }
+    func enableLibrary() async throws { _ = try await web.builtinPlugin(PluginRequests.builtin("library", on: true)) }
 }
 
 /// fixture：一台有几个 Agent 的示例主机。改动只改内存里的整页 JSON，再按真实主机的样子回整页 + result。
@@ -68,6 +74,7 @@ actor FixtureLibraryService: LibraryServing {
     static let shared = FixtureLibraryService()
 
     private var json: WebJSON = LibraryFixtureData.page
+    private var enabled = true
     private var rtkJSON: WebJSON = LibraryFixtureData.rtk
 
     private func pause() async throws { try await Task.sleep(for: .milliseconds(120)) }
@@ -300,6 +307,9 @@ actor FixtureLibraryService: LibraryServing {
     }
 
     // MARK: 其它
+
+    func libraryEnabled() async -> Bool? { enabled }
+    func enableLibrary() async throws { enabled = true }
 
     func skillText(_ name: String) async throws -> String {
         try await pause()
