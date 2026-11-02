@@ -28,9 +28,10 @@ final class PickerGapUITests: XCTestCase {
 
     /// 分页器 `pickerID`（条里最下面那个）的上沿离导航栏底边多远、下沿离下面第一块内容多远。
     /// 列表页的「第一块内容」是分页器下面最靠上的那一行（cell）；`ScrollView` 页给出那块内容的 id。
-    private func measure(_ page: String, picker pickerID: String, firstContent: String? = nil,
+    private func measure(_ page: String, picker pickerID: String, topPicker: String? = nil, firstContent: String? = nil,
                          in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) -> Gap? {
         let picker = app.segmentedControls[pickerID]
+        let first = app.segmentedControls[topPicker ?? pickerID]
         XCTAssertTrue(picker.appears(timeout: 10), "\(page)：没有分页器 \(pickerID)", file: file, line: line)
         // 等内容读出来、布局停下来
         _ = waitUntil(1.5) { false }
@@ -60,7 +61,7 @@ final class PickerGapUITests: XCTestCase {
             XCTFail("\(page)：分页器下面没有内容", file: file, line: line)
             return nil
         }
-        return Gap(page: page, top: p.minY - bar.maxY, below: next - p.maxY)
+        return Gap(page: page, top: first.frame.minY - bar.maxY, below: next - p.maxY)
     }
 
     private func checkAllPages(_ mode: String, in app: XCUIApplication) {
@@ -76,7 +77,7 @@ final class PickerGapUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "usage.totalCost").firstMatch.appears(timeout: 15), "概览没有出现总花费")
         let tab = app.segmentedControls["usage.tab"]
         app.swipeDown(until: tab, max: 4)
-        let usage = measure("用量 概览", picker: "usage.period", in: app)!
+        let usage = measure("用量 概览", picker: "usage.period", topPicker: "usage.tab", in: app)!
         gaps.append(usage)
         // 两个分页器在同一条里，中间 8pt
         let between = app.segmentedControls["usage.period"].frame.minY - tab.frame.maxY

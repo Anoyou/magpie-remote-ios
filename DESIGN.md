@@ -21,7 +21,7 @@ magpie 的 iPhone 遥控器。用户不是开发者：所有文案用简体中�
 - 间距只有一个规则（0.6.3，`PageTopStripMetrics`）：分页器离导航栏标题 **8pt**，条里两个分页器之间 **8pt**，条到下面第一块内容 **12pt**。每一页都用 `PageTopStripSection` / `PageTopStripView` / `PageTopStripStack`，不要自己在分页器外面再包 `Section`、加行内边距或分组标题。
 - 页面自己的分页器（「用量 › 概览」的「今天 / 7 天…」、上下文 / 会话的范围、请求的时间段和筛选、插件的「发现 / 已安装」）写进 `PageTopStripSection { … }`，和外层交来的分页器排在同一条里，不另起一节（另起一节会多出一个分组间距）。
 - 条下面紧跟的第一节不要分组标题（标题会让 12pt 变成一大截）；需要说明时间段等信息时写进卡片里。
-- 列表页靠分节上的间距实现（`listSectionSpacing(.custom(12))` + `listSectionMargins(.top, 8)`，分节上写的优先于整个列表的），所以和「卡片间距」用紧凑还是宽松无关；`ScrollView` 页（额度）用同样的数字。`PickerGapUITests` 在两种模式下比较主页 Agent / 供应商 / 额度和用量的间距。
+- 列表页把 8 / 12 画在条那一行里面，这一节的上边距和分组间距写成 0（`listSectionMargins(.top, 0)` + `listSectionSpacing(.custom(0))`，分节上写的优先于整个列表的），所以和「卡片间距」用紧凑还是宽松无关；不要改成用分组间距当 12pt——iOS 26 的行有最小高度（约 52pt），只有一个分页器的行会被撑高，上下各多出约 10pt；`ScrollView` 页（额度）用同样的数字。`PickerGapUITests` 在两种模式下比较主页 Agent / 供应商 / 额度和用量的间距。
 
 ## 卡片间距
 - 「更多 › App › 卡片间距」：紧凑（默认，`.listSectionSpacing(.compact)`）/ 宽松（系统默认间距），存 `@AppStorage("app.cardSpacing")`。

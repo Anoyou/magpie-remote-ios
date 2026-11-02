@@ -44,9 +44,13 @@ enum PageTopStripMetrics {
 }
 
 /// 列表的第一节：外层交来的条 + 这一页自己的分页器（`inner`，例如「用量 › 概览」的「今天 / 7 天…」），
-/// 两个都没有就什么都不显示。整节是一行（透明底、无分隔线、无内边距），上下间距按 `PageTopStripMetrics`：
-/// 这一节自己写了分组间距（`listSectionSpacing(.custom(below))`），所以它和下一节之间就是 `below`，
-/// 不管列表整体用「紧凑」还是「宽松」（分节上写的间距优先于列表整体的）。
+/// 两个都没有就什么都不显示。整节是一行（透明底、无分隔线），上下间距按 `PageTopStripMetrics`：
+/// 间距画在这一行里面（上 `top`、下 `below`），这一节自己的上边距和分组间距都是 0
+/// （`listSectionMargins(.top, 0)`、`listSectionSpacing(.custom(0))`；分节上写的间距优先于列表整体的，
+/// 所以不管「卡片间距」用紧凑还是宽松都一样）。
+/// 为什么不用分组间距当 12pt：iOS 26 列表的行有最小高度（约 52pt），只放一个分页器（约 31pt）的行会被撑高、
+/// 分页器居中，上下各多出约 10pt（0.6.3 第一轮 UI 测试量到「主页」上 19 / 下 23，而两个分页器的「用量」正好 12）。
+/// 间距放进行里以后，一个分页器的行是 8 + 31 + 12 ≈ 51pt，正好够最小高度，不会再被撑高。
 struct PageTopStripSection<Inner: View>: View {
     @Environment(\.pageTopStrip) private var strip
     private let showsOuter: Bool
@@ -67,14 +71,15 @@ struct PageTopStripSection<Inner: View>: View {
                     if let outer { outer.view }
                     if hasInner { inner }
                 }
+                .padding(.top, PageTopStripMetrics.top)
+                .padding(.bottom, PageTopStripMetrics.below)
                 .frame(maxWidth: .infinity)
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets())
                 .listRowSeparator(.hidden)
             }
-            .environment(\.defaultMinListRowHeight, 0)
-            .listSectionSpacing(.custom(PageTopStripMetrics.below))
-            .listSectionMargins(.top, PageTopStripMetrics.top)
+            .listSectionSpacing(.custom(0))
+            .listSectionMargins(.top, 0)
         }
     }
 }
