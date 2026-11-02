@@ -40,7 +40,7 @@ struct ManageProvidersView: View {
                 }
             }
         }
-        .navigationTitle("供应商")
+        .pageHeader("供应商")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { adding = true } label: { Label("添加供应商", systemImage: "plus") }
@@ -116,8 +116,7 @@ struct ProviderDetailView: View {
                 ContentUnavailableView("供应商已不存在", systemImage: "server.rack")
             }
         }
-        .navigationTitle(provider?.name ?? "供应商")
-        .navigationBarTitleDisplayMode(.inline)
+        .detailHeader(provider?.name ?? "供应商")
         .safeAreaInset(edge: .bottom) { ManageStatusLine(store: store) }
         .onAppear(perform: load)
         .manageAlerts(store: store, id: "provider.\(id)")
@@ -308,8 +307,7 @@ private struct AddProviderSheet: View {
                     Text("Key 直接发给你的 Mac 上的 magpie 保存，不会留在这台 iPhone 上。保存后 magpie 会尝试读取模型列表，可能要等几秒。")
                 }
             }
-            .navigationTitle("添加供应商")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("添加供应商")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {

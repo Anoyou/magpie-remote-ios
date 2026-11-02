@@ -84,7 +84,7 @@ struct HostPrivacyModelView: View {
                 Section { HStack { ProgressView(); Text("正在读取…").foregroundStyle(.secondary) } }
             }
         }
-        .navigationTitle("隐私模型")
+        .pageHeader("隐私模型")
         .refreshable { await model.load() }
         .task { await model.load() }
         .task(id: model.shouldPoll) { await model.poll() }

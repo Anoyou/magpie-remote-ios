@@ -1,0 +1,7 @@
+{"source": "example-org/skills", "kind": "github",
+ "candidates": [
+  {"path": "pdf", "name": "pdf", "description": "Read, fill and make PDF files", "have": true},
+  {"path": "xlsx", "name": "xlsx", "description": "Spreadsheets", "have": false},
+  {"path": "skill-creator", "name": "skill-creator", "description": "Make skills", "have": false, "as": "skill-creator-example-org"}
+ ],
+ "left": [{"path": "huge", "size": 297000000}]}

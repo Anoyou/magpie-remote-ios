@@ -48,8 +48,7 @@ struct ChatModelPicker: View {
                     }
                 }
             }
-            .navigationTitle("选择模型")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("选择模型")
             .refreshable { await chat.loadModels(app: model, force: true) }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

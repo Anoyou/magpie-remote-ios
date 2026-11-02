@@ -39,6 +39,9 @@ final class AppModel {
     var sheet: AppSheet?
     /// 点小组件打开时：要「主页」切到的分页（HomeView 读到后清掉）。
     var requestedHomeSegment: HomeSegment?
+    /// 「主页」这次启动里选过的分页（nil：还没选过，用保存的那页）。放在这里而不是 HomeView 里：
+    /// 「主页」在底栏时，换分页会换一个新的导航栈（见 MainTabs），HomeView 会重建。
+    var homeSegmentChoice: HomeSegment?
     /// 点小组件打开、而目标页面在「更多」里时：要推入的页面（MoreView 读到后推入）。
     var morePush: AppPage?
 

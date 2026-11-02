@@ -10,7 +10,7 @@ final class DockLayoutTests: XCTestCase {
 
     func testMorePagesExcludeDockPagesAndKeepEverythingElse() {
         let layout = DockLayout.default
-        XCTAssertEqual(layout.morePages, [.chat, .keys, .plugins, .hostTools, .web, .hosts, .about])
+        XCTAssertEqual(layout.morePages, [.chat, .keys, .plugins, .hostTools, .web, .hosts, .about, .library])
         XCTAssertEqual(Set(layout.morePages + layout.pages), Set(AppPage.allCases))
     }
 

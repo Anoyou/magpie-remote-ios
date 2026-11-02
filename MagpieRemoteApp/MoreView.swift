@@ -51,6 +51,14 @@ struct MoreView: View {
                 }
             }
 
+            if more.contains(.library) {
+                Section {
+                    MorePageLink(page: .library)
+                } footer: {
+                    Text("指令、MCP 服务器、技能、Hooks、子代理只需添加一次，再为需要的 Agent 打开。")
+                }
+            }
+
             if more.contains(.plugins) {
                 Section {
                     MorePageLink(page: .plugins)
@@ -89,7 +97,7 @@ struct MoreView: View {
                 Text("App")
             }
         }
-        .navigationTitle("更多")
+        .pageHeader("更多")
         // 点小组件打开、而对应页面在「更多」里时：直接推入那个页面。
         .navigationDestination(item: Binding(get: { model.morePush }, set: { model.morePush = $0 })) { page in
             AppPageView(page: page)
@@ -142,39 +150,42 @@ struct AppPageView: View {
         case .home:
             HomeView()
         case .usage:
-            UsageView().navigationTitle(page.title)
+            UsageView()
         case .chat:
-            ChatView().navigationTitle(page.title)
+            ChatView()
         case .about:
             AboutView()
         case .hosts:
             HostListContent()
         case .routes:
-            ManageGate(title: page.title) { store in
+            ManageGate(title: page.title, subtitle: page.headerSubtitle) { store in
                 ManageGroupsView(store: store).id(store.configurationKey)
             }
         case .keys:
-            ManageGate(title: page.title) { ManageKeysView(store: $0) }
+            ManageGate(title: page.title, subtitle: page.headerSubtitle) { ManageKeysView(store: $0) }
         case .plugins:
-            ManageGate(title: page.title) { ManagePluginsView(manage: $0) }
+            ManageGate(title: page.title, subtitle: page.headerSubtitle) { ManagePluginsView(manage: $0) }
         case .sessions:
-            ManageGate(title: page.title) { store in
+            ManageGate(title: page.title, subtitle: page.headerSubtitle) { store in
                 if let service = AgentSessionsServices.make(from: store.service) {
                     AgentSessionsView(service: service).id(store.configurationKey)
                 } else {
                     ContentUnavailableView("会话记录", systemImage: page.symbol, description: Text("这台主机暂时不能读取 Agent 会话。"))
+                        .pageHeader(page.title, subtitle: page.headerSubtitle)
                 }
             }
         case .hostTools:
-            ManageGate(title: page.title) { store in
+            ManageGate(title: page.title, subtitle: page.headerSubtitle) { store in
                 List { HostToolsSection(store: store) }
-                    .navigationTitle(page.title)
+                    .pageHeader(page.title)
             }
         case .web:
-            ManageGate(title: page.title) { store in
+            ManageGate(title: page.title, subtitle: page.headerSubtitle) { store in
                 List { MagpieWebSection(store: store) }
-                    .navigationTitle(page.title)
+                    .pageHeader(page.title)
             }
+        case .library:
+            ManageGate(title: page.title, subtitle: page.headerSubtitle) { LibraryPage(manage: $0) }
         }
     }
 }
@@ -203,6 +214,7 @@ extension AppPage {
         case .about: "manage.about"
         case .usage: "more.usage"
         case .chat: "more.chat"
+        case .library: "more.library"
         }
     }
 }

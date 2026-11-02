@@ -75,7 +75,7 @@ struct ManageKeysView: View {
                 }
             }
         }
-        .navigationTitle("网关密钥")
+        .pageHeader(AppPage.keys.title, subtitle: AppPage.keys.headerSubtitle)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { creating = true } label: { Label("新建密钥", systemImage: "plus") }
@@ -256,8 +256,7 @@ private struct NewKeySheet: View {
                     Text("创建后会显示一次完整的密钥，请立刻复制保存；之后只能看到脱敏后的值。")
                 }
             }
-            .navigationTitle("新建网关密钥")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("新建网关密钥")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -302,8 +301,7 @@ private struct IssueKeySheet: View {
                     Text("7 天").tag("168h")
                 }
             }
-            .navigationTitle("签发临时密钥")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("签发临时密钥")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -364,8 +362,7 @@ struct SecretRevealView: View {
                     }
                 }
             }
-            .navigationTitle("新密钥")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("新密钥")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("完成") { dismiss() }.accessibilityIdentifier("key.secret.done")

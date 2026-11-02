@@ -25,8 +25,7 @@ struct ManageWebPageView: View {
                 .accessibilityIdentifier("manage.web.placeholder")
             }
         }
-        .navigationTitle(page.title)
-        .navigationBarTitleDisplayMode(.inline)
+        .detailHeader(page.title)
     }
 }
 

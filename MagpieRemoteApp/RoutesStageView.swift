@@ -340,8 +340,10 @@ private struct ReplayBar: View {
                     Circle().fill(RT.accent).frame(width: 7, height: 7)
                     Text(RouteWords.t("Replaying")).font(.system(size: 11, weight: .semibold)).foregroundStyle(RT.muted)
                 }
+                // 钟永远一行、不被挤：出现「跳过空闲时段…」时以前会把钟挤成两行（03:33:22. / 1），整条重放条每 0.1 秒跳一下高度。
                 Text(Self.clock(time)).font(.system(size: 22, weight: .semibold)).monospacedDigit().foregroundStyle(RT.fg).tracking(-0.44)
-                Text(Self.day(time)).font(.system(size: 11)).foregroundStyle(RT.muted)
+                    .lineLimit(1).fixedSize().layoutPriority(2)
+                Text(Self.day(time)).font(.system(size: 11)).foregroundStyle(RT.muted).lineLimit(1).fixedSize().layoutPriority(1)
                 let skip = replay.skipText(fast)
                 if !skip.isEmpty { Text(skip).font(.system(size: 11)).foregroundStyle(RT.accent).lineLimit(1) }
                 Spacer(minLength: 0)

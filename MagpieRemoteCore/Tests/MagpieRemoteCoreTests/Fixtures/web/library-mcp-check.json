@@ -1,0 +1,5 @@
+{"servers": {
+ "github": {"state": "ok", "tools": 2, "toolList": [{"name": "search_code", "description": "Search code"}, {"name": "create_issue"}], "at": 1793500000000},
+ "filesystem": {"state": "fail", "tools": 0, "why": "timeout", "step": "tools/list", "waited": 30000, "detail": "npm warn exec", "at": 1793500000000},
+ "events": {"state": "auth", "tools": 0, "oauth": true, "code": 401, "agentSignIn": ["claude"], "at": 1793500000000}
+}}

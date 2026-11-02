@@ -31,27 +31,28 @@ struct UsageView: View {
             case .requests:
                 UsageRequestsView(period: $period, held: held, embedded: true)
             case .sessions:
-                ManageGate(title: "用量") { store in
+                ManageGate(title: AppPage.usage.title, subtitle: AppPage.usage.headerSubtitle) { store in
                     UsageSessionsPane(service: UsageWebServices.make(from: store.service), manage: store)
                         .id(store.configurationKey)
                 }
             case .context:
-                ManageGate(title: "用量") { store in
+                ManageGate(title: AppPage.usage.title, subtitle: AppPage.usage.headerSubtitle) { store in
                     UsageContextPane(service: UsageWebServices.make(from: store.service),
                                      tune: HostTools.service(for: store.service))
                         .id(store.configurationKey)
                 }
             }
         }
-        .safeAreaInset(edge: .top, spacing: 0) {
+        // 和「主页」的分页器一样放在导航栏下方的 safeAreaBar 里（大标题在导航栏里，不会被分页器挤掉）。
+        .safeAreaBar(edge: .top, spacing: 0) {
             Picker("用量", selection: $tab) {
                 ForEach(UsageTab.allCases) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
-            .padding(.horizontal, 16)
+            .padding(.horizontal)
             .padding(.vertical, 8)
-            .background(.bar)
             .accessibilityIdentifier("usage.tab")
         }
+        .pageHeader(AppPage.usage.title, subtitle: AppPage.usage.headerSubtitle)
     }
 }

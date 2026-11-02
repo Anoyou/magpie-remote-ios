@@ -364,8 +364,7 @@ private struct RequestsTitle: ViewModifier {
             content
         } else {
             content
-                .navigationTitle("请求记录")
-                .navigationBarTitleDisplayMode(.inline)
+                .pageHeader("请求记录")
         }
     }
 }
@@ -515,8 +514,7 @@ struct UsageRequestDetailView: View {
                 }
                 contentSection
             }
-            .navigationTitle("请求详情")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("请求详情")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("完成") { dismiss() }.accessibilityIdentifier("usage.detail.done")

@@ -33,7 +33,7 @@ struct AboutView: View {
                 Text("Magpie Remote 是 magpie 的非官方 iOS 遥控器。它只连接你自己的主机，不收集任何数据。")
             }
         }
-        .navigationTitle("关于")
+        .pageHeader("关于")
     }
 
     private var widgetFooter: String {
@@ -98,7 +98,7 @@ struct ChangelogView: View {
                 .accessibilityIdentifier("changelog.list")
             }
         }
-        .navigationTitle("更新日志")
+        .pageHeader("更新日志")
     }
 
     /// 支持 **粗体**、`代码` 等行内 Markdown；解析失败时原样显示。

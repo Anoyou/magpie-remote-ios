@@ -108,7 +108,7 @@ final class RoutesUITests: XCTestCase {
         let replay = element(id: "routes.replay.one", in: app)
         let bar = element(id: "routes.replay", in: app)
         XCTAssertTrue(replay.appears(timeout: 20), "最近一个请求结束后应当有「重放」")
-        app.swipeUp(until: replay, max: 2)
+        // 不用 swipeUp(until:)：它要问 isHittable，按钮刚好消失时会直接记一次失败；下面的循环自己按框判断要不要滑。
         var started = false
         let window = app.windows.firstMatch.frame
         for _ in 0..<6 where !started {
@@ -124,9 +124,12 @@ final class RoutesUITests: XCTestCase {
         }
         XCTAssertTrue(started, "没有出现重放条")
         // 只重放一个请求一两秒就放完了；换速度、停止用「全部重放」（十几个请求，够长）。
+        // 请求卡片在舞台下面，懒加载：滑到它之前它不在无障碍树里（页头是导航栏里的大标题后，舞台占满一屏），所以先滑再找。
         let all = element(id: "routes.replay.all", in: app)
+        _ = all.appears(timeout: 2)
+        scrollTo(all, in: app, attempts: 5)
         XCTAssertTrue(all.appears(timeout: 15), "没有「全部重放」")
-        scrollTo(all, in: app, attempts: 4)
+        scrollTo(all, in: app, attempts: 2)
         all.tap()
         let speed = element(id: "routes.replay.speed", in: app)
         app.swipeDown(until: speed, max: 4)

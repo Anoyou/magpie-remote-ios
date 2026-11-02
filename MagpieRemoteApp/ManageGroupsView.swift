@@ -134,8 +134,8 @@ struct ManageGroupsView: View {
                 }
             }
         }
-        .navigationTitle("路由")
-        .navigationDestination(isPresented: $viewingUsage) { UsageView().navigationTitle("用量") }
+        .pageHeader("路由")
+        .navigationDestination(isPresented: $viewingUsage) { UsageView() }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { creating = true } label: { Label("新建路由组", systemImage: "plus") }
@@ -619,8 +619,7 @@ struct GroupEditorView: View {
             }
         }
         .environment(\.editMode, .constant(.active))
-        .navigationTitle(group == nil ? "新建路由组" : group?.name ?? "")
-        .navigationBarTitleDisplayMode(.inline)
+        .detailHeader(group == nil ? "新建路由组" : group?.name ?? "")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button(group == nil ? "添加" : "保存") {

@@ -14,6 +14,7 @@ magpie 的 iPhone 遥控器。用户不是开发者：所有文案用简体中�
 - 只用部署目标 iOS 26 已有的 API；用到 iOS 27 SDK 才有的 API 时必须 `if #available(iOS 27.0, *)` 兜底。
 - 系统「降低透明度」由系统处理玻璃材质，不额外定制。
 - 强调色 AccentColor（蓝），危险/警告用系统橙/红。
+- 页头统一用 `PageHeader.swift`：页面（底栏页、「更多」里的每一项、固定名字的二级页）用 `.pageHeader(标题, subtitle:)`——导航栏里靠左的大标题（`.inlineLarge`），不跟着列表滚走，顶部有分页器也不会丢；副标题只用 magpie 网页插件清单 `Sub` 的官方中文（`PageSubtitles`）。名字不固定的详情页和弹出表单用 `.detailHeader`（居中小标题）。页面工具栏按钮放右上角。不要再直接写 `.navigationTitle` / `.navigationBarTitleDisplayMode`。
 
 ## 状态
 每个依赖主机的页面都经过 `ConnectedContent`：没有主机 → 引导添加；连接中 → 进度；失败 → `MagpieError` 的中文标题、说明、提示 + 重试 / 配置引导。

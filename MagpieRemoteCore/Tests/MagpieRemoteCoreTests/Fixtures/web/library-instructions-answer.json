@@ -1,0 +1,5 @@
+{"part": "instructions",
+ "instructions": {"shared": "# 规范\n用中文回答。", "sets": [{"id": "default", "name": "", "text": "# 规范\n用中文回答。", "active": true}],
+  "agents": [{"agent": "claude", "name": "Claude Code", "icon": "claudecode-color", "path": "/Users/someone/.claude/CLAUDE.md", "on": true, "extra": "", "own": 0},
+             {"agent": "codex", "name": "Codex", "icon": "codex-color", "path": "/Users/someone/.codex/AGENTS.md", "on": true, "extra": "", "own": 0}]},
+ "result": {"changed": ["codex"], "problems": []}}

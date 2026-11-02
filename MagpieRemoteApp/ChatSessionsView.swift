@@ -65,8 +65,7 @@ struct ChatSessionsView: View {
                     }
                 }
             }
-            .navigationTitle("对话列表")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("对话列表")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("完成") { dismiss() }.accessibilityIdentifier("chat.sessions.done")

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import MagpieRemoteCore
 
 /// 「主页」：原来的 Agent、供应商、额度三页合成一页，顶部分页器切换。
@@ -6,15 +7,13 @@ import MagpieRemoteCore
 /// 导航栏标题跟着分页走（Agent / 供应商 / 额度），推入的详情页返回按钮也是这个名字。
 struct HomeView: View {
     @Environment(AppModel.self) private var model
-    /// nil：还没读保存的值（读要等拿到 `model`）。
-    @State private var chosen: HomeSegment?
-
     private var defaults: UserDefaults? { model.isFixture ? nil : .standard }
-    private var segment: HomeSegment { chosen ?? HomeSegment(stored: defaults?.string(forKey: HomeSegment.defaultsKey)) }
+    private var segment: HomeSegment {
+        model.homeSegmentChoice ?? HomeSegment(stored: defaults?.string(forKey: HomeSegment.defaultsKey))
+    }
 
     var body: some View {
         page
-            .navigationBarTitleDisplayMode(.inline)
             .safeAreaBar(edge: .top, spacing: 0) { picker }
             // 点「额度」小组件打开时切到额度分页。
             .onChange(of: model.requestedHomeSegment, initial: true) { _, request in
@@ -31,7 +30,7 @@ struct HomeView: View {
         case .providers:
             ManageGate(title: HomeSegment.providers.title) { ManageProvidersView(store: $0) }
         case .quota:
-            QuotaView().navigationTitle(HomeSegment.quota.title)
+            QuotaView().pageHeader(HomeSegment.quota.title)
         }
     }
 
@@ -48,7 +47,15 @@ struct HomeView: View {
     }
 
     private func choose(_ next: HomeSegment) {
-        chosen = next
+        guard next != segment else { return }
+        model.homeSegmentChoice = next
         defaults?.set(next.rawValue, forKey: HomeSegment.defaultsKey)
+        // 导航栏标题原地改（Agent → 供应商）时，iOS 26 的大标题画出了新名字，无障碍树里却还是旧名字
+        // （VoiceOver 会读「Agent」）。在底栏里时 MainTabs 会为新分页换一个导航栈；从「更多」推入时换不了栈，
+        // 至少告诉系统「换屏」让它重新读一遍。
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(350))
+            UIAccessibility.post(notification: .screenChanged, argument: nil)
+        }
     }
 }

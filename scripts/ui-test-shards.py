@@ -33,6 +33,8 @@ DURATIONS = {
     "AgentSessionsUITests/testListShowsFixtureSessionsAndOpensTranscript": 31,
     "AgentSessionsUITests/testSwitchAgentShowsItsSessions": 31,
     "DockUITests/testCustomizeDockAndRestoreDefault": 31,
+    "PageHeadersUITests/testEveryDockTabAndMorePageHasHeader": 90,
+    "PageHeadersUITests/testHeaderShowsBothInDockAndFromMore": 40,
     "DockUITests/testDockedPageOpensFromTabAndLeavesMore": 31,
     "HomeUITests/testAgentsNotSetUpAndHiddenStartFolded": 31,
     "HomeUITests/testSegmentsSwitchBetweenAgentsProvidersAndQuota": 31,

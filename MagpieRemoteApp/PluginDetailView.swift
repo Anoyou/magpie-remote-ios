@@ -26,8 +26,7 @@ struct PluginDetailView: View {
                     .accessibilityIdentifier("plugin.gone")
             }
         }
-        .navigationTitle(store.plugin(spec).map { store.shownName($0) } ?? "插件")
-        .navigationBarTitleDisplayMode(.inline)
+        .detailHeader(store.plugin(spec).map { store.shownName($0) } ?? "插件")
         .sheet(item: $web) { target in PluginWebSheet(service: store.service, target: target) }
     }
 
@@ -397,8 +396,7 @@ struct PluginListingSheet: View {
                     Text("插件是他人的代码：由它登录并发出请求，或作为中间件看到请求。")
                 }
             }
-            .navigationTitle(listing.name)
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader(listing.name)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } }
             }
@@ -450,8 +448,7 @@ struct PluginOptionsEditor: View {
                 }
             }
         }
-        .navigationTitle("选项")
-        .navigationBarTitleDisplayMode(.inline)
+        .detailHeader("选项")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("保存") { Task { await save() } }

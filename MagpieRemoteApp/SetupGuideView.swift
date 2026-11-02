@@ -50,8 +50,7 @@ struct SetupGuideView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("配置引导")
-        .navigationBarTitleDisplayMode(.inline)
+        .pageHeader("配置引导")
         .accessibilityIdentifier("guide.screen")
         .toolbar {
             if showsDone {

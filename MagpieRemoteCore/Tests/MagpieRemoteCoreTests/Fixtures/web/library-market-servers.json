@@ -1,0 +1,4 @@
+{"items": [
+ {"id": "magpie-web-search", "name": "magpie-web-search", "title": "Magpie Web Search", "description": "Search the web through magpie", "publisher": "magpie", "transport": "stdio", "featured": true, "unready": "Settings › Models › Web search isn't set up", "inputs": []},
+ {"id": "io.example/notion", "name": "notion", "title": "Notion", "description": "Read and write Notion pages", "publisher": "Example", "transport": "http", "signIn": true, "inputs": [{"key": "NOTION_TOKEN", "where": "header", "label": "Token", "secret": true, "required": true}], "have": "notion"}
+], "error": "registry: timeout", "failed": "registry", "cause": "timeout"}

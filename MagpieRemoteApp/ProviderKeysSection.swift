@@ -364,8 +364,7 @@ struct AddProviderKeySheet: View {
                     }
                 }
             }
-            .navigationTitle("添加 Key")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("添加 Key")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -426,8 +425,7 @@ struct ReplaceProviderKeySheet: View {
                     Text("「\(key.label)」的名字、排序和设置保持不变，只换成新的值。")
                 }
             }
-            .navigationTitle("更换 Key")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("更换 Key")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {

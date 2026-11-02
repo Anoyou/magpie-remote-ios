@@ -38,8 +38,7 @@ struct AgentModelListView: View {
                 ProgressView("正在读取…")
             }
         }
-        .navigationTitle("\(agent.name) 的模型列表")
-        .navigationBarTitleDisplayMode(.inline)
+        .detailHeader("\(agent.name) 的模型列表")
         .task { await load() }
         .safeAreaInset(edge: .bottom) { ManageStatusLine(store: store) }
         .manageAlerts(store: store, id: "agent.models")

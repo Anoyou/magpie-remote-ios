@@ -53,8 +53,7 @@ struct SessionTrashView: View {
                 }
             }
         }
-        .navigationTitle("回收站")
-        .navigationBarTitleDisplayMode(.inline)
+        .pageHeader("回收站")
         .refreshable { await store.load() }
         .confirmationDialog("彻底删除这个会话？", isPresented: Binding(get: { pendingPurge != nil }, set: { if !$0 { pendingPurge = nil } }),
                             titleVisibility: .visible, presenting: pendingPurge) { item in
