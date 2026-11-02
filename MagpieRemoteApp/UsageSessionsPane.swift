@@ -60,9 +60,7 @@ struct UsageSessionsPane: View {
             }
         }
         .listStyle(.insetGrouped)
-        .searchable(text: $filter.search, prompt: "搜索会话")
-        // 这一页还有范围、筛选和图表：搜索收成工具栏里的放大镜（见 DESIGN.md「搜索」）。
-        .minimizedSearch()
+        .pageSearchable(text: $filter.search, prompt: "搜索会话")
         .refreshable { await loadAll() }
         .task(id: range) { await loadAll() }
         .task(id: OverviewKey(range: range, agent: filter.agent, model: filter.model, folder: filter.folder)) { await loadOverview() }

@@ -68,14 +68,21 @@ final class PageTopStripUITests: XCTestCase {
         assertInsideScrollingContent("home.segment", in: app)
     }
 
-    /// 搜索统一用系统默认位置（不钉在导航栏下面）：插件页的搜索栏不在导航栏里。
+    /// 搜索统一用导航栏标题下面的系统搜索栏（`pageSearchable`）：从「更多」推入的插件页也要有搜索栏，
+    /// 而且它跟着大标题一起收起（不是 `.always` 钉在标题下面——钉住的搜索栏往上滚时还留在原处、还能点）。
     func testPluginsSearchIsNotPinnedUnderTheTitle() {
         let app = launch()
         app.openFromMore("manage.plugins", title: "插件")
         let search = app.revealSearchField()
-        XCTAssertTrue(search.exists, "插件页没有搜索栏（也没有放大镜按钮）：\(app.navigationBars.firstMatch.debugDescription)\n\(app.toolbars.firstMatch.debugDescription)")
-        let bar = app.navigationBars["插件"]
-        XCTAssertFalse(bar.searchFields.firstMatch.exists, "搜索栏不应当放在导航栏里（和大标题抢位置）")
+        XCTAssertTrue(search.exists && search.isHittable, "插件页没有搜索栏：\(app.navigationBars.firstMatch.debugDescription)")
+        let before = search.frame
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+        start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
+        let collapsed = waitUntil(3) { !search.exists || !search.isHittable || search.frame.height < 10 }
+        XCTAssertTrue(collapsed, "往上滚时搜索栏没有跟着大标题收起（还钉在标题下面）：之前 \(before)，之后 \(search.frame)")
+        // 往下拉又出来
+        XCTAssertTrue(app.revealSearchField().isHittable, "往下拉后搜索栏没有重新出来")
     }
 
     /// 「更多」照 iOS「设置」的样式：分组标题，读到 magpie 版本时有「magpie 版本」一行。

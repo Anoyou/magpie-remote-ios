@@ -17,7 +17,7 @@ struct AgentSessionsView: View {
     var body: some View {
         content
             .pageHeader(AppPage.sessions.title, subtitle: AppPage.sessions.headerSubtitle)
-            .searchable(text: $store.query, prompt: store.scope == .titles ? "筛选标题、目录、模型" : "搜索对话内容（至少 2 个字）")
+            .pageSearchable(text: $store.query, prompt: store.scope == .titles ? "筛选标题、目录、模型" : "搜索对话内容（至少 2 个字）")
             .searchScopes($store.scope) {
                 ForEach(AgentSessionsStore.SearchScope.allCases) { scope in
                     Text(scope.title).tag(scope)

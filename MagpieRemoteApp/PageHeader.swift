@@ -24,13 +24,13 @@ extension View {
 }
 
 extension View {
-    /// 搜索的统一规则（DESIGN.md「搜索」）：一律用系统的 `.searchable`，放在系统默认位置（和「会话」页一样，
-    /// 由系统决定放在导航栏里跟着大标题展开 / 收起，或收成工具栏里的放大镜），不用 `.navigationBarDrawer(displayMode: .always)` 钉住。
-    /// 页面主体就是那张可搜索的列表时（会话、插件、发现、选模型的表单）显示完整的搜索栏；
-    /// 页面上还有分页器 / 筛选 / 图表、搜索只是其中一个工具时（用量 › 请求、用量 › 会话、Agent 的模型列表），
-    /// 再加上这个修饰符，把搜索收成工具栏里的放大镜按钮，点开才展开。
-    func minimizedSearch() -> some View {
-        searchToolbarBehavior(.minimize)
+    /// 搜索的统一规则（DESIGN.md「搜索」）：全 App 只用这一种写法——系统 `.searchable`，
+    /// 放在导航栏标题下面的系统搜索栏（`.navigationBarDrawer(displayMode: .automatic)`，和 iOS「设置」「邮件」一样）：
+    /// 停在顶部时显示在大标题下面，往上滚时和大标题一起由系统收起，往下拉又出来；不用 `.always` 钉住。
+    /// 不写位置（系统默认）时，iOS 26 在底栏 TabView 里推入的页面（例如「更多 › 插件」）上既没有搜索栏也没有放大镜
+    /// （0.6.2 的 UI 测试里看到的），所以位置写明，不论页面在底栏里还是从「更多」推入都一样。
+    func pageSearchable(text: Binding<String>, prompt: String) -> some View {
+        searchable(text: text, placement: .navigationBarDrawer(displayMode: .automatic), prompt: Text(prompt))
     }
 }
 

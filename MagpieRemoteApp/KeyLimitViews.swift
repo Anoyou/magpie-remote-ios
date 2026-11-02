@@ -230,7 +230,7 @@ struct KeyModelsSheet: View {
                             }
                         }
                     }
-                    .searchable(text: $search, prompt: "搜索模型")
+                    .pageSearchable(text: $search, prompt: "搜索模型")
                 } else if failed {
                     ContentUnavailableView("读不到模型列表", systemImage: "exclamationmark.triangle")
                 } else {

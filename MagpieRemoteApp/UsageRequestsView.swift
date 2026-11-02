@@ -137,9 +137,7 @@ struct UsageRequestsView: View {
         }
         .listStyle(.insetGrouped)
         .modifier(RequestsTitle(embedded: embedded))
-        .searchable(text: $search, prompt: "搜索模型、供应商、会话")
-        // 这一页还有时间段、筛选和图表：搜索收成工具栏里的放大镜（见 DESIGN.md「搜索」）。
-        .minimizedSearch()
+        .pageSearchable(text: $search, prompt: "搜索模型、供应商、会话")
         .toolbar {
             if web != nil {
                 ToolbarItem(placement: .secondaryAction) {
