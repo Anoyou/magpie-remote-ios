@@ -126,6 +126,10 @@ private struct LibraryContent: View {
             }
         }
         .animation(.default, value: store.tab)
+        // RTK 的状态每次打开这个分页都重新读（官方：装了新 Agent 之后要能看到）
+        .onChange(of: store.tab) { _, tab in
+            if tab == .rtk { Task { await store.loadRTK(force: true) } }
+        }
     }
 }
 
@@ -356,7 +360,7 @@ struct LibraryConfirm: Identifiable {
     var message: String
     var button: String
     var destructive = true
-    var run: () async -> Void
+    var run: @MainActor () async -> Void
 }
 
 extension View {

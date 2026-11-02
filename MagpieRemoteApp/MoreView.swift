@@ -51,6 +51,14 @@ struct MoreView: View {
                 }
             }
 
+            if more.contains(.library) {
+                Section {
+                    MorePageLink(page: .library)
+                } footer: {
+                    Text("指令、MCP 服务器、技能、Hooks、子代理只需添加一次，再为需要的 Agent 打开。")
+                }
+            }
+
             if more.contains(.plugins) {
                 Section {
                     MorePageLink(page: .plugins)
@@ -175,6 +183,8 @@ struct AppPageView: View {
                 List { MagpieWebSection(store: store) }
                     .navigationTitle(page.title)
             }
+        case .library:
+            ManageGate(title: page.title) { LibraryPage(manage: $0) }
         }
     }
 }
@@ -203,6 +213,7 @@ extension AppPage {
         case .about: "manage.about"
         case .usage: "more.usage"
         case .chat: "more.chat"
+        case .library: "more.library"
         }
     }
 }
