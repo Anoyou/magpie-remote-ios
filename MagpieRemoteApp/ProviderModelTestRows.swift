@@ -13,6 +13,9 @@ final class ProviderModelTests {
     private(set) var run: String?
     private var task: Task<Void, Never>?
 
+    /// 「只选可用」的确认弹窗开着没有：弹窗挂在整个供应商表单上（不挂在列表里懒加载的那一行上）。
+    var confirmWorking = false
+
     var running: Bool { run != nil }
     var answered: [String: ProviderTestResult] { results.compactMapValues { $0 } }
 
@@ -56,7 +59,6 @@ struct ProviderModelTestRows: View {
     let store: ManageStore
     let provider: WebProvider
     let tests: ProviderModelTests
-    @State private var confirmWorking = false
 
     var body: some View {
         let unavailable = ProviderModelTest.unavailable(provider)
@@ -77,27 +79,13 @@ struct ProviderModelTestRows: View {
         if !tests.answered.isEmpty {
             let working = ProviderModelTest.workingOnly(provider, results: tests.answered)
             Button {
-                confirmWorking = true
+                tests.confirmWorking = true
             } label: {
                 Label("只选可用", systemImage: "checkmark.seal")
             }
             .disabled(working.dropped == 0 || store.busy)
             .accessibilityHint(working.dropped == 0 ? "已测试的选中模型都有响应" : "取消选中上次测试失败的模型；测试通过的和未测试的保持选中")
             .accessibilityIdentifier("provider.workingOnly")
-            .confirmationDialog(ProviderModelTest.droppedSaid(working.dropped).replacingOccurrences(of: "已取消选中", with: "取消选中") + "？",
-                                isPresented: $confirmWorking, titleVisibility: .visible) {
-                Button("只选可用", role: .destructive) {
-                    Task {
-                        if await store.saveProvider(provider, edits: .init(enabledModels: Set(working.keep))) {
-                            store.status = ProviderModelTest.droppedSaid(working.dropped)
-                        }
-                    }
-                }
-                .accessibilityIdentifier("provider.workingOnly.confirm")
-                Button("取消", role: .cancel) {}
-            } message: {
-                Text("这些模型会从 Agent 的模型列表里拿掉；测试通过的和未测试的保持选中。")
-            }
         }
     }
 }
@@ -135,5 +123,37 @@ struct ProviderModelTestDetail: View {
                 .foregroundStyle(result.ok ? Color.secondary : Color.red)
                 .lineLimit(2)
         }
+    }
+}
+
+extension View {
+    /// 「只选可用」的确认弹窗：挂在整个供应商表单上，只挂一份。
+    func providerModelTestPresentations(_ tests: ProviderModelTests, store: ManageStore, provider: WebProvider) -> some View {
+        modifier(ProviderModelTestPresentations(tests: tests, store: store, provider: provider))
+    }
+}
+
+private struct ProviderModelTestPresentations: ViewModifier {
+    @Bindable var tests: ProviderModelTests
+    let store: ManageStore
+    let provider: WebProvider
+
+    func body(content: Content) -> some View {
+        let working = ProviderModelTest.workingOnly(provider, results: tests.answered)
+        content
+            .confirmationDialog(ProviderModelTest.droppedSaid(working.dropped).replacingOccurrences(of: "已取消选中", with: "取消选中") + "？",
+                                isPresented: $tests.confirmWorking, titleVisibility: .visible) {
+                Button("只选可用", role: .destructive) {
+                    Task {
+                        if await store.saveProvider(provider, edits: .init(enabledModels: Set(working.keep))) {
+                            store.status = ProviderModelTest.droppedSaid(working.dropped)
+                        }
+                    }
+                }
+                .accessibilityIdentifier("provider.workingOnly.confirm")
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("这些模型会从 Agent 的模型列表里拿掉；测试通过的和未测试的保持选中。")
+            }
     }
 }

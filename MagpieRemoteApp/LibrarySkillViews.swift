@@ -7,10 +7,12 @@ struct LibrarySkillsTab: View {
     let store: LibraryStore
     let page: LibrarySnapshot
     @State private var filter = ""
-    @State private var confirm: LibraryConfirm?
-    @State private var installing = false
-    @State private var market = false
-    @State private var how = false
+    @Environment(LibraryPresenter.self) private var presenter
+    /// 确认弹窗由页面根上的 LibraryPresenter 弹出（见 LibraryPresenter 的说明）。
+    private var confirm: LibraryConfirm? {
+        get { presenter.confirm }
+        nonmutating set { presenter.confirm = newValue }
+    }
 
     private var all: [LibraryAgent] { page.skillAgents(hidden: store.hidden) }
 
@@ -27,7 +29,7 @@ struct LibrarySkillsTab: View {
                     } description: {
                         Text("owner/repo、GitHub 或 GitLab 链接、任意 git 仓库地址，或本机上的文件夹")
                     } actions: {
-                        Button("查找技能") { installing = true }
+                        Button("查找技能") { presenter.show(.skillInstall) }
                             .buttonStyle(.borderedProminent)
                             .accessibilityIdentifier("library.skills.installEmpty")
                     }
@@ -51,7 +53,7 @@ struct LibrarySkillsTab: View {
                             LibrarySkillRow(store: store, page: page, skill: skill, all: all)
                         }
                     } header: {
-                        LibrarySkillGroupHeader(store: store, repo: group.repo, skills: group.skills, confirm: $confirm)
+                        LibrarySkillGroupHeader(store: store, repo: group.repo, skills: group.skills, confirm: presenter.confirmBinding)
                     }
                 }
             }
@@ -62,7 +64,7 @@ struct LibrarySkillsTab: View {
 
             Section {
                 Button {
-                    market = true
+                    presenter.show(.skillMarket)
                 } label: {
                     Label("发现", systemImage: "magnifyingglass")
                 }
@@ -77,18 +79,13 @@ struct LibrarySkillsTab: View {
                     }
                 }
             }
-            // 弹窗挂在一直都在的最后一节上
-            .sheet(isPresented: $installing) { LibrarySkillInstall(store: store) }
-            .sheet(isPresented: $market) { LibrarySkillMarket(store: store) }
-            .sheet(isPresented: $how) { LibrarySkillHowSheet(store: store) }
-            .libraryConfirm($confirm)
         }
     }
 
     /// 页面上方的一排操作（官方 renderSkills 的 row-head）。
     @ViewBuilder private var actions: some View {
         Button {
-            installing = true
+            presenter.show(.skillInstall)
         } label: {
             Label("添加技能", systemImage: "plus")
         }
@@ -130,7 +127,7 @@ struct LibrarySkillsTab: View {
             }
             .disabled(page.skills.isEmpty)
             Button {
-                how = true
+                presenter.show(.skillHow)
             } label: {
                 Label("Skills 启用方式", systemImage: "link")
             }
@@ -377,7 +374,7 @@ struct LibrarySkillDetail: View {
     private var skill: LibrarySkill? { page?.skills.first { $0.name == name } }
 
     var body: some View {
-        Group {
+        ZStack {  // 不用 Group：Group 的修饰符会分给每个分支，换分支时弹窗宿主跟着被换掉
             if let page, let skill {
                 content(page, skill)
             } else {

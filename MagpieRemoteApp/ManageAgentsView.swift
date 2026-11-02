@@ -5,14 +5,22 @@ import MagpieRemoteCore
 /// 每个 Agent 一组，有它的所有设置（模型、推理强度、子代理、登录方式…）、「接入 magpie」开关、命令行程序的版本与「更新到 …」，
 /// 配置被改过时有「重新应用」；两个以上有新版本时上面一行「全部更新」；最下面是「方案」（保存 / 应用 / 更新 / 删除）。
 /// 在用的排在上面；什么都没设置的（未设置）和在网页版里隐藏的（已隐藏）收进下面一组，默认折叠，点开才显示。
+/// 每个 Agent 的设置默认也收起：只显示一行标题（图标、名字、版本、是否接入），点一下展开；展开了哪些记在本机。
 struct ManageAgentsView: View {
     let store: ManageStore
+    @Environment(AppModel.self) private var model
+    /// 展开了设置的 Agent（id）。默认都收起；本机记住（示例模式不记，UI 测试每次都从全部收起开始）。
+    @State private var expanded: Set<String> = []
+    @State private var loadedExpanded = false
     /// 折叠组是否展开（和网页版一样只在这次打开期间记住）。
     @State private var showsFolded = false
     /// 正在问「断开 X 和 magpie？」的 Agent。
     @State private var disconnecting: WebAgent?
     /// 正在解释「连不上 magpie」的 Agent。
     @State private var explaining: WebAgent?
+    /// 「方案 › 保存当前」的起名弹窗（挂在整页上，不挂在列表里懒加载的那一行上）。
+    @State private var namingProfile = false
+    @State private var newProfileName = ""
 
     var body: some View {
         let arrangement = AgentArrangement(agents: store.agents, order: store.settings?.agentOrder ?? [],
@@ -26,6 +34,7 @@ struct ManageAgentsView: View {
             AgentUpdatesBar(store: store)
             ForEach(Array(arrangement.shown.enumerated()), id: \.element.id) { index, agent in
                 AgentSection(store: store, agent: agent, place: .shown(index: index, count: arrangement.shown.count),
+                             expanded: expanded.contains(agent.id), toggle: { toggle(agent.id) },
                              disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
             }
             if arrangement.foldedCount > 0 {
@@ -50,18 +59,25 @@ struct ManageAgentsView: View {
                     if !arrangement.notSetUp.isEmpty {
                         FoldCaption(text: "未设置")
                         ForEach(arrangement.notSetUp) { agent in
-                            AgentSection(store: store, agent: agent, place: .notSetUp, disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
+                            AgentSection(store: store, agent: agent, place: .notSetUp,
+                                         expanded: expanded.contains(agent.id), toggle: { toggle(agent.id) }, disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
                         }
                     }
                     if !arrangement.hidden.isEmpty {
                         FoldCaption(text: "已隐藏")
                         ForEach(arrangement.hidden) { agent in
-                            AgentSection(store: store, agent: agent, place: .hidden, disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
+                            AgentSection(store: store, agent: agent, place: .hidden,
+                                         expanded: expanded.contains(agent.id), toggle: { toggle(agent.id) }, disconnect: { disconnecting = $0 }, explain: { explaining = $0 })
                         }
                     }
                 }
             }
-            if store.phase == .ready { AgentProfilesSection(store: store) }
+            if store.phase == .ready {
+                AgentProfilesSection(store: store) {
+                    newProfileName = ""
+                    namingProfile = true
+                }
+            }
         }
         .pageHeader("Agent")
         .refreshable { await store.refresh() }
@@ -90,7 +106,32 @@ struct ManageAgentsView: View {
         } message: { agent in
             Text(agent.drift?.detail ?? "")
         }
+        .alert("保存当前", isPresented: $namingProfile) {
+            TextField("方案名称", text: $newProfileName)
+                .accessibilityIdentifier("agents.profile.name")
+            Button("取消", role: .cancel) {}
+            Button("保存") {
+                let name = newProfileName.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty else { return }
+                Task { await store.profile(.save, name: name, update: store.profiles.contains { $0.name == name }) }
+            }
+            .accessibilityIdentifier("agents.profile.name.save")
+        } message: {
+            Text(store.profiles.isEmpty ? "给这套设置起个名字。" : "同名的方案会被当前设置覆盖。")
+        }
         .manageAlerts(store: store, id: "agents")
+        .onAppear {
+            guard !loadedExpanded else { return }
+            loadedExpanded = true
+            expanded = AgentExpansion.load(model.isFixture ? nil : .standard)
+        }
+    }
+
+    private func toggle(_ id: String) {
+        withAnimation {
+            if expanded.contains(id) { expanded.remove(id) } else { expanded.insert(id) }
+        }
+        AgentExpansion.save(expanded, to: model.isFixture ? nil : .standard)
     }
 
     private func foldedLabel(_ arrangement: AgentArrangement) -> String {
@@ -107,6 +148,19 @@ struct ManageAgentsView: View {
 
 /// 一个 Agent 在列表里的位置：决定「更多操作」里有什么（官方 openAgentMenu：上面那组有上移 / 下移 / 隐藏，
 /// 折叠的「未设置」只有隐藏，「已隐藏」只有显示）。
+/// 「主页 › Agent」里展开了设置的 Agent，记在本机（UserDefaults）。`defaults` 为 nil（示例模式）时不读不写。
+enum AgentExpansion {
+    static let defaultsKey = "home.agents.expanded"
+
+    static func load(_ defaults: UserDefaults?) -> Set<String> {
+        Set(defaults?.stringArray(forKey: defaultsKey) ?? [])
+    }
+
+    static func save(_ ids: Set<String>, to defaults: UserDefaults?) {
+        defaults?.set(ids.sorted(), forKey: defaultsKey)
+    }
+}
+
 enum AgentPlace: Equatable {
     case shown(index: Int, count: Int)
     case notSetUp
@@ -205,6 +259,9 @@ private struct AgentSection: View {
     let store: ManageStore
     let agent: WebAgent
     let place: AgentPlace
+    /// 设置展开着没有（默认收起，只显示标题行）。
+    let expanded: Bool
+    let toggle: () -> Void
     /// 问「断开 X 和 magpie？」（弹窗挂在整页上，避免挂在 Section 上被每一行重复）。
     let disconnect: (WebAgent) -> Void
     /// 解释连不上 magpie 的原因。
@@ -215,56 +272,95 @@ private struct AgentSection: View {
 
     var body: some View {
         Section {
-            if agent.cliMissing {
-                Text("找不到它的命令行程序，可能已经卸载。重新安装后这里会再显示它的设置。").foregroundStyle(.secondary)
-                if agent.wired && agent.connectable { connectToggle }
-                moreActions
-            } else {
-                if let drift = agent.drift { driftRow(drift) }
-                if agent.connectable { connectToggle }
-                let fields = agent.shownFields
-                if fields.isEmpty {
-                    Text("这个 Agent 没有可切换的设置。").foregroundStyle(.secondary)
-                }
-                ForEach(fields) { field in
-                    AgentFieldPicker(store: store, agent: agent, field: field)
-                }
-                if let count = agent.modelCount { modelListRow(count) }
-                if let cli, cli.update || busy { updateRow(cli) }
-                moreActions
-            }
-        } header: {
-            HStack(spacing: 6) {
-                BrandIcon(agent.officialIcon, size: 16)
-                Text(agent.name)
-                if let tag = cli?.versionTag {
-                    Text(tag).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                        .accessibilityLabel(cli.map { $0.versionNote(agent: agent.name) } ?? tag)
-                        .accessibilityIdentifier("agent.version.\(agent.id)")
-                }
-                if let app = cli?.app, !app.isEmpty {
-                    Text("App \(app)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                }
-                if cli?.inDesktop == true {
-                    Text("Claude Desktop 内置").font(.caption).foregroundStyle(.secondary)
-                }
+            titleRow
+            if expanded {
                 if agent.cliMissing {
-                    Text("未找到 CLI").font(.caption).foregroundStyle(.orange)
+                    Text("找不到它的命令行程序，可能已经卸载。重新安装后这里会再显示它的设置。").foregroundStyle(.secondary)
+                    if agent.wired && agent.connectable { connectToggle }
+                    moreActions
+                } else {
+                    if let drift = agent.drift { driftRow(drift) }
+                    if agent.connectable { connectToggle }
+                    let fields = agent.shownFields
+                    if fields.isEmpty {
+                        Text("这个 Agent 没有可切换的设置。").foregroundStyle(.secondary)
+                    }
+                    ForEach(fields) { field in
+                        AgentFieldPicker(store: store, agent: agent, field: field)
+                    }
+                    if let count = agent.modelCount { modelListRow(count) }
+                    if let cli, cli.update || busy { updateRow(cli) }
+                    moreActions
                 }
-                Spacer()
-                Text(agent.wired ? "已接入 magpie" : "未接入").foregroundStyle(agent.wired ? .green : .secondary)
             }
         } footer: {
-            VStack(alignment: .leading, spacing: 2) {
-                if let cli, !cli.version.isEmpty {
-                    Text(cli.versionNote(agent: agent.name))
-                    if cli.offPath, !cli.path.isEmpty {
-                        Text("不在终端的 PATH 里：magpie 在 \(cli.path) 找到它，但终端的 PATH 里没有这个目录。")
+            if expanded {
+                VStack(alignment: .leading, spacing: 2) {
+                    if let cli, !cli.version.isEmpty {
+                        Text(cli.versionNote(agent: agent.name))
+                        if cli.offPath, !cli.path.isEmpty {
+                            Text("不在终端的 PATH 里：magpie 在 \(cli.path) 找到它，但终端的 PATH 里没有这个目录。")
+                        }
                     }
+                    if !agent.path.isEmpty { Text("配置文件：\(agent.path)") }
                 }
-                if !agent.path.isEmpty { Text("配置文件：\(agent.path)") }
             }
         }
+    }
+
+    /// 标题行（收起时只有这一行）：图标、名字、版本、是否接入；点一下展开 / 收起这个 Agent 的设置。
+    private var titleRow: some View {
+        Button(action: toggle) {
+            HStack(spacing: 8) {
+                BrandIcon(agent.officialIcon, size: 22)
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(agent.name).font(.headline).foregroundStyle(.primary)
+                        if agent.drift != nil {
+                            Image(systemName: "exclamationmark.triangle.fill").font(.caption).foregroundStyle(.orange)
+                                .accessibilityLabel("配置被改过")
+                        }
+                        if let cli, cli.update {
+                            Image(systemName: "arrow.up.circle.fill").font(.caption).foregroundStyle(Color.accentColor)
+                                .accessibilityLabel("有新版本")
+                        }
+                    }
+                    HStack(spacing: 6) {
+                        if let tag = cli?.versionTag {
+                            Text(tag).monospacedDigit()
+                                .accessibilityLabel(cli.map { $0.versionNote(agent: agent.name) } ?? tag)
+                                .accessibilityIdentifier("agent.version.\(agent.id)")
+                        }
+                        if let app = cli?.app, !app.isEmpty {
+                            Text("App \(app)").monospacedDigit()
+                        }
+                        if cli?.inDesktop == true {
+                            Text("Claude Desktop 内置")
+                        }
+                        if agent.cliMissing {
+                            Text("未找到 CLI").foregroundStyle(.orange)
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(agent.wired ? "已接入 magpie" : "未接入")
+                    .font(.subheadline)
+                    .foregroundStyle(agent.wired ? .green : .secondary)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(expanded ? 90 : 0))
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityValue(expanded ? "已展开" : "已收起")
+        .accessibilityHint(expanded ? "收起 \(agent.name) 的设置" : "展开 \(agent.name) 的设置")
+        .accessibilityIdentifier("agent.header.\(agent.id)")
     }
 
     // MARK: 接入
@@ -561,8 +657,8 @@ private struct AgentDisconnectSheet: View {
 /// 「方案」：把所有 Agent 现在的设置存成一个方案，之后一键切回（官方 renderProfiles）。
 private struct AgentProfilesSection: View {
     let store: ManageStore
-    @State private var naming = false
-    @State private var newName = ""
+    /// 点「保存当前」：起名弹窗由整页弹出。
+    let save: () -> Void
 
     var body: some View {
         Section {
@@ -589,26 +685,12 @@ private struct AgentProfilesSection: View {
                 .accessibilityIdentifier("agents.profile.\(profile.name)")
             }
             Button {
-                newName = ""
-                naming = true
+                save()
             } label: {
                 Label("保存当前", systemImage: "plus")
             }
             .disabled(store.busy)
             .accessibilityIdentifier("agents.profile.save")
-            .alert("保存当前", isPresented: $naming) {
-                TextField("方案名称", text: $newName)
-                    .accessibilityIdentifier("agents.profile.name")
-                Button("取消", role: .cancel) {}
-                Button("保存") {
-                    let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !name.isEmpty else { return }
-                    Task { await store.profile(.save, name: name, update: store.profiles.contains { $0.name == name }) }
-                }
-                .accessibilityIdentifier("agents.profile.name.save")
-            } message: {
-                Text(store.profiles.isEmpty ? "给这套设置起个名字。" : "同名的方案会被当前设置覆盖。")
-            }
         } header: {
             Text("方案")
         } footer: {

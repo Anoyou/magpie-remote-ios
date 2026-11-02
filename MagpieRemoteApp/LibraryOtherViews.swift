@@ -8,7 +8,7 @@ import MagpieRemoteCore
 struct LibraryInstructionsTab: View {
     let store: LibraryStore
     let page: LibrarySnapshot
-    @State private var adding = false
+    @Environment(LibraryPresenter.self) private var presenter
 
     private var iv: LibraryInstructions { page.instructions }
     private var rows: [LibraryInstructionAgent] { iv.agents.filter { !store.hidden.contains($0.agent) || $0.on } }
@@ -44,7 +44,7 @@ struct LibraryInstructionsTab: View {
                         .accessibilityIdentifier("library.set.\(set.id)")
                     }
                 }
-                Button("+ 新建一套") { adding = true }
+                Button("+ 新建一套") { presenter.show(.newSet) }
                     .disabled(store.busy)
                     .accessibilityIdentifier("library.sets.add")
             } header: {
@@ -78,7 +78,6 @@ struct LibraryInstructionsTab: View {
                     }
                 }
             }
-            .sheet(isPresented: $adding) { LibraryNewSetSheet(store: store) }
         }
     }
 }
@@ -221,7 +220,7 @@ private struct LibraryInstructionSetEditor: View {
     }
 }
 
-private struct LibraryNewSetSheet: View {
+struct LibraryNewSetSheet: View {
     let store: LibraryStore
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
@@ -356,8 +355,12 @@ private struct LibraryInstructionAgentDetail: View {
 struct LibraryHooksTab: View {
     let store: LibraryStore
     let page: LibrarySnapshot
-    @State private var editing: LibraryHookDraft?
-    @State private var confirm: LibraryConfirm?
+    @Environment(LibraryPresenter.self) private var presenter
+    /// 确认弹窗由页面根上的 LibraryPresenter 弹出（见 LibraryPresenter 的说明）。
+    private var confirm: LibraryConfirm? {
+        get { presenter.confirm }
+        nonmutating set { presenter.confirm = newValue }
+    }
 
     private var all: [LibraryAgent] { page.hookTargets(hidden: store.hidden) }
     private var newDraft: LibraryHookDraft {
@@ -374,7 +377,7 @@ struct LibraryHooksTab: View {
                     } description: {
                         Text("添加一个，再选要运行它的 Agent。")
                     } actions: {
-                        Button("＋ 添加 Hook") { editing = newDraft }
+                        Button("＋ 添加 Hook") { presenter.show(.hook(newDraft)) }
                             .buttonStyle(.borderedProminent)
                             .accessibilityIdentifier("library.hooks.addEmpty")
                     }
@@ -386,7 +389,7 @@ struct LibraryHooksTab: View {
                     ForEach(page.hooks.sorted { $0.name < $1.name }) { hook in
                         VStack(alignment: .leading, spacing: 8) {
                             Button {
-                                editing = LibraryHookDraft(old: hook.name, hook: hook)
+                                presenter.show(.hook(LibraryHookDraft(old: hook.name, hook: hook)))
                             } label: {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(hook.name).font(.body.monospaced()).foregroundStyle(.primary)
@@ -408,7 +411,7 @@ struct LibraryHooksTab: View {
                         }
                         .padding(.vertical, 2)
                     }
-                    Button("＋ 添加 Hook") { editing = newDraft }
+                    Button("＋ 添加 Hook") { presenter.show(.hook(newDraft)) }
                         .disabled(store.busy)
                         .accessibilityIdentifier("library.hooks.add")
                     if page.hooks.count > 1 {
@@ -440,8 +443,6 @@ struct LibraryHooksTab: View {
                     if !skip.isEmpty { Text("magpie 还不能给 \(skip.map(\.name).joined(separator: "、")) 写入 Hook：它们的图标是灰的，点一下可看原因。") }
                 }
             }
-            .sheet(item: $editing) { draft in LibraryHookEditor(store: store, draft: draft) }
-            .libraryConfirm($confirm)
         }
     }
 }
@@ -452,7 +453,7 @@ struct LibraryHookDraft: Identifiable {
     var hook: LibraryHook
 }
 
-private struct LibraryHookEditor: View {
+struct LibraryHookEditor: View {
     let store: LibraryStore
     @State var draft: LibraryHookDraft
     @Environment(\.dismiss) private var dismiss
@@ -599,7 +600,7 @@ private struct LibraryHookEditor: View {
 struct LibrarySubagentsTab: View {
     let store: LibraryStore
     let page: LibrarySnapshot
-    @State private var editing: LibrarySubagentDraft?
+    @Environment(LibraryPresenter.self) private var presenter
 
     private var all: [LibraryAgent] { page.subagentTargets(hidden: store.hidden) }
     private var newDraft: LibrarySubagentDraft {
@@ -615,7 +616,7 @@ struct LibrarySubagentsTab: View {
                     } description: {
                         Text("添加一个，并选择可以把任务交给它的 Agent。")
                     } actions: {
-                        Button("＋ 添加子代理") { editing = newDraft }
+                        Button("＋ 添加子代理") { presenter.show(.subagent(newDraft)) }
                             .buttonStyle(.borderedProminent)
                             .accessibilityIdentifier("library.subagents.addEmpty")
                     }
@@ -627,7 +628,7 @@ struct LibrarySubagentsTab: View {
                     ForEach(page.subagents.sorted { $0.name < $1.name }) { sub in
                         VStack(alignment: .leading, spacing: 8) {
                             Button {
-                                editing = LibrarySubagentDraft(old: sub.name, subagent: sub)
+                                presenter.show(.subagent(LibrarySubagentDraft(old: sub.name, subagent: sub)))
                             } label: {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(sub.name).font(.body.monospaced()).foregroundStyle(.primary)
@@ -647,7 +648,7 @@ struct LibrarySubagentsTab: View {
                         }
                         .padding(.vertical, 2)
                     }
-                    Button("＋ 添加子代理") { editing = newDraft }
+                    Button("＋ 添加子代理") { presenter.show(.subagent(newDraft)) }
                         .disabled(store.busy)
                         .accessibilityIdentifier("library.subagents.add")
                 } header: {
@@ -672,7 +673,6 @@ struct LibrarySubagentsTab: View {
                     if !skip.isEmpty { Text("magpie 还不能给 \(skip.map(\.name).joined(separator: "、")) 写入子代理：它们的图标是灰的，点一下可看原因。") }
                 }
             }
-            .sheet(item: $editing) { draft in LibrarySubagentEditor(store: store, draft: draft) }
         }
     }
 }
@@ -683,7 +683,7 @@ struct LibrarySubagentDraft: Identifiable {
     var subagent: LibrarySubagent
 }
 
-private struct LibrarySubagentEditor: View {
+struct LibrarySubagentEditor: View {
     let store: LibraryStore
     @State var draft: LibrarySubagentDraft
     @Environment(\.dismiss) private var dismiss
@@ -825,7 +825,12 @@ private struct LibraryNamesPicker: View {
 
 struct LibraryRTKTab: View {
     let store: LibraryStore
-    @State private var confirm: LibraryConfirm?
+    @Environment(LibraryPresenter.self) private var presenter
+    /// 确认弹窗由页面根上的 LibraryPresenter 弹出（见 LibraryPresenter 的说明）。
+    private var confirm: LibraryConfirm? {
+        get { presenter.confirm }
+        nonmutating set { presenter.confirm = newValue }
+    }
 
     var body: some View {
         Group {
@@ -898,7 +903,6 @@ struct LibraryRTKTab: View {
         } footer: {
             if rtk.installed && rtk.hasGain { Text("来自 RTK 自身的统计（rtk gain）：本机经过 RTK 的所有命令，不分 Agent 和终端。") }
         }
-        .libraryConfirm($confirm)
     }
 
     private func agents(_ rtk: LibraryRTK) -> some View {

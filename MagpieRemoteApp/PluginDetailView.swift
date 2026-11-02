@@ -17,7 +17,7 @@ struct PluginDetailView: View {
     @State private var web: PluginWebTarget?
 
     var body: some View {
-        Group {
+        ZStack {  // 不用 Group：Group 的修饰符会分给每个分支，换分支时弹窗宿主跟着被换掉
             if let plugin = store.plugin(spec) {
                 form(plugin)
             } else {

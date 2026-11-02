@@ -25,7 +25,7 @@ struct AgentModelListView: View {
     @State private var asksAll: Bool?
 
     var body: some View {
-        Group {
+        ZStack {  // 不用 Group：Group 的修饰符会分给每个分支，换分支时弹窗宿主跟着被换掉
             if let list {
                 content(list)
             } else if failed {

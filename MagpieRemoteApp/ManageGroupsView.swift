@@ -608,17 +608,20 @@ struct GroupEditorView: View {
                     Button("删除这个路由组", role: .destructive) { confirmDelete = true }
                         .accessibilityIdentifier("group.delete")
                 }
-                .confirmationDialog("删除路由组「\(group.name)」？", isPresented: $confirmDelete, titleVisibility: .visible) {
-                    Button("删除路由组", role: .destructive) {
-                        Task { if await store.deleteGroup(group.id) { dismiss() } }
-                    }
-                    .accessibilityIdentifier("group.delete.confirm")
-                } message: {
-                    Text("Agent 将不能再选这个路由组。")
-                }
             }
         }
         .environment(\.editMode, .constant(.active))
+        // 确认弹窗挂在整个表单上，不挂在列表里懒加载的那一节上。
+        .confirmationDialog("删除路由组「\(group?.name ?? "")」？", isPresented: $confirmDelete, titleVisibility: .visible) {
+            if let group {
+                Button("删除路由组", role: .destructive) {
+                    Task { if await store.deleteGroup(group.id) { dismiss() } }
+                }
+                .accessibilityIdentifier("group.delete.confirm")
+            }
+        } message: {
+            Text("Agent 将不能再选这个路由组。")
+        }
         .detailHeader(group == nil ? "新建路由组" : group?.name ?? "")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {

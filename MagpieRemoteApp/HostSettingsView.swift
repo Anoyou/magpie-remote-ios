@@ -222,15 +222,18 @@ struct HostEditorView: View {
                     Button("删除这台主机", role: .destructive) { confirmDelete = true }
                         .accessibilityIdentifier("host.delete")
                 }
-                .confirmationDialog("删除「\(original.name)」？", isPresented: $confirmDelete, titleVisibility: .visible) {
-                    Button("删除主机和它的密钥", role: .destructive) {
-                        model.delete(original.id)
-                        dismiss()
-                    }
-                }
             }
         }
         .detailHeader(original == nil ? "添加主机" : "编辑主机")
+        // 确认弹窗挂在整个表单上，不挂在列表里懒加载的那一节上（那样一节里每一行都会各挂一份）。
+        .confirmationDialog("删除「\(original?.name ?? "")」？", isPresented: $confirmDelete, titleVisibility: .visible) {
+            if let original {
+                Button("删除主机和它的密钥", role: .destructive) {
+                    model.delete(original.id)
+                    dismiss()
+                }
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("保存") { save() }
