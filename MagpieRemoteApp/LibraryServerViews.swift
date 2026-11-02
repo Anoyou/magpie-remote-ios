@@ -7,10 +7,12 @@ import MagpieRemoteCore
 struct LibraryServersTab: View {
     let store: LibraryStore
     let page: LibrarySnapshot
-    @State private var editing: LibraryServerDraft?
-    @State private var confirm: LibraryConfirm?
-    @State private var market = false
-
+    @Environment(LibraryPresenter.self) private var presenter
+    /// 确认弹窗由页面根上的 LibraryPresenter 弹出（见 LibraryPresenter 的说明）。
+    private var confirm: LibraryConfirm? {
+        get { presenter.confirm }
+        nonmutating set { presenter.confirm = newValue }
+    }
     private var all: [LibraryAgent] { page.mcpAgents(hidden: store.hidden) }
     private var sorted: [LibraryServer] { page.servers.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending } }
 
@@ -23,7 +25,7 @@ struct LibraryServersTab: View {
                     } description: {
                         Text(page.listedFoundServers.isEmpty ? "粘贴 README 里的服务器 JSON，或手动填写。" : "添加一个，或把 Agent 里已有的导入进来（见下方）。")
                     } actions: {
-                        Button("＋ 添加服务器") { editing = LibraryServerDraft(server: nil, agents: all.map(\.id)) }
+                        Button("＋ 添加服务器") { presenter.show(.server(LibraryServerDraft(server: nil, agents: all.map(\.id)))) }
                             .buttonStyle(.borderedProminent)
                             .accessibilityIdentifier("library.servers.addEmpty")
                     }
@@ -35,7 +37,7 @@ struct LibraryServersTab: View {
                     ForEach(sorted) { server in
                         LibraryServerRow(store: store, page: page, server: server, all: all)
                     }
-                    Button("＋ 添加服务器") { editing = LibraryServerDraft(server: nil, agents: all.map(\.id)) }
+                    Button("＋ 添加服务器") { presenter.show(.server(LibraryServerDraft(server: nil, agents: all.map(\.id)))) }
                         .disabled(store.busy)
                         .accessibilityIdentifier("library.servers.add")
                 } header: {
@@ -52,7 +54,7 @@ struct LibraryServersTab: View {
             if !page.listedFoundServers.isEmpty {
                 Section {
                     ForEach(page.listedFoundServers) { found in
-                        LibraryFoundServerRow(store: store, page: page, found: found, confirm: $confirm)
+                        LibraryFoundServerRow(store: store, page: page, found: found, confirm: presenter.confirmBinding)
                     }
                 } header: {
                     Text("Agent 中已有")
@@ -65,7 +67,7 @@ struct LibraryServersTab: View {
 
             Section {
                 Button {
-                    market = true
+                    presenter.show(.serverMarket)
                 } label: {
                     Label("发现", systemImage: "magnifyingglass")
                 }
@@ -73,14 +75,6 @@ struct LibraryServersTab: View {
             } footer: {
                 serverAsides
             }
-            // 弹窗挂在一直都在的最后一节上（Group 的修饰符会分给每一节）
-            .sheet(item: $editing) { draft in
-                LibraryServerEditor(store: store, draft: draft)
-            }
-            .sheet(isPresented: $market) {
-                LibraryServerMarket(store: store)
-            }
-            .libraryConfirm($confirm)
         }
     }
 
@@ -276,7 +270,7 @@ struct LibraryServerDetail: View {
     private var server: LibraryServer? { page?.servers.first { $0.name == name } }
 
     var body: some View {
-        Group {
+        ZStack {  // 不用 Group：Group 的修饰符会分给每个分支，换分支时弹窗宿主跟着被换掉
             if let page, let server {
                 content(page, server)
             } else {

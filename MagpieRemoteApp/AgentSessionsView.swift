@@ -7,6 +7,8 @@ import MagpieRemoteCore
 struct AgentSessionsView: View {
     @State private var store: AgentSessionsStore
     @State private var pendingDelete: AgentSession?
+    /// 「允许读取」的确认弹窗（挂在整页上，不挂在列表里懒加载的那一行上）。
+    @State private var confirmingReads = false
 
     init(service: any AgentSessionsServing) {
         _store = State(initialValue: AgentSessionsStore(service: service))
@@ -53,6 +55,10 @@ struct AgentSessionsView: View {
             }
             .refreshable { await store.load() }
             .task { if store.overview == nil { await store.load() } }
+            .confirmationDialog("允许 magpie 读取这些 Agent 的会话？", isPresented: $confirmingReads, titleVisibility: .visible) {
+                Button("允许读取") { Task { await store.allowReads(store.blockedReads.map(\.id)) } }
+                Button("取消", role: .cancel) {}
+            }
             .confirmationDialog("把这个会话移到 magpie 回收站？", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
                                 titleVisibility: .visible, presenting: pendingDelete) { session in
                 Button("移到回收站", role: .destructive) {
@@ -93,7 +99,7 @@ struct AgentSessionsView: View {
     private var list: some View {
         List {
             if !store.blockedReads.isEmpty {
-                ReadsBlockedSection(store: store)
+                ReadsBlockedSection(store: store) { confirmingReads = true }
             }
 
             if store.agents.count > 1 {
@@ -172,7 +178,7 @@ struct AgentSessionsView: View {
 /// 新装的 magpie 不读任何 Agent 的会话，要先允许。
 private struct ReadsBlockedSection: View {
     let store: AgentSessionsStore
-    @State private var confirming = false
+    let allow: () -> Void
 
     var body: some View {
         Section {
@@ -184,13 +190,9 @@ private struct ReadsBlockedSection: View {
                 Text("允许后，magpie 会在 Mac 上读取它们的会话文件，用来列出会话和统计用量；也可以在 Mac 上 magpie 的「设置 → 会话」里逐个设置。")
                     .font(.footnote).foregroundStyle(.secondary)
             }
-            Button("允许读取") { confirming = true }
+            Button("允许读取") { allow() }
                 .disabled(store.busy)
                 .accessibilityIdentifier("sessions.reads.allow")
-                .confirmationDialog("允许 magpie 读取这些 Agent 的会话？", isPresented: $confirming, titleVisibility: .visible) {
-                    Button("允许读取") { Task { await store.allowReads(store.blockedReads.map(\.id)) } }
-                    Button("取消", role: .cancel) {}
-                }
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("sessions.reads.blocked")

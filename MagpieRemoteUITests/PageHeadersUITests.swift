@@ -18,24 +18,27 @@ final class PageHeadersUITests: XCTestCase {
         return app
     }
 
-    /// 导航栏里有这个标题。`leading`：根页面（没有返回按钮）的大标题应当靠左，而不是居中的小标题。
+    /// 导航栏里有这个标题，返回标题文字的高度（系统大标题约 41 pt，收起后的小标题约 20 pt）。
+    /// `leading`：根页面（没有返回按钮）的大标题应当靠左，而不是居中的小标题。
+    @discardableResult
     private func assertHeader(_ title: String, subtitle: String? = nil, leading: Bool = false, in app: XCUIApplication,
-                              file: StaticString = #filePath, line: UInt = #line) {
+                              file: StaticString = #filePath, line: UInt = #line) -> CGFloat {
         let bar = app.navigationBars.matching(identifier: title).firstMatch
         XCTAssertTrue(bar.appears(timeout: 10), "「\(title)」页没有导航栏标题", file: file, line: line)
-        var text = bar.descendants(matching: .any).matching(NSPredicate(format: "label == %@", title)).firstMatch
-        if !text.appears(timeout: 3) {
-            // 右上角有两个以上按钮时（例如「供应商」的「编辑」「添加」），iOS 26 的大标题画在导航栏里，
-            // 却不挂在导航栏的无障碍子树下：改找画在导航栏范围里的那行标题文字（不会找到下面分页器里的同名按钮）。
+        // 导航栏范围里、朗读文字就是标题的文字（不算按钮：主页分页器里也有同名的「Agent」「供应商」）。
+        // 大标题模式下导航栏里还藏着一份收起后用的小标题：取最高的那一个。
+        let same = NSPredicate(format: "label == %@ AND elementType == %@", title, NSNumber(value: XCUIElement.ElementType.staticText.rawValue))
+        var texts: [XCUIElement] = []
+        let found = waitUntil(5) {
             let barFrame = bar.frame
-            let same = NSPredicate(format: "label == %@ AND elementType != %@", title, NSNumber(value: XCUIElement.ElementType.button.rawValue))
-            let inBar = app.descendants(matching: .any).matching(same).allElementsBoundByIndex.first {
+            texts = app.descendants(matching: .any).matching(same).allElementsBoundByIndex.filter {
                 let f = $0.frame
                 return !f.isEmpty && f.midY >= barFrame.minY && f.midY <= barFrame.maxY
             }
-            if let inBar { text = inBar }
+            return !texts.isEmpty
         }
-        XCTAssertTrue(text.appears(timeout: 5), "「\(title)」页的导航栏里没有标题文字：\(bar.debugDescription)", file: file, line: line)
+        XCTAssertTrue(found, "「\(title)」页的导航栏里没有标题文字：\(bar.debugDescription)", file: file, line: line)
+        guard let text = texts.max(by: { $0.frame.height < $1.frame.height }) else { return 0 }
         if leading {
             let barFrame = bar.frame
             XCTAssertLessThan(text.frame.minX - barFrame.minX, barFrame.width * 0.35,
@@ -45,28 +48,38 @@ final class PageHeadersUITests: XCTestCase {
             let sub = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", subtitle)).firstMatch
             XCTAssertTrue(sub.appears(timeout: 5), "「\(title)」页没有副标题「\(subtitle)」", file: file, line: line)
         }
+        return text.frame.height
+    }
+
+    /// 所有页面的大标题一样高（同一个系统大标题字号），而且是大标题（不是收起后的小标题）。
+    private func assertSameSize(_ heights: [(String, CGFloat)], file: StaticString = #filePath, line: UInt = #line) {
+        let all = heights.map { "\($0.0) \(Int($0.1.rounded()))pt" }.joined(separator: "、")
+        guard let tallest = heights.map(\.1).max(), let shortest = heights.map(\.1).min() else { return }
+        XCTAssertGreaterThanOrEqual(shortest, 30, "有页面的标题不是系统大标题（太小）：\(all)", file: file, line: line)
+        XCTAssertLessThanOrEqual(tallest - shortest, 1.5, "各页面的大标题高度不一致：\(all)", file: file, line: line)
     }
 
     /// 默认底栏的 4 个页面和「更多」，以及「更多」里的各个页面。
     func testEveryDockTabAndMorePageHasHeader() {
         let app = launch()
+        var heights: [(String, CGFloat)] = []
 
         // 底栏（主页的大标题跟着分页走：Agent / 供应商 / 额度）
         app.openHome("Agent")
-        assertHeader("Agent", leading: true, in: app)
+        heights.append(("Agent", assertHeader("Agent", leading: true, in: app)))
         app.openHome("供应商")
-        assertHeader("供应商", leading: true, in: app)
+        heights.append(("供应商", assertHeader("供应商", leading: true, in: app)))
         app.openHome("额度")
-        assertHeader("额度", leading: true, in: app)
+        heights.append(("额度", assertHeader("额度", leading: true, in: app)))
 
         app.openDockTab("会话")
-        assertHeader("会话", subtitle: "Agent 的历史对话", leading: true, in: app)
+        heights.append(("会话", assertHeader("会话", subtitle: "Agent 的历史对话", leading: true, in: app)))
         app.openDockTab("路由")
-        assertHeader("路由", leading: true, in: app)
+        heights.append(("路由", assertHeader("路由", leading: true, in: app)))
         app.openDockTab("用量")
-        assertHeader("用量", subtitle: "你的额度、花费及其去向", leading: true, in: app)
+        heights.append(("用量", assertHeader("用量", subtitle: "你的额度、花费及其去向", leading: true, in: app)))
         app.openMore()
-        assertHeader("更多", leading: true, in: app)
+        heights.append(("更多", assertHeader("更多", leading: true, in: app)))
 
         // 「更多」里的页面（每次都点底栏「更多」回到根列表再进）
         let pages: [(id: String, title: String, subtitle: String?)] = [
@@ -81,8 +94,9 @@ final class PageHeadersUITests: XCTestCase {
         ]
         for page in pages {
             app.openFromMore(page.id, title: page.title)
-            assertHeader(page.title, subtitle: page.subtitle, in: app)
+            heights.append((page.title, assertHeader(page.title, subtitle: page.subtitle, leading: true, in: app)))
         }
+        assertSameSize(heights)
     }
 
     /// 同一个页面放在底栏和放在「更多」里，页头一样：把「对话」换到底栏第 1 个，主页就去了「更多」。

@@ -24,6 +24,7 @@ struct LibraryPage: View {
 private struct LibraryRoot: View {
     let manage: ManageStore
     @State private var store: LibraryStore
+    @State private var presenter = LibraryPresenter()
 
     init(manage: ManageStore, service: any LibraryServing) {
         self.manage = manage
@@ -31,7 +32,9 @@ private struct LibraryRoot: View {
     }
 
     var body: some View {
-        Group {
+        @Bindable var presenter = presenter
+        // ZStack 而不是 Group：Group 的修饰符会分给它里面的每个视图，换分支（读取中 → 列表）时弹窗的宿主也跟着换掉。
+        ZStack {
             if store.turnedOff {
                 ContentUnavailableView {
                     Label("资源库已关闭", systemImage: "books.vertical")
@@ -57,6 +60,13 @@ private struct LibraryRoot: View {
         }
         .refreshable { await store.load() }
         .safeAreaInset(edge: .bottom) { LibraryStatusLine(store: store) }
+        // 六个分页的弹窗都由这里（页面根）弹出，见 LibraryPresenter。
+        .environment(presenter)
+        .sheet(item: $presenter.sheet) { sheet in
+            LibrarySheetContent(store: store, sheet: sheet)
+                .environment(store)
+        }
+        .libraryConfirm($presenter.confirm)
         .libraryAlerts(store: store, id: "library")
     }
 
@@ -143,6 +153,69 @@ private struct LibraryContent: View {
         // RTK 的状态每次打开这个分页都重新读（官方：装了新 Agent 之后要能看到）
         .onChange(of: store.tab) { _, tab in
             if tab == .rtk { Task { await store.loadRTK(force: true) } }
+        }
+    }
+}
+
+// MARK: 弹窗（页面根上的唯一宿主）
+
+/// 资源库页面上「新建 / 添加 / 发现 / 编辑」的表单和确认弹窗，统一挂在页面根上。
+///
+/// 0.6.0 把它们挂在每个分页的某个 `Section` 上：`List` 里 `Section` 的修饰符会分给这一节的每一行（还有页脚），
+/// 一个开关就有好几个弹窗宿主，而且这些行是懒加载的，滚出屏幕就被拆掉。真机上点「新建一套」「添加服务器」「添加技能」，
+/// 表单弹出来马上又被另一个宿主收回去，开关却还停在「打开」，之后再点就没有反应（连带别的按钮也像失灵）。
+/// 现在每个分页只设置 `sheet` / `confirm`，由页面根上唯一的宿主弹出；表单关掉时 `sheet` 自动回到 nil，下次一定能再打开。
+@MainActor
+@Observable
+final class LibraryPresenter {
+    var sheet: LibrarySheet?
+    var confirm: LibraryConfirm?
+
+    func show(_ next: LibrarySheet) { sheet = next }
+
+    var confirmBinding: Binding<LibraryConfirm?> {
+        Binding(get: { self.confirm }, set: { self.confirm = $0 })
+    }
+}
+
+enum LibrarySheet: Identifiable {
+    case newSet
+    case server(LibraryServerDraft)
+    case serverMarket
+    case skillInstall
+    case skillMarket
+    case skillHow
+    case hook(LibraryHookDraft)
+    case subagent(LibrarySubagentDraft)
+
+    var id: String {
+        switch self {
+        case .newSet: "newSet"
+        case .server(let d): "server.\(d.id)"
+        case .serverMarket: "serverMarket"
+        case .skillInstall: "skillInstall"
+        case .skillMarket: "skillMarket"
+        case .skillHow: "skillHow"
+        case .hook(let d): "hook.\(d.id)"
+        case .subagent(let d): "subagent.\(d.id)"
+        }
+    }
+}
+
+private struct LibrarySheetContent: View {
+    let store: LibraryStore
+    let sheet: LibrarySheet
+
+    var body: some View {
+        switch sheet {
+        case .newSet: LibraryNewSetSheet(store: store)
+        case .server(let draft): LibraryServerEditor(store: store, draft: draft)
+        case .serverMarket: LibraryServerMarket(store: store)
+        case .skillInstall: LibrarySkillInstall(store: store)
+        case .skillMarket: LibrarySkillMarket(store: store)
+        case .skillHow: LibrarySkillHowSheet(store: store)
+        case .hook(let draft): LibraryHookEditor(store: store, draft: draft)
+        case .subagent(let draft): LibrarySubagentEditor(store: store, draft: draft)
         }
     }
 }

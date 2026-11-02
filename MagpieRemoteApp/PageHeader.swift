@@ -1,14 +1,15 @@
 import SwiftUI
 import MagpieRemoteCore
 
-/// 全 App 统一的页头。
+/// 全 App 统一的页头：只用系统导航栏自己的标题，不自己画字、不换字体、不放 `.principal` 标题。
 ///
 /// - `pageHeader`：一个「页面」（底栏里的页面、「更多」里的每一项、固定名字的二级页）：
-///   左对齐的大标题放在导航栏里（`.inlineLarge`），可选一行官方副标题（导航栏副标题）。
-///   标题在导航栏里而不是跟着列表滚动，所以不管页面顶部有没有分页器、在底栏还是从「更多」推入，
-///   大标题都一定在（0.5.0 里「用量」「会话」「主页」就是因为分页器 / `.inline` 把大标题弄没了）。
-///   工具栏按钮一律放右上角，和标题同一行；深色 / 浅色跟系统导航栏一起变。
-/// - `detailHeader`：名字不固定的详情页（某个供应商、某个会话、编辑页）和弹出的表单：普通的居中小标题。
+///   系统标准大标题（`.navigationBarTitleDisplayMode(.large)`，和「设置」「信息」等系统 App 一样），
+///   可选一行官方副标题（系统的导航栏副标题 `navigationSubtitle`）。往上滚时由系统收成居中小标题。
+///   0.6.0 用的是 `.inlineLarge`（导航栏里的「中号」标题），字号和系统大标题不同，
+///   不同页面（有没有副标题、右上角几个按钮）看起来还不一样大；0.6.1 起所有页面统一成系统大标题。
+///   工具栏按钮一律放右上角；深色 / 浅色跟系统导航栏一起变。
+/// - `detailHeader`：名字不固定的详情页（某个供应商、某个会话、编辑页）和弹出的表单：系统的居中小标题。
 ///
 /// 标题和副标题都用 magpie 网页上的官方中文（网页每页的标题 + 插件清单里的 Sub）。
 /// 页面自己的状态行（例如「路由」的「● 实时 · 网关正在做的决定」）留在页面内容里，和网页一样。
@@ -31,7 +32,7 @@ private struct PageHeaderModifier: ViewModifier {
         content
             .navigationTitle(title)
             .modifier(PageSubtitle(subtitle: subtitle))
-            .toolbarTitleDisplayMode(large ? .inlineLarge : .inline)
+            .navigationBarTitleDisplayMode(large ? .large : .inline)
     }
 }
 

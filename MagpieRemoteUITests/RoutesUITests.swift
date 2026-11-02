@@ -34,6 +34,26 @@ final class RoutesUITests: XCTestCase {
         }
     }
 
+    /// 一小段一小段地往下挪，直到元素完整地落在导航栏和底栏之间（整屏 swipeUp 会滑过头，懒加载的行随即被拆掉）。
+    private func reveal(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 10) {
+        let window = app.windows.firstMatch.frame
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        for _ in 0..<attempts {
+            let bar = app.navigationBars.firstMatch
+            let tabs = app.tabBars.firstMatch
+            let top = bar.exists ? bar.frame.maxY : window.minY
+            let bottom = tabs.exists && !tabs.frame.isEmpty ? tabs.frame.minY : window.maxY
+            let middle = (top + bottom) / 2
+            var shift: CGFloat = -220
+            if element.exists, let f = try? element.snapshot().frame, !f.isEmpty {
+                if f.minY > top + 4 && f.maxY < bottom - 4 { return }
+                shift = max(-220, min(220, middle - f.midY))
+            }
+            origin.withOffset(CGVector(dx: window.midX, dy: middle))
+                .press(forDuration: 0.05, thenDragTo: origin.withOffset(CGVector(dx: window.midX, dy: middle + shift)))
+        }
+    }
+
     func testLiveStageShowsRouteThroughGroup() {
         let app = launchRoutes()
         let stage = element(id: "routes.stage", in: app)
@@ -111,25 +131,41 @@ final class RoutesUITests: XCTestCase {
         // 不用 swipeUp(until:)：它要问 isHittable，按钮刚好消失时会直接记一次失败；下面的循环自己按框判断要不要滑。
         var started = false
         let window = app.windows.firstMatch.frame
-        for _ in 0..<6 where !started {
+        // 能点的范围：导航栏（系统大标题）下面、底栏上面；按钮被底栏或导航栏盖住时点不到它。
+        let tabBar = app.tabBars.firstMatch
+        let top = app.navigationBars.firstMatch.exists ? app.navigationBars.firstMatch.frame.maxY : window.minY
+        let bottom = tabBar.exists && !tabBar.frame.isEmpty ? tabBar.frame.minY : window.maxY
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        for _ in 0..<8 where !started {
             // snapshot() 在元素刚好消失时只是抛错（不算测试失败）；拿到框后按整个 App 的坐标点，不再去找元素。
             guard replay.appears(timeout: 15), let snap = try? replay.snapshot() else { continue }
             let f = snap.frame
-            guard !f.isEmpty, window.contains(CGPoint(x: f.midX, y: f.midY)) else {
-                if f.midY > window.midY { app.swipeUp() } else { app.swipeDown() }
+            guard !f.isEmpty, f.minY > top + 4, f.maxY < bottom - 4 else {
+                // 只滑一小段（把按钮挪到可点范围中间），不要整屏地滑：滑过头舞台会被懒加载拆掉。
+                let middle = (top + bottom) / 2
+                let shift = max(-250, min(250, middle - f.midY))
+                let from = origin.withOffset(CGVector(dx: window.midX, dy: middle))
+                from.press(forDuration: 0.05, thenDragTo: origin.withOffset(CGVector(dx: window.midX, dy: middle + shift)))
                 continue
             }
-            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
+            origin.withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
             started = bar.appears(timeout: 2)
+            if !started && !replay.exists {
+                // 已经在重放（「重放」按钮藏起来了），重放条可能在屏幕下面：往上挪一小段再找。
+                let middle = (top + bottom) / 2
+                origin.withOffset(CGVector(dx: window.midX, dy: middle))
+                    .press(forDuration: 0.05, thenDragTo: origin.withOffset(CGVector(dx: window.midX, dy: middle - 200)))
+                started = bar.appears(timeout: 2)
+            }
         }
         XCTAssertTrue(started, "没有出现重放条")
         // 只重放一个请求一两秒就放完了；换速度、停止用「全部重放」（十几个请求，够长）。
         // 请求卡片在舞台下面，懒加载：滑到它之前它不在无障碍树里（页头是导航栏里的大标题后，舞台占满一屏），所以先滑再找。
         let all = element(id: "routes.replay.all", in: app)
         _ = all.appears(timeout: 2)
-        scrollTo(all, in: app, attempts: 5)
+        reveal(all, in: app)
         XCTAssertTrue(all.appears(timeout: 15), "没有「全部重放」")
-        scrollTo(all, in: app, attempts: 2)
+        reveal(all, in: app, attempts: 3)
         all.tap()
         let speed = element(id: "routes.replay.speed", in: app)
         app.swipeDown(until: speed, max: 4)

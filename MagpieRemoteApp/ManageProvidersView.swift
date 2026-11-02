@@ -109,7 +109,7 @@ struct ProviderDetailView: View {
     }
 
     var body: some View {
-        Group {
+        ZStack {  // 不用 Group：Group 的修饰符会分给每个分支，换分支时弹窗宿主跟着被换掉
             if let provider {
                 form(provider)
             } else {
@@ -250,6 +250,7 @@ struct ProviderDetailView: View {
             }
         }
         .providerKeyPresentations(keysUI, store: store, provider: provider)
+        .providerModelTestPresentations(modelTests, store: store, provider: provider)
         .confirmationDialog("删除供应商「\(provider.name)」？", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("删除供应商", role: .destructive) {
                 Task { if await store.deleteProvider(provider.id) { dismiss() } }

@@ -42,6 +42,7 @@ final class ParityGaps2UITests: XCTestCase {
     func testHideAgentFromMenu() {
         let app = launch()
         app.openHome("Agent")
+        app.expandAgent("codex")
         let more = element(id: "agent.more.codex", in: app)
         scrollTo(more, in: app)
         XCTAssertTrue(more.waitForExistence(timeout: 15), "Codex 应当有「更多操作」")
@@ -61,6 +62,7 @@ final class ParityGaps2UITests: XCTestCase {
     func testAgentModelList() {
         let app = launch()
         app.openHome("Agent")
+        app.expandAgent("codex")
         let entry = element(id: "agent.models.codex", in: app)
         scrollTo(entry, in: app)
         XCTAssertTrue(entry.waitForExistence(timeout: 15), "Codex 应当有「模型列表」一行")

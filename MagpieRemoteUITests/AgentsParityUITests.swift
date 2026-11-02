@@ -24,7 +24,9 @@ final class AgentsParityUITests: XCTestCase {
     /// 有新版本的 Agent 显示「更新到 …」，点了之后更新完成，按钮消失。
     func testUpdateAgentCLI() {
         let app = launch()
+        app.expandAgent("codex")
         let update = element(id: "agent.update.codex", in: app)
+        app.swipeUp(until: update, max: 3)
         XCTAssertTrue(update.waitForExistence(timeout: 15), "Codex 有新版本，应当有「更新到」按钮")
         XCTAssertTrue(update.label.contains("更新到 0.164.2"), "按钮文字不对：\(update.label)")
         update.tap()
@@ -50,6 +52,7 @@ final class AgentsParityUITests: XCTestCase {
     /// 「接入 magpie」开关：关掉要先确认，确认后变成未接入。
     func testDisconnectAsksFirst() {
         let app = launch()
+        app.expandAgent("codex")
         let toggle = element(id: "agent.connect.codex", in: app)
         XCTAssertTrue(toggle.waitForExistence(timeout: 15), "Codex 应当有「接入 magpie」开关")
         // 点开关本身（行的右侧），不是左边的文字
@@ -57,7 +60,8 @@ final class AgentsParityUITests: XCTestCase {
         let confirm = element(id: "agent.disconnect.confirm", in: app)
         XCTAssertTrue(confirm.waitForExistence(timeout: 5), "关掉开关应当先问「断开 Codex 和 magpie？」")
         confirm.tap()
-        XCTAssertTrue(app.staticTexts["未接入"].waitForExistence(timeout: 10), "断开后 Codex 应当显示未接入")
+        // 标题行是一个合并的无障碍元素：「未接入」在它的朗读文字里
+        XCTAssertTrue(app.agentHeader("codex").hasLabel(containing: "未接入", within: 10), "断开后 Codex 应当显示未接入")
     }
 
     /// 方案：有示例方案「工作」，可以打开看它存了什么。
