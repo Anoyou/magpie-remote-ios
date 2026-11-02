@@ -65,6 +65,7 @@ struct HostListContent: View {
                 .accessibilityIdentifier("guide.open")
             }
         }
+        .cardSpacing()
         .pageHeader("主机")
         .navigationDestination(item: $editing) { target in
             HostEditorView(target: target)
@@ -224,6 +225,7 @@ struct HostEditorView: View {
                 }
             }
         }
+        .cardSpacing()
         .detailHeader(original == nil ? "添加主机" : "编辑主机")
         // 确认弹窗挂在整个表单上，不挂在列表里懒加载的那一节上（那样一节里每一行都会各挂一份）。
         .confirmationDialog("删除「\(original?.name ?? "")」？", isPresented: $confirmDelete, titleVisibility: .visible) {

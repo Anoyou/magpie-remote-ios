@@ -17,13 +17,23 @@ magpie 的 iPhone 遥控器。用户不是开发者：所有文案用简体中�
 - 页头统一用 `PageHeader.swift`：页面（底栏页、「更多」里的每一项、固定名字的二级页）用 `.pageHeader(标题, subtitle:)`——iOS 系统标准大标题（`.large`，和「设置」一样），往上滚时由系统收成**居中**的小标题；副标题用系统的 `navigationSubtitle`，内容取自 magpie 网页插件清单 `Sub` 的官方中文，但必须短到 393 pt 宽的 iPhone 上一行放得下（约 12 个字以内，`PageSubtitles`）。名字不固定的详情页和弹出表单用 `.detailHeader`（居中小标题）。页面工具栏按钮放右上角。不要再直接写 `.navigationTitle` / `.navigationBarTitleDisplayMode`，也不要用 `.principal` / 靠左的自定义标题。
 - **页面顶部不钉东西**：大标题页面的导航栏下面不放钉住的条（分页器、搜索栏、筛选、`safeAreaInset(edge: .top)` / `safeAreaBar(edge: .top)`、列表上方的固定内容）。钉住的条会和大标题的展开 / 收起抢位置，滚到顶部附近页头会抖。这类内容做成列表的第一行，跟着内容滚：外层用 `.pageTopStrip { … }` 交给页面，页面根列表第一行写 `PageTopStripSection()`（`ScrollView` 页用 `PageTopStripView()`，读取中 / 出错等不能滚的状态用 `PageTopStripStack`），见 `PageTopStrip.swift`。「主页」「用量」的分页器、管理页「读取失败」的提示都这样放。底部的状态行（`safeAreaInset(edge: .bottom)`）不受影响。
 
+## 顶部分页器
+- 间距只有一个规则（0.6.3，`PageTopStripMetrics`）：分页器离导航栏标题 **8pt**，条里两个分页器之间 **8pt**，条到下面第一块内容 **12pt**。每一页都用 `PageTopStripSection` / `PageTopStripView` / `PageTopStripStack`，不要自己在分页器外面再包 `Section`、加行内边距或分组标题。
+- 页面自己的分页器（「用量 › 概览」的「今天 / 7 天…」、上下文 / 会话的范围、请求的时间段和筛选、插件的「发现 / 已安装」）写进 `PageTopStripSection { … }`，和外层交来的分页器排在同一条里，不另起一节（另起一节会多出一个分组间距）。
+- 条下面紧跟的第一节不要分组标题（标题会让 12pt 变成一大截）；需要说明时间段等信息时写进卡片里。
+- 列表页靠分节上的间距实现（`listSectionSpacing(.custom(12))` + `listSectionMargins(.top, 8)`，分节上写的优先于整个列表的），所以和「卡片间距」用紧凑还是宽松无关；`ScrollView` 页（额度）用同样的数字。`PickerGapUITests` 在两种模式下比较主页 Agent / 供应商 / 额度和用量的间距。
+
+## 卡片间距
+- 「更多 › App › 卡片间距」：紧凑（默认，`.listSectionSpacing(.compact)`）/ 宽松（系统默认间距），存 `@AppStorage("app.cardSpacing")`。
+- 每个 `List` / `Form` 都挂 `.cardSpacing()`（`PageTopStrip.swift`）；新写的列表也要挂。个别分节自己写了间距的（顶部条、Agent 折叠组的小标题）不受影响。
+
 ## 搜索
 - 全 App 只有一种写法：`pageSearchable(text:prompt:)`（`PageHeader.swift`）= 系统 `.searchable` + `.navigationBarDrawer(displayMode: .automatic)`。和 iOS「设置」「邮件」一样，搜索栏在大标题下面，停在顶部时可见，往上滚时和大标题一起由系统收起，往下拉又出来。
 - 不用 `.always`（钉在标题下面，和大标题抢位置、顶部会抖）；也不省略位置——iOS 26 在底栏里推入的页面（如「更多 › 插件」）上，系统默认位置会让搜索整个不显示。
 - 页面、二级页、弹出的表单（选模型、资源库的「发现」）都一样，不再区分「完整搜索栏 / 收成放大镜」。
 
 ## 「更多」
-- 照 iOS「设置」的样式：分组圆角列表（`.insetGrouped`），每组有标题：主机（当前主机、magpie 版本）· 页面 · 主机工具 · 在网页中打开 · App（关于、配置引导、自定义底栏）。
+- 照 iOS「设置」的样式：分组圆角列表（`.insetGrouped`），每组有标题：主机（当前主机、magpie 版本）· 页面 · 主机工具 · 在网页中打开 · App（关于、配置引导、自定义底栏、卡片间距）。
 - 每一行：彩色圆角方块图标（`SettingsIcon`，30 pt、圆角 7、白色图标）+ 名字 + 可选的值 + 右箭头；图标颜色按页面固定（`AppPage.tint`）。
 ## 状态
 每个依赖主机的页面都经过 `ConnectedContent`：没有主机 → 引导添加；连接中 → 进度；失败 → `MagpieError` 的中文标题、说明、提示 + 重试 / 配置引导。

@@ -30,8 +30,7 @@ struct UsageSessionsPane: View {
 
     var body: some View {
         List {
-            PageTopStripSection()
-            Section {
+            PageTopStripSection {
                 Picker("范围", selection: $rangeRaw) {
                     ForEach(SessionRange.allCases) { Text($0.title).tag($0.rawValue) }
                 }
@@ -39,8 +38,6 @@ struct UsageSessionsPane: View {
                 .accessibilityIdentifier("usage.sessions.range")
                 if let stats { filterBar(SessionUsageReport(stats: stats, overview: nil, filter: filter)) }
             }
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
 
             if service == nil {
                 Section { ContentUnavailableView("会话", systemImage: "bubble.left.and.text.bubble.right", description: Text("这台主机暂时不能读取会话用量。")) }
@@ -59,6 +56,7 @@ struct UsageSessionsPane: View {
                 .listRowBackground(Color.clear)
             }
         }
+        .cardSpacing()
         .listStyle(.insetGrouped)
         .pageSearchable(text: $filter.search, prompt: "搜索会话")
         .refreshable { await loadAll() }
@@ -470,6 +468,7 @@ private struct UsageSessionInfo: View {
             LabeledContent("词元", value: "输入 \(UsageFormat.tokens(s.inputTokens)) · 输出 \(UsageFormat.tokens(s.outputTokens))")
             if !s.path.isEmpty { LabeledContent("文件", value: s.path) }
         }
+        .cardSpacing()
         .detailHeader(item.session.displayTitle)
     }
 }

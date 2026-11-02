@@ -48,6 +48,7 @@ struct ChatModelPicker: View {
                     }
                 }
             }
+            .cardSpacing()
             .detailHeader("选择模型")
             .refreshable { await chat.loadModels(app: model, force: true) }
             .toolbar {

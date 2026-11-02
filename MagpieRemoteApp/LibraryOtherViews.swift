@@ -192,6 +192,7 @@ private struct LibraryInstructionSetEditor: View {
                 Text("这一套已经不在了。").foregroundStyle(.secondary)
             }
         }
+        .cardSpacing()
         .detailHeader(set?.title ?? "共享指令")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
@@ -246,6 +247,7 @@ struct LibraryNewSetSheet: View {
                 }
                 if let error { Section { Text(error).foregroundStyle(.red).font(.footnote) } }
             }
+            .cardSpacing()
             .detailHeader("新建一套")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
@@ -339,6 +341,7 @@ private struct LibraryInstructionAgentDetail: View {
                 }
             }
         }
+        .cardSpacing()
         .detailHeader(agent?.name ?? "")
         .onAppear {
             guard !loaded, let a = agent else { return }
@@ -555,6 +558,7 @@ struct LibraryHookEditor: View {
                     }
                 }
             }
+            .cardSpacing()
             .detailHeader(isNew ? "新 Hook" : draft.old)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
@@ -763,6 +767,7 @@ struct LibrarySubagentEditor: View {
                     }
                 }
             }
+            .cardSpacing()
             .detailHeader(isNew ? "新子代理" : draft.old)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
@@ -817,6 +822,7 @@ private struct LibraryNamesPicker: View {
                 Button("无") { picked = [] }
             }
         }
+        .cardSpacing()
         .detailHeader(title)
     }
 }

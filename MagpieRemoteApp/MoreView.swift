@@ -98,10 +98,12 @@ struct MoreView: View {
                     }
                 }
                 .accessibilityIdentifier("more.customize")
+                CardSpacingRow()
             } header: {
                 Text("App")
             }
         }
+        .cardSpacing()
         .listStyle(.insetGrouped)
         .pageHeader("更多")
         // 点小组件打开、而对应页面在「更多」里时：直接推入那个页面。
@@ -118,6 +120,26 @@ struct MoreView: View {
         case .routes: store.groups.map { "\($0.visible.count) 个路由组" }
         case .keys: store.phase == .ready ? "\(store.keys.count) 把" : nil
         default: nil
+        }
+    }
+}
+
+/// 「更多 › App › 卡片间距」：紧凑（默认）/ 宽松，全 App 的列表分组间距（`cardSpacing()`，DESIGN.md「卡片间距」）。
+private struct CardSpacingRow: View {
+    @AppStorage(CardSpacing.defaultsKey) private var raw = CardSpacing.compact.rawValue
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SettingsLabel("卡片间距", icon: Image(systemName: "rectangle.split.1x2"), color: .indigo)
+                .lineLimit(1)
+                .layoutPriority(1)
+            Spacer(minLength: 0)
+            Picker("卡片间距", selection: $raw) {
+                ForEach(CardSpacing.allCases) { Text($0.title).tag($0.rawValue) }
+            }
+            .pickerStyle(.segmented)
+            .fixedSize()
+            .accessibilityIdentifier("more.cardSpacing")
         }
     }
 }
@@ -182,12 +204,12 @@ struct AppPageView: View {
             }
         case .hostTools:
             ManageGate(title: page.title, subtitle: page.headerSubtitle) { store in
-                List { PageTopStripSection(); HostToolsSection(store: store) }
+                List { PageTopStripSection(); HostToolsSection(store: store) }.cardSpacing()
                     .pageHeader(page.title)
             }
         case .web:
             ManageGate(title: page.title, subtitle: page.headerSubtitle) { store in
-                List { PageTopStripSection(); MagpieWebSection(store: store) }
+                List { PageTopStripSection(); MagpieWebSection(store: store) }.cardSpacing()
                     .pageHeader(page.title)
             }
         case .library:

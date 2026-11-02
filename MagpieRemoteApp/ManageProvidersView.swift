@@ -41,6 +41,7 @@ struct ManageProvidersView: View {
                 }
             }
         }
+        .cardSpacing()
         .pageHeader("供应商")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -250,6 +251,7 @@ struct ProviderDetailView: View {
                     .accessibilityIdentifier("provider.delete")
             }
         }
+        .cardSpacing()
         .providerKeyPresentations(keysUI, store: store, provider: provider)
         .providerModelTestPresentations(modelTests, store: store, provider: provider)
         .confirmationDialog("删除供应商「\(provider.name)」？", isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -309,6 +311,7 @@ private struct AddProviderSheet: View {
                     Text("Key 直接发给你的 Mac 上的 magpie 保存，不会留在这台 iPhone 上。保存后 magpie 会尝试读取模型列表，可能要等几秒。")
                 }
             }
+            .cardSpacing()
             .detailHeader("添加供应商")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }

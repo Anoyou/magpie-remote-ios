@@ -135,6 +135,7 @@ struct ManageGroupsView: View {
                 }
             }
         }
+        .cardSpacing()
         .pageHeader("路由")
         .navigationDestination(isPresented: $viewingUsage) { UsageView() }
         .toolbar {
@@ -611,6 +612,7 @@ struct GroupEditorView: View {
                 }
             }
         }
+        .cardSpacing()
         .environment(\.editMode, .constant(.active))
         // 确认弹窗挂在整个表单上，不挂在列表里懒加载的那一节上。
         .confirmationDialog("删除路由组「\(group?.name ?? "")」？", isPresented: $confirmDelete, titleVisibility: .visible) {

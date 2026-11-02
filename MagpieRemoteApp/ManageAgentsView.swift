@@ -80,6 +80,7 @@ struct ManageAgentsView: View {
                 }
             }
         }
+        .cardSpacing()
         .pageHeader("Agent")
         .refreshable { await store.refresh() }
         .toolbar {
@@ -637,6 +638,7 @@ private struct AgentDisconnectSheet: View {
                     .accessibilityIdentifier("agent.disconnect.confirm")
                 }
             }
+            .cardSpacing()
             .detailHeader("断开 \(agent.name) 和 magpie？")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
@@ -753,6 +755,7 @@ private struct AgentProfileDetail: View {
                 Text("这个方案已经不在了。").foregroundStyle(.secondary)
             }
         }
+        .cardSpacing()
         .detailHeader(name)
         .confirmationDialog("覆盖？", isPresented: $asksOverwrite, titleVisibility: .visible) {
             Button("用当前配置覆盖 \(name)") { Task { await store.profile(.save, name: name, update: true) } }

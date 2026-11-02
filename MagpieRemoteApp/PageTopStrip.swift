@@ -33,29 +33,67 @@ extension View {
     }
 }
 
-/// 列表的第一节：外层交来的条（没有就什么都不显示）。
-struct PageTopStripSection: View {
+/// 顶部条的间距规则（0.6.3，DESIGN.md「顶部分页器」）：所有页面一样。
+/// - 分页器离导航栏标题固定 `top`；
+/// - 两个分页器（「用量」的页面分页 + 范围）放在同一条里，中间 `between`；
+/// - 条和下面第一块内容之间固定 `below`，不叠加列表的分组间距、也不随「卡片间距」变。
+enum PageTopStripMetrics {
+    static let top: CGFloat = 8
+    static let between: CGFloat = 8
+    static let below: CGFloat = 12
+}
+
+/// 列表的第一节：外层交来的条 + 这一页自己的分页器（`inner`，例如「用量 › 概览」的「今天 / 7 天…」），
+/// 两个都没有就什么都不显示。整节是一行（透明底、无分隔线、无内边距），上下间距按 `PageTopStripMetrics`：
+/// 这一节自己写了分组间距（`listSectionSpacing(.custom(below))`），所以它和下一节之间就是 `below`，
+/// 不管列表整体用「紧凑」还是「宽松」（分节上写的间距优先于列表整体的）。
+struct PageTopStripSection<Inner: View>: View {
     @Environment(\.pageTopStrip) private var strip
+    private let showsOuter: Bool
+    private let inner: Inner
+    private let hasInner: Bool
+
+    init(showsOuter: Bool = true, @ViewBuilder inner: () -> Inner) {
+        self.showsOuter = showsOuter
+        self.inner = inner()
+        hasInner = Inner.self != EmptyView.self
+    }
 
     var body: some View {
-        if let strip {
+        let outer = showsOuter ? strip : nil
+        if outer != nil || hasInner {
             Section {
-                strip.view
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                    .listRowSeparator(.hidden)
+                VStack(spacing: PageTopStripMetrics.between) {
+                    if let outer { outer.view }
+                    if hasInner { inner }
+                }
+                .frame(maxWidth: .infinity)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
             }
+            .environment(\.defaultMinListRowHeight, 0)
+            .listSectionSpacing(.custom(PageTopStripMetrics.below))
+            .listSectionMargins(.top, PageTopStripMetrics.top)
         }
     }
 }
 
-/// `ScrollView` 页面里的条（放在滚动内容的最上面）。
+extension PageTopStripSection where Inner == EmptyView {
+    init(showsOuter: Bool = true) {
+        self.init(showsOuter: showsOuter) { EmptyView() }
+    }
+}
+
+/// `ScrollView` 页面里的条（放在滚动内容的最上面；外面那层 `VStack` 用 `PageTopStripMetrics` 的间距）。
 struct PageTopStripView: View {
     @Environment(\.pageTopStrip) private var strip
 
     var body: some View {
         if let strip {
             strip.view
+                .padding(.top, PageTopStripMetrics.top)
+                .padding(.bottom, PageTopStripMetrics.below)
         }
     }
 }
@@ -70,7 +108,8 @@ struct PageTopStripStack<Content: View>: View {
             VStack(spacing: 0) {
                 strip.view
                     .padding(.horizontal)
-                    .padding(.vertical, 8)
+                    .padding(.top, PageTopStripMetrics.top)
+                    .padding(.bottom, PageTopStripMetrics.below)
                 content
                     .frame(maxHeight: .infinity)
                     .pageTopStrip(nil)
@@ -78,5 +117,44 @@ struct PageTopStripStack<Content: View>: View {
         } else {
             content
         }
+    }
+}
+
+// MARK: 卡片间距
+
+/// 「更多 › App › 卡片间距」（0.6.3）：全 App 列表分组（卡片）之间的距离。紧凑是默认。
+enum CardSpacing: String, CaseIterable, Identifiable {
+    case compact, roomy
+
+    static let defaultsKey = "app.cardSpacing"
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .compact: "紧凑"
+        case .roomy: "宽松"
+        }
+    }
+
+    var listSpacing: ListSectionSpacing {
+        switch self {
+        case .compact: .compact
+        case .roomy: .default
+        }
+    }
+}
+
+private struct CardSpacingModifier: ViewModifier {
+    @AppStorage(CardSpacing.defaultsKey) private var raw = CardSpacing.compact.rawValue
+
+    func body(content: Content) -> some View {
+        content.listSectionSpacing((CardSpacing(rawValue: raw) ?? .compact).listSpacing)
+    }
+}
+
+extension View {
+    /// 每个 `List` 都挂这一个（DESIGN.md「卡片间距」）：分组间距跟着「更多 › 卡片间距」走。
+    /// 页面顶部的条（`PageTopStripSection`）自己写了间距，不受它影响。
+    func cardSpacing() -> some View {
+        modifier(CardSpacingModifier())
     }
 }

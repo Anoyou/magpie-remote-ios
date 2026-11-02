@@ -69,8 +69,8 @@ struct UsageRequestsView: View {
 
     var body: some View {
         List {
-            if embedded { PageTopStripSection() }
-            Section {
+            // 「用量」的页面分页器（嵌在「用量」里时）、时间段、筛选、合计条数在同一条里（PageTopStripMetrics）。
+            PageTopStripSection(showsOuter: embedded) {
                 UsagePeriodPicker(period: $period)
                     .accessibilityIdentifier("usage.requests.period")
                 filterBar
@@ -79,11 +79,10 @@ struct UsageRequestsView: View {
                     Text(totalText)
                         .font(.footnote).foregroundStyle(.secondary)
                         .padding(.horizontal, 16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("usage.requests.total")
                 }
             }
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
 
             if held {
                 Section { UsageHeldKeyNote() }
@@ -135,6 +134,7 @@ struct UsageRequestsView: View {
                 }
             }
         }
+        .cardSpacing()
         .listStyle(.insetGrouped)
         .modifier(RequestsTitle(embedded: embedded))
         .pageSearchable(text: $search, prompt: "搜索模型、供应商、会话")
@@ -515,6 +515,7 @@ struct UsageRequestDetailView: View {
                 }
                 contentSection
             }
+            .cardSpacing()
             .detailHeader("请求详情")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

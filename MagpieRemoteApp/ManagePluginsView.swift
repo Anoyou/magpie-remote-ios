@@ -36,12 +36,8 @@ struct ManagePluginsView: View {
 
     var body: some View {
         List {
-            PageTopStripSection()
-            Section {
-                tabPicker
-            }
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+            // 「发现 / 已安装…」和外层的条（如果有）在同一条里，间距照 PageTopStripMetrics。
+            PageTopStripSection { tabPicker }
 
             if let notice = store.notice {
                 Section { PluginNoticeRow(notice: notice) }
@@ -56,6 +52,7 @@ struct ManagePluginsView: View {
             case .installed: installedTab
             }
         }
+        .cardSpacing()
         .pageHeader("插件")
         // 统一的系统搜索栏（见 DESIGN.md「搜索」）：跟着大标题一起收起，不再钉在导航栏下面（那样会和大标题抢位置）。
         .pageSearchable(text: $query, prompt: "搜索插件和 npm…")
@@ -915,6 +912,7 @@ struct AddPluginSheet: View {
                     Text("例如 @scope/name、name@版本号、github:owner/repo 或 https://github.com/owner/repo。也可以在「发现」里浏览 magpie 社区的插件。")
                 }
             }
+            .cardSpacing()
             .detailHeader("添加插件")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } }

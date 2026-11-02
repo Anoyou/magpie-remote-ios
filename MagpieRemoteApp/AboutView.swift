@@ -33,6 +33,7 @@ struct AboutView: View {
                 Text("Magpie Remote 是 magpie 的非官方 iOS 遥控器。它只连接你自己的主机，不收集任何数据。")
             }
         }
+        .cardSpacing()
         .pageHeader("关于")
     }
 
@@ -95,6 +96,7 @@ struct ChangelogView: View {
                         }
                     }
                 }
+                .cardSpacing()
                 .accessibilityIdentifier("changelog.list")
             }
         }

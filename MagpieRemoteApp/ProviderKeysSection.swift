@@ -364,6 +364,7 @@ struct AddProviderKeySheet: View {
                     }
                 }
             }
+            .cardSpacing()
             .detailHeader("添加 Key")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
@@ -425,6 +426,7 @@ struct ReplaceProviderKeySheet: View {
                     Text("「\(key.label)」的名字、排序和设置保持不变，只换成新的值。")
                 }
             }
+            .cardSpacing()
             .detailHeader("更换 Key")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }

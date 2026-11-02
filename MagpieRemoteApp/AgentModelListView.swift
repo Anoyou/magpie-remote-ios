@@ -82,6 +82,7 @@ struct AgentModelListView: View {
                 }
             }
         }
+        .cardSpacing()
         .pageSearchable(text: $search, prompt: "搜索模型")
         .environment(\.editMode, .constant(mode == .order ? .active : .inactive))
         .confirmationDialog(confirmTitle(list), isPresented: present($asksAll), titleVisibility: .visible, presenting: asksAll) { hide in

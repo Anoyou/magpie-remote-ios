@@ -164,6 +164,7 @@ struct AgentSessionsView: View {
                 footer
             }
         }
+        .cardSpacing()
         .accessibilityIdentifier("sessions.list")
     }
 
@@ -283,6 +284,7 @@ struct AgentSessionDetailView: View {
             }
             transcriptSection
         }
+        .cardSpacing()
         .detailHeader(title)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

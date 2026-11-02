@@ -18,16 +18,13 @@ struct UsageContextPane: View {
 
     var body: some View {
         List {
-            PageTopStripSection()
-            Section {
+            PageTopStripSection {
                 Picker("范围", selection: $days) {
                     ForEach(ContextReport.dayOptions, id: \.self) { Text(ContextReport.dayTitle($0)).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .accessibilityIdentifier("usage.context.range")
             }
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
 
             tuneSection
 
@@ -49,6 +46,7 @@ struct UsageContextPane: View {
                 .listRowBackground(Color.clear)
             }
         }
+        .cardSpacing()
         .listStyle(.insetGrouped)
         .refreshable { await load() }
         .task(id: days) { await load() }

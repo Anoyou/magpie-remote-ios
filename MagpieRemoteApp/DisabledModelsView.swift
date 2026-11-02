@@ -51,6 +51,7 @@ struct DisabledModelsView: View {
                 Text("已停用的模型")
             }
         }
+        .cardSpacing()
         .pageHeader("已停用的模型")
         .refreshable { await store.refresh() }
         .safeAreaInset(edge: .bottom) { ManageStatusLine(store: store) }
@@ -125,6 +126,7 @@ private struct DisabledModelPicker: View {
                     }
                 }
             }
+            .cardSpacing()
             .pageSearchable(text: $search, prompt: "搜索模型")
             .detailHeader("停用模型")
             .toolbar {
