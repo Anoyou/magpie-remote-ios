@@ -39,7 +39,19 @@ extension XCUIApplication {
 
     /// 打开底栏「更多」的根列表。
     func openMore(file: StaticString = #filePath, line: UInt = #line) {
-        openDockTab("更多", file: file, line: line)
+        let tab = tabBars.buttons["更多"]
+        XCTAssertTrue(tab.appears(timeout: 15), "底栏里没有「更多」", file: file, line: line)
+        tab.tap()
+        let root = navigationBars["更多"]
+        // 从别的页面切回「更多」时，回到的是上次在「更多」里推入的那一页（例如「自定义底栏」）：
+        // 再点一次底栏「更多」回到根列表；还不行就按返回。
+        if !root.appears(timeout: 3) { tab.tap() }
+        for _ in 0..<3 where !root.appears(timeout: 2) {
+            let back = navigationBars.firstMatch.buttons.firstMatch
+            guard back.exists else { break }
+            back.tap()
+        }
+        XCTAssertTrue(root.appears(timeout: 10), "没有打开「更多」", file: file, line: line)
     }
 
     /// 从「更多」打开一个页面（按行的 identifier，列表懒加载，必要时往下滑）。

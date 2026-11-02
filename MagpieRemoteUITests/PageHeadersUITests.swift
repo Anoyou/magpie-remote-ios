@@ -23,8 +23,19 @@ final class PageHeadersUITests: XCTestCase {
                               file: StaticString = #filePath, line: UInt = #line) {
         let bar = app.navigationBars.matching(identifier: title).firstMatch
         XCTAssertTrue(bar.appears(timeout: 10), "「\(title)」页没有导航栏标题", file: file, line: line)
-        let text = bar.descendants(matching: .any).matching(NSPredicate(format: "label == %@", title)).firstMatch
-        XCTAssertTrue(text.appears(timeout: 5), "「\(title)」页的导航栏里没有标题文字", file: file, line: line)
+        var text = bar.descendants(matching: .any).matching(NSPredicate(format: "label == %@", title)).firstMatch
+        if !text.appears(timeout: 3) {
+            // 右上角有两个以上按钮时（例如「供应商」的「编辑」「添加」），iOS 26 的大标题画在导航栏里，
+            // 却不挂在导航栏的无障碍子树下：改找画在导航栏范围里的那行标题文字（不会找到下面分页器里的同名按钮）。
+            let barFrame = bar.frame
+            let same = NSPredicate(format: "label == %@ AND elementType != %@", title, NSNumber(value: XCUIElement.ElementType.button.rawValue))
+            let inBar = app.descendants(matching: .any).matching(same).allElementsBoundByIndex.first {
+                let f = $0.frame
+                return !f.isEmpty && f.midY >= barFrame.minY && f.midY <= barFrame.maxY
+            }
+            if let inBar { text = inBar }
+        }
+        XCTAssertTrue(text.appears(timeout: 5), "「\(title)」页的导航栏里没有标题文字：\(bar.debugDescription)", file: file, line: line)
         if leading {
             let barFrame = bar.frame
             XCTAssertLessThan(text.frame.minX - barFrame.minX, barFrame.width * 0.35,
