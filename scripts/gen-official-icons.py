@@ -32,7 +32,7 @@ RISKY = re.compile(r"<mask|<filter|clip-path|clipPath|<image|<style|<use")
 RASTER = 96  # 栅格化标志的边长（像素）：最大 28pt @3x
 # 网页 index.html 导航按钮 data-view → 资源名。
 NAV = {"agents": "nav-agents", "sessions": "nav-sessions", "providers": "nav-providers", "routing": "nav-routing",
-       "gateway": "nav-gateway", "usage": "nav-usage", "plugins": "nav-plugins"}
+       "gateway": "nav-gateway", "usage": "nav-usage", "plugins": "nav-plugins", "library": "nav-library"}
 
 
 def contents(images: list[dict], props: dict | None = None) -> str:

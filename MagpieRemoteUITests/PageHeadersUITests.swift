@@ -1,7 +1,7 @@
 import XCTest
 
 /// 统一页头：底栏的每个页面、「更多」里的每一项，顶部都要有左对齐的大标题（导航栏里），
-/// 有官方副标题的页面（用量、会话、网关密钥）还要有那行副标题。
+/// 有官方副标题的页面（用量、会话、网关密钥、资源库）还要有那行副标题。
 /// 0.5.0 里「用量」「会话」「主页」没有大标题，这里逐页检查，防止再丢。
 @MainActor
 final class PageHeadersUITests: XCTestCase {
@@ -62,6 +62,7 @@ final class PageHeadersUITests: XCTestCase {
             ("more.chat", "对话", nil),
             ("manage.keys", "网关密钥", "让每个网关密钥只用到"),
             ("manage.plugins", "插件", nil),
+            ("more.library", "资源库", "指令、MCP 服务器、技能和 Hooks"),
             ("manage.hosts", "主机", nil),
             ("manage.about", "关于", nil),
             ("manage.guide", "配置引导", nil),

@@ -165,6 +165,11 @@ public struct WebClient: Sendable {
 /// 只能在网页里完成的功能。
 public enum MagpieWebPage: String, CaseIterable, Identifiable, Sendable {
     case accounts, backup, masking
+    /// 资源库：原生页面里只在 Mac 上才有意义的操作（选文件夹、OAuth 登录等）在这里兜底。
+    case library
+
+    /// 「在网页中打开」列出的页面（资源库有原生页面，不在其中）。
+    public static let fallbacks: [MagpieWebPage] = [.accounts, .backup, .masking]
 
     public var id: String { rawValue }
 
@@ -173,6 +178,7 @@ public enum MagpieWebPage: String, CaseIterable, Identifiable, Sendable {
         case .accounts: "账号登录"
         case .backup: "备份与同步"
         case .masking: "脱敏"
+        case .library: "资源库"
         }
     }
 
@@ -181,6 +187,7 @@ public enum MagpieWebPage: String, CaseIterable, Identifiable, Sendable {
         case .accounts: "登录 Codex、Claude、Copilot 等订阅账号"
         case .backup: "导出、导入备份，WebDAV 同步"
         case .masking: "查看脱敏记录与规则"
+        case .library: "项目、OAuth 登录等只能在网页里做的资源库操作"
         }
     }
 
@@ -189,6 +196,7 @@ public enum MagpieWebPage: String, CaseIterable, Identifiable, Sendable {
         case .accounts: "person.badge.key"
         case .backup: "externaldrive.badge.icloud"
         case .masking: "eye.slash"
+        case .library: "books.vertical"
         }
     }
 
@@ -197,6 +205,7 @@ public enum MagpieWebPage: String, CaseIterable, Identifiable, Sendable {
         case .accounts: [URLQueryItem(name: "view", value: "providers")]
         case .backup: [URLQueryItem(name: "view", value: "settings"), URLQueryItem(name: "tab", value: "sync")]
         case .masking: [URLQueryItem(name: "view", value: "masking")]
+        case .library: [URLQueryItem(name: "view", value: "library")]
         }
     }
 }

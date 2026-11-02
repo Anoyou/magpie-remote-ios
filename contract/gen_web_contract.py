@@ -71,6 +71,41 @@ PLUGINS_TAGS = [
 ]
 NPM_TAGS = {"file": "internal/plugin/market.go", "tags": ["version","description","publisher","license","homepage","repository","weekly","icon"]}
 
+# 资源库（internal/library 的各 *View；internal/gui/library.go 的 libraryJSON）
+LIB_ACTIONS = ["instructions/save","instructions/import","servers/save","servers/agents","servers/hub","servers/tools","servers/agents-all","servers/remove","servers/remove-all","servers/import","servers/remove-found",
+ "hooks/save","hooks/agents","hooks/remove","hooks/remove-all","subagents/save","subagents/agents","subagents/remove",
+ "skills/install","skills/update","skills/remove-gone","skills/update-all","skills/agents","skills/here","skills/agents-all","skills/remove","skills/remove-all","skills/add-new","skills/ignore-new","skills/import","skills/import-all","skills/remove-found","skills/hand-over","skills/how",
+ "market/server","market/skill","all/sync"]
+LIB_RES = ["agents[].id","agents[].name","agents[].icon","agents[].instructions?","agents[].mcp?","agents[].skills?","agents[].skillsAlso?","agents[].noSSE?","agents[].noRemote?","agents[].noEnvRefs?","agents[].toolsOff?","agents[].startup?","agents[].mcpVia?","agents[].how?","agents[].gone?","agents[].asleep?","agents[].unseen?",
+ "servers[].name","servers[].transport","servers[].command?","servers[].args?","servers[].env?","servers[].url?","servers[].headers?","servers[].agents","servers[].disabledTools?","servers[].oauth?.clientId","servers[].startupTimeout?","servers[].local?","servers[].hub?","servers[].icon?","servers[].problems?","servers[].signIn?.signedIn","servers[].signIn?.dead?",
+ "hooks[].name","hooks[].description?","hooks[].event","hooks[].matcher?","hooks[].command","hooks[].timeout?","hooks[].agents","hooks[].problems?","hookAgents[].id","hookAgents[].no?","hookAgents[].wsl?","hookAgents[].off?","hookAgents[].events?",
+ "subagents[].name","subagents[].description","subagents[].prompt","subagents[].skills?","subagents[].mcp?","subagents[].agents","subagents[].problems?","subagentAgents[].id","subagentAgents[].no?","subagentAgents[].wsl?","subagentAgents[].skills?","subagentAgents[].mcp?",
+ "foundServers[].server","foundServers[].others?","foundServers[].own?",
+ "skills[].name","skills[].description","skills[].source?","skills[].kind","skills[].origin?","skills[].repo?","skills[].icon?","skills[].agents","skills[].missing?","skills[].problems?","skills[].check?.status","skills[].check?.url?","skills[].check?.error?","skills[].always?","skills[].shared?","skills[].sharedElsewhere?","skills[].behind?","skills[].edited?","skills[].gone?","skills[].offHere?",
+ "foundSkills[].name","foundSkills[].description","foundSkills[].agents","foundSkills[].others?","foundSkills[].link?","foundSkills[].shared?","newSkills[].id","newSkills[].name","newSkills[].repo","newSkills[].agents",
+ "projects[].dir","projects[].name","projects[].copy","projects[].skills","projects[].servers","projects[].missing?",
+ "instructions.shared","instructions.sets[].id","instructions.sets[].name","instructions.sets[].text","instructions.sets[].active?","instructions.sets[].file?","instructions.agents[].agent","instructions.agents[].name","instructions.agents[].path","instructions.agents[].on","instructions.agents[].extra","instructions.agents[].own","instructions.agents[].edited?","instructions.agents[].override?","instructions.agents[].asleep?","instructions.agents[].unseen?",
+ "dir","backups","copySkills","mcpHub","hubPath","checkDue?","partial?","home","problems[]?.agent","problems[]?.what","problems[]?.error","problems[]?.own?",
+ "result?.changed","result?.problems","result?.backup?","result?.updated?","result?.unupdated?","result?.gone?","result?.installed?","result?.had?","result?.skipped?"]
+LIB_TAGS = [
+ {"file": G+"library.go", "tags": ["result","home","problems","part","instructions"]},
+ {"file": "internal/library/sync.go", "tags": ["agents","servers","hooks","hookAgents","subagents","subagentAgents","foundServers","skills","foundSkills","newSkills","projects","instructions","dir","backups","skillGroups","copySkills","mcpHub","hubPath","checkDue","partial",
+   "id","name","icon","mcp","skillsAlso","note","noSSE","noRemote","noEnvRefs","toolsOff","startup","mcpVia","hub","how","howOwn","mustCopy","gone","asleep","unseen",
+   "problems","signIn","description","source","kind","origin","repo","missing","check","always","shared","sharedElsewhere","behind","edited","offHere",
+   "changed","backup","updated","unupdated","unimported","unremoved","unmoved","installed","had","skipped","agent","what","error","own"]},
+ {"file": "internal/library/mcp.go", "tags": ["name","transport","command","args","env","url","headers","agents","disabledTools","oauth","startupTimeout","local","plugin","hub","clientId","clientSecret","callbackPort","server","others","icon","own"]},
+ {"file": "internal/library/skills.go", "tags": ["name","description","agents","others","copies","link","shared","library"]},
+ {"file": "internal/library/skillcheck.go", "tags": ["status","commit","date","message","url","error"]},
+ {"file": "internal/library/skillnew.go", "tags": ["id","name","description","repo","ref","path","from","agents"]},
+ {"file": "internal/library/hooks.go", "tags": ["name","description","event","matcher","command","timeout","agents","native","problems","id","file","no","wsl","off","events"]},
+ {"file": "internal/library/subagents.go", "tags": ["name","description","prompt","skills","mcp","agents","files","problems","id","dir","no","wsl"]},
+ {"file": "internal/library/instructions.go", "tags": ["shared","sets","agents","id","name","text","active","file","agent","icon","path","on","extra","own","edited","override","profile","asleep","unseen"]},
+ {"file": "internal/library/projects.go", "tags": ["dir","name","copy","skills","placed","servers","wrote","missing","problems"]},
+ {"file": "internal/mcpauth/mcpauth.go", "tags": ["signedIn","dead"]},
+]
+RTK_RES = ["path?","version?","gain?.commands","gain?.saved","gain?.pct","gainErr?","latest?","upgrade?","noUpgrade?","waiting?","waitingHas?","offPath?","pathDir?","agents[].id","agents[].name","agents[].icon","agents[].on","agents[].blocked?","agents[].noHook?","agents[].asleep?","url","install?","restart?"]
+RTK_TAGS = [{"file": "internal/library/rtk.go", "tags": ["path","version","gain","gainErr","codexSandbox","days","latest","upgrade","noUpgrade","manual","admin","waiting","waitingHas","note","pathDir","pathLink","offPath","agents","wsl","url","install","restart","backup","id","name","icon","on","blocked","noHook","asleep","commands","input","saved","pct"]}]
+
 routes = [
  R("GET","/api/settings",G+"api.go", res=["version","gateway","lan?","port?","lanURLs?","lanPublic?","publicURL?","onNetwork?","addrEnv?","allowIPs?","lanKeyId?","disabledModels?","web?","gatewayOn?","dir",
         # 第二轮对齐官方（feat/parity-gaps2）：Agent 排序 / 隐藏、停用的模型
@@ -236,6 +271,39 @@ routes = [
    tags=[{"file":G+"pluginpage.go","tags":["spec","name","key","title","titles","url","icon","replaces","reads","slot"]}],
    note="a JSON array; open a page in the web shell as /?view=<key> (the page file itself expects the window's bridge)"),
  R("GET","/api/plugin-panels",G+"pluginpage.go", res=["<[]pluginPanel>"]),
+
+ # 「更多 › 资源库」（官方 Library：指令 / MCP 服务器 / 技能 / Hooks / 子代理 / RTK，feat/library）
+ R("GET","/api/library",G+"library.go", req=["?glance"], res=LIB_RES, tags=LIB_TAGS,
+   contains=['r.URL.Query().Get("glance") == "1"','Home   string          `json:"home"`','Problems []library.Problem `json:"problems,omitempty"`'],
+   note="glance=1 leaves out foundSkills and each skill's behind (partial: true); the page reads it first, then the whole"),
+ R("POST","/api/library/{what}/{action}",G+"library.go", actions=LIB_ACTIONS,
+   req=["name?","old?","agents?","names?","source?","paths?","server?","hook?","subagent?","agent?","id?","values?","on?","how?","replace?","texts?","extra?","activate?","create?.id","create?.name","create?.file?","rename?.id","rename?.name","remove?","rewrite?"],
+   res=["<libraryJSON>","part?","instructions?"],
+   contains=['Agents []string `json:"agents"`','library.InstructionsChange','switch r.PathValue("what") + "/" + r.PathValue("action")','if r.PathValue("what") == "instructions"',
+     {"file":"internal/library/instructions.go","contains":['Texts    map[string]*string `json:"texts,omitempty"`','Activate string             `json:"activate,omitempty"`','Create   *InstrSet          `json:"create,omitempty"`','Rename   *InstrSet          `json:"rename,omitempty"`','Remove   string             `json:"remove,omitempty"`','Rewrite []string `json:"rewrite,omitempty"`','Extra  map[string]*string `json:"extra,omitempty"`']}],
+   note="untagged struct (Go matches name/agents/names/… case-insensitively); answers the whole page, except instructions/* which answer {part:\"instructions\", instructions, result, problems}; a server/hook/subagent save replaces the whole item; skills/update with replace:true replaces local edits (kept in backups)"),
+ R("GET","/api/library/skill",G+"library.go", req=["?name"], res=["text","path"], contains=['library.SkillText(r.URL.Query().Get("name"))']),
+ R("POST","/api/library/skills/check",G+"library.go", res=["<libraryJSON>"], contains=['library.CheckSkills()'], note="asks GitHub / git remotes; each skill gets check.status current|update|unknown|gone"),
+ R("POST","/api/library/skills/regroup",G+"library.go", res=["<libraryJSON>","regrouped"], contains=['Regrouped int `json:"regrouped"`']),
+ R("POST","/api/library/skills/probe",G+"library.go", req=["source"], res=["source","kind","candidates[].path","candidates[].name","candidates[].description","candidates[].have","candidates[].as?","left[]?.path","left[]?.size"],
+   tags=[{"file":"internal/library/skills.go","tags":["source","kind","candidates","left","path","name","description","have","as"]},{"file":"internal/library/skilltree.go","tags":["path","size"]}],
+   contains=['var in struct{ Source string }','library.ProbeSkills(in.Source)']),
+ R("GET","/api/library/market/servers",G+"library.go", req=["?q"], res=["items[].id","items[].name","items[].title","items[].description","items[].publisher?","items[].icon?","items[].homepage?","items[].transport","items[].runs?","items[].signIn?","items[].featured?","items[].unready?","items[].inputs[].key","items[].inputs[].where","items[].inputs[].label","items[].inputs[].secret?","items[].inputs[].required?","items[].have?","error?","failed?","cause?","custom?"],
+   tags=[{"file":"internal/library/market.go","tags":["id","name","title","description","publisher","icon","homepage","transport","runs","signIn","featured","optIn","inputs","have","key","where","label","placeholder","secret","required"]},{"file":G+"library.go","tags":["items","error","custom","failed","cause"]}]),
+ R("GET","/api/library/market/skills",G+"library.go", req=["?q"], res=["items[].id","items[].source","items[].skillId","items[].name","items[].installs","items[].official?","items[].icon","items[].description?","items[].have?","error?","failed?","cause?"],
+   tags=[{"file":"internal/library/market.go","tags":["id","source","skillId","name","installs","official","featured","icon","description","have"]}]),
+ R("POST","/api/library/market/about",G+"library.go", req=["ids"], res=["<id>: description"], contains=['var in struct{ IDs []string }','in.IDs = in.IDs[:60]']),
+ R("POST","/api/library/mcp/check",G+"library.go", req=["names","fresh"], res=["servers.<name>.state","servers.<name>.tools","servers.<name>.toolList[]?.name","servers.<name>.why?","servers.<name>.code?","servers.<name>.detail?","servers.<name>.oauth?","servers.<name>.agentSignIn?","servers.<name>.step?","servers.<name>.waited?","servers.<name>.at"],
+   tags=[{"file":"internal/library/mcp_check.go","tags":["state","tools","toolList","why","code","detail","oauth","signIn","agentSignIn","step","waited","checked","at","name","description"]}],
+   contains=['Names []string','Fresh bool','writeJSON(rw, map[string]any{"servers": m})']),
+ R("POST","/api/library/mcp/config",G+"library.go", req=["agent","names"], res=["file","text","skipped?"],
+   tags=[{"file":"internal/library/mcp_copy.go","tags":["file","text","skipped"]}], contains=['library.ConfigOfServers(in.Agent, in.Names)'], note="nothing is written; the text to paste into a project"),
+ R("POST","/api/library/mcp-signout",G+"library.go", req=["name"], res=["<libraryJSON>"], contains=['library.SignOutServer(in.Name)']),
+ R("GET","/api/library/rtk",G+"library.go", res=RTK_RES, tags=RTK_TAGS, note="waits up to 3 s for the latest release"),
+ R("POST","/api/library/rtk",G+"library.go", req=["agent","on"], res=["<rtkView>"], contains=['library.SetRTK(in.Agent, in.On)']),
+ R("POST","/api/library/rtk/upgrade",G+"library.go", res=["<rtkView>"], contains=['library.UpgradeRTK()']),
+ R("POST","/api/library/rtk/path",G+"library.go", res=["<rtkView>"], contains=['library.PathRTK()']),
+ R("POST","/api/library/rtk/install",G+"library.go", req=["distro?"], res=["<rtkView>"], contains=['library.InstallRTK()'], note="{} or no body: this computer"),
  R("POST","/api/settings/plugin-option",G+"api.go", req=["provider","key","on"], res=["<settingsJSON>"], note="untagged struct{ Provider, Key string; On bool }; provider = the plugin's own provider id (pid)"),
 ]
 contract = {

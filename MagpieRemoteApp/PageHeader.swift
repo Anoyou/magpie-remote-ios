@@ -67,6 +67,7 @@ extension AppPage {
         case .usage: PageSubtitles.usage
         case .sessions: PageSubtitles.sessions
         case .keys: PageSubtitles.keys
+        case .library: PageSubtitles.library
         default: nil
         }
     }

@@ -7,6 +7,8 @@ public enum AppPage: String, CaseIterable, Identifiable, Hashable, Sendable {
     case sessions, routes
     case usage, chat
     case keys, plugins, hostTools, web, hosts, about
+    /// 「资源库」（官方 Library：指令、MCP 服务器、技能、Hooks、子代理、RTK）。放在最后，不改变旧版本保存的顺序。
+    case library
 
     public var id: String { rawValue }
 
@@ -32,6 +34,7 @@ public enum AppPage: String, CaseIterable, Identifiable, Hashable, Sendable {
         case .web: "网页功能"
         case .hosts: "主机"
         case .about: "关于"
+        case .library: "资源库"
         }
     }
 
@@ -49,6 +52,7 @@ public enum AppPage: String, CaseIterable, Identifiable, Hashable, Sendable {
         case .web: "账号登录、备份与同步、脱敏"
         case .hosts: "切换、添加、编辑主机"
         case .about: "版本与更新日志"
+        case .library: "指令、MCP 服务器、技能、Hooks、子代理"
         }
     }
 
@@ -65,6 +69,7 @@ public enum AppPage: String, CaseIterable, Identifiable, Hashable, Sendable {
         case .web: "safari"
         case .hosts: "desktopcomputer"
         case .about: "info.circle"
+        case .library: "books.vertical"
         }
     }
 }
