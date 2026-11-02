@@ -31,7 +31,7 @@ final class AgentSessionsUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.waitForDock(timeout: launchTimeout), "没有出现底栏「更多」")
         // 默认底栏第 2 个就是「会话」。
-        app.openDockTab("会话", navigationTitle: "会话记录")
+        app.openDockTab("会话")
         return app
     }
 
@@ -74,7 +74,7 @@ final class AgentSessionsUITests: XCTestCase {
         XCTAssertTrue(confirm.appears(timeout: 5), "删除前应当先弹出确认")
         confirm.tap()
         // 删除后回到列表，这个会话不再出现，其它的还在
-        XCTAssertTrue(app.navigationBars["会话记录"].appears(timeout: 10))
+        XCTAssertTrue(app.navigationBars["会话"].appears(timeout: 10))
         XCTAssertTrue(element(id: "session.row.fixture-claude-2", in: app).disappears(timeout: 10), "删除后会话不应还在列表里")
         XCTAssertTrue(element(id: "session.row.fixture-claude-1", in: app).exists)
     }

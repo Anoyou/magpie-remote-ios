@@ -337,8 +337,7 @@ struct PluginWebPageView: View {
                 .accessibilityIdentifier("plugins.web.placeholder")
             }
         }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
+        .detailHeader(title)
     }
 }
 

@@ -154,7 +154,7 @@ struct HostUpdateView: View {
             }
             notesSection
         }
-        .navigationTitle("主机更新")
+        .pageHeader("主机更新")
         .refreshable { await model.load(fresh: true) }
         .task { await model.load(fresh: true) }
         .task(id: model.status?.isWorking == true && !model.isRestarting) { await model.poll() }

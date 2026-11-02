@@ -65,8 +65,7 @@ struct HostListContent: View {
                 .accessibilityIdentifier("guide.open")
             }
         }
-        .navigationTitle("主机")
-        .navigationBarTitleDisplayMode(.inline)
+        .pageHeader("主机")
         .navigationDestination(item: $editing) { target in
             HostEditorView(target: target)
         }
@@ -231,8 +230,7 @@ struct HostEditorView: View {
                 }
             }
         }
-        .navigationTitle(original == nil ? "添加主机" : "编辑主机")
-        .navigationBarTitleDisplayMode(.inline)
+        .detailHeader(original == nil ? "添加主机" : "编辑主机")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("保存") { save() }

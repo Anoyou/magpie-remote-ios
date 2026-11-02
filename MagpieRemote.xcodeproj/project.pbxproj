@@ -41,6 +41,7 @@
 		50E72EACFE9D1C8D82D2138A /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19FC2DD80AE7DF7087FB1460 /* AboutView.swift */; };
 		520E04DFFAD8676BAA5F5F78 /* UsageTabsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E878152FDB5534070169FA /* UsageTabsUITests.swift */; };
 		530FA5C87029EB1BDE65B37D /* DockCustomizeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8FF93AA7A2D9498A020FDE3 /* DockCustomizeView.swift */; };
+		53DE8926615F8E9A1A1D6644 /* PageHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A24487A389E07B4E187370E2 /* PageHeader.swift */; };
 		54705930CAB370F66C589891 /* MainTabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78C3B92FB2353A6F4894F947 /* MainTabs.swift */; };
 		5B927621BC4B7B99B4A4E916 /* ManageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B2D092F7FDAB32A6B31E82 /* ManageService.swift */; };
 		5C0AC2052468A97ECF8620BB /* ManageWebPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D0018F229A70CBA54BFECD /* ManageWebPageView.swift */; };
@@ -69,6 +70,7 @@
 		9E46AEEF517478038D7944C7 /* UsageWebService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1A9B6D72257B22637228D9 /* UsageWebService.swift */; };
 		9E7415EC73D396F9C776BFB7 /* ChatController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B078F07A52896FF08A607 /* ChatController.swift */; };
 		A68F99FCE8F4A672FEEB0E14 /* ManageKeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1BFA63809ED4BF7D265B80 /* ManageKeysView.swift */; };
+		A9A09336B65C34CEBE779D8F /* PageHeadersUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE86000AD568E7D738D33A75 /* PageHeadersUITests.swift */; };
 		ACB33B7408218952BAB7DCEA /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E44F19DB495C09B782A0B1C /* AppEnvironment.swift */; };
 		AF5A351B63781ABD368C4EE6 /* WidgetsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB846BC95EF9F98069F65F4 /* WidgetsUITests.swift */; };
 		B362AD6B34D319D46E07AB24 /* QuotaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 726F02F062C85BC63F1B4072 /* QuotaUITests.swift */; };
@@ -199,6 +201,7 @@
 		956776CE0C93C73B96065EF2 /* ManagePluginsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagePluginsView.swift; sourceTree = "<group>"; };
 		9AB846BC95EF9F98069F65F4 /* WidgetsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetsUITests.swift; sourceTree = "<group>"; };
 		A22DB1B3CA4B1806EC581871 /* HostSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostSettingsView.swift; sourceTree = "<group>"; };
+		A24487A389E07B4E187370E2 /* PageHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageHeader.swift; sourceTree = "<group>"; };
 		A3FC619A941C0D64DF0F8A56 /* DockUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockUITests.swift; sourceTree = "<group>"; };
 		A522998429764710306A89D9 /* WidgetProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetProvider.swift; sourceTree = "<group>"; };
 		A671F154A4F44DCB5F605A5B /* HostPrivacyModelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostPrivacyModelView.swift; sourceTree = "<group>"; };
@@ -212,6 +215,7 @@
 		C6569D84F259F6DD1DA32A31 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		CA685B0A7948AA062BF1218E /* HostUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostUpdateView.swift; sourceTree = "<group>"; };
 		CE47489B641118574213CF4B /* StateViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateViews.swift; sourceTree = "<group>"; };
+		CE86000AD568E7D738D33A75 /* PageHeadersUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageHeadersUITests.swift; sourceTree = "<group>"; };
 		D0D0018F229A70CBA54BFECD /* ManageWebPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageWebPageView.swift; sourceTree = "<group>"; };
 		D305F1E97CE0AEB24C9D712E /* RoutesClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesClock.swift; sourceTree = "<group>"; };
 		D735EF3971F23500E9C63F87 /* RoutesStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesStageView.swift; sourceTree = "<group>"; };
@@ -302,6 +306,7 @@
 				8C56E3159B2079790A06026A /* MagpieRemoteUITests.swift */,
 				2700C9BFBE9754CC3D979AB0 /* ManageUITests.swift */,
 				55952D448E60FDA0346ED597 /* OfficialIconsUITests.swift */,
+				CE86000AD568E7D738D33A75 /* PageHeadersUITests.swift */,
 				23B05A223444B8A29F73817B /* ParityGaps2UITests.swift */,
 				0D6DB79AF3E4D0FC04E2BFAD /* PluginsUITests.swift */,
 				48C5EB01B38AD0699E80D214 /* ProviderDetailUITests.swift */,
@@ -357,6 +362,7 @@
 				D0D0018F229A70CBA54BFECD /* ManageWebPageView.swift */,
 				793F539829F0FF3C2E4C218C /* MoreView.swift */,
 				28E0F7A1DD10B13C5F72FFA8 /* OfficialIconViews.swift */,
+				A24487A389E07B4E187370E2 /* PageHeader.swift */,
 				FA5767857C60806660E639B6 /* PluginComponents.swift */,
 				DA773FD5DA6B3DB82F02868D /* PluginDetailView.swift */,
 				D90D4267EF9983628F5A705C /* PluginService.swift */,
@@ -548,6 +554,7 @@
 				FF51B2EAE72A2A70428D3694 /* MagpieRemoteUITests.swift in Sources */,
 				3451D060920BEF28E9607C42 /* ManageUITests.swift in Sources */,
 				46691A0663D2E79200332052 /* OfficialIconsUITests.swift in Sources */,
+				A9A09336B65C34CEBE779D8F /* PageHeadersUITests.swift in Sources */,
 				081C5121C048F627784522BD /* ParityGaps2UITests.swift in Sources */,
 				224F756965E44160F0793E7D /* PluginsUITests.swift in Sources */,
 				868CD4E99FACF3A03D4300D4 /* ProviderDetailUITests.swift in Sources */,
@@ -601,6 +608,7 @@
 				5C0AC2052468A97ECF8620BB /* ManageWebPageView.swift in Sources */,
 				BE07FE492CF20ADED83A0B4F /* MoreView.swift in Sources */,
 				402156A6F7C67024BC8CEA17 /* OfficialIconViews.swift in Sources */,
+				53DE8926615F8E9A1A1D6644 /* PageHeader.swift in Sources */,
 				8093DD89947CFB33F3673ED7 /* PluginComponents.swift in Sources */,
 				762E0FC0C41941341BD7FF16 /* PluginDetailView.swift in Sources */,
 				71BCE8E10AAFE6B65CC4EE13 /* PluginService.swift in Sources */,

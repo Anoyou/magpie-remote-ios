@@ -14,7 +14,6 @@ struct HomeView: View {
 
     var body: some View {
         page
-            .navigationBarTitleDisplayMode(.inline)
             .safeAreaBar(edge: .top, spacing: 0) { picker }
             // 点「额度」小组件打开时切到额度分页。
             .onChange(of: model.requestedHomeSegment, initial: true) { _, request in
@@ -31,7 +30,7 @@ struct HomeView: View {
         case .providers:
             ManageGate(title: HomeSegment.providers.title) { ManageProvidersView(store: $0) }
         case .quota:
-            QuotaView().navigationTitle(HomeSegment.quota.title)
+            QuotaView().pageHeader(HomeSegment.quota.title)
         }
     }
 

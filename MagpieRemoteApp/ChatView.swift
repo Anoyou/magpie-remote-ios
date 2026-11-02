@@ -11,8 +11,10 @@ struct ChatView: View {
         ConnectedContent {
             ChatScreen()
         }
+        .pageHeader(AppPage.chat.title)
         .toolbar {
-            ToolbarItemGroup(placement: .topBarLeading) {
+            // 和其它页面一样，按钮都在右上角，左边留给大标题。
+            ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
                     model.chat.refreshList()
                     showSessions = true

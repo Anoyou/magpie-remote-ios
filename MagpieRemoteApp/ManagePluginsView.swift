@@ -55,7 +55,7 @@ struct ManagePluginsView: View {
             case .installed: installedTab
             }
         }
-        .navigationTitle("插件")
+        .pageHeader("插件")
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索插件和 npm…")
         .onChange(of: query) { _, new in
             if !new.isEmpty, tab != .discover { tab = .discover }
@@ -913,8 +913,7 @@ struct AddPluginSheet: View {
                     Text("例如 @scope/name、name@版本号、github:owner/repo 或 https://github.com/owner/repo。也可以在「发现」里浏览 magpie 社区的插件。")
                 }
             }
-            .navigationTitle("添加插件")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("添加插件")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } }
             }

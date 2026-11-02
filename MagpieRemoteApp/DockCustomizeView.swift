@@ -98,7 +98,7 @@ struct DockCustomizeView: View {
                 Text("默认底栏：" + (DockLayout.defaultPages.map(\.title) + ["更多"]).joined(separator: "、") + "。")
             }
         }
-        .navigationTitle("自定义底栏")
+        .pageHeader("自定义底栏")
         .toolbar {
             ToolbarItem(placement: .primaryAction) { EditButton() }
         }

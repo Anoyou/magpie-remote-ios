@@ -469,8 +469,7 @@ private struct UsageSessionInfo: View {
             LabeledContent("词元", value: "输入 \(UsageFormat.tokens(s.inputTokens)) · 输出 \(UsageFormat.tokens(s.outputTokens))")
             if !s.path.isEmpty { LabeledContent("文件", value: s.path) }
         }
-        .navigationTitle(item.session.displayTitle)
-        .navigationBarTitleDisplayMode(.inline)
+        .detailHeader(item.session.displayTitle)
     }
 }
 

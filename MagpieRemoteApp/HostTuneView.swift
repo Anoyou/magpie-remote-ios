@@ -132,7 +132,7 @@ struct HostTuneView: View {
                 Section { HStack { ProgressView(); Text("正在重放这段时间的调用…").foregroundStyle(.secondary) } }
             }
         }
-        .navigationTitle("自动调优")
+        .pageHeader("自动调优")
         .refreshable { await model.load() }
         .task { await model.load() }
         .confirmationDialog("应用全部建议？", isPresented: $confirmAll, titleVisibility: .visible) {

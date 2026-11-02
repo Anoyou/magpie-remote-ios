@@ -8,6 +8,8 @@ struct ManageGate<Content: View>: View {
     @Environment(AppModel.self) private var model
     @Environment(ManageStore.self) private var store
     let title: String
+    /// 页头的官方副标题（和页面准备好之后的一致）。
+    var subtitle: String? = nil
     @ViewBuilder let content: (ManageStore) -> Content
 
     /// 从来没读成功过（例如密钥不对、连不上）：整页显示错误。读成功过之后的失败只在顶部提示，不打断当前页面。
@@ -25,7 +27,7 @@ struct ManageGate<Content: View>: View {
                     }
             } else {
                 placeholder
-                    .navigationTitle(title)
+                    .pageHeader(title, subtitle: subtitle)
             }
         }
         .onAppear { Task { await store.configure(model: model) } }

@@ -51,7 +51,7 @@ struct DisabledModelsView: View {
                 Text("已停用的模型")
             }
         }
-        .navigationTitle("已停用的模型")
+        .pageHeader("已停用的模型")
         .refreshable { await store.refresh() }
         .safeAreaInset(edge: .bottom) { ManageStatusLine(store: store) }
         .sheet(isPresented: $picking) {
@@ -126,8 +126,7 @@ private struct DisabledModelPicker: View {
                 }
             }
             .searchable(text: $search, prompt: "搜索模型")
-            .navigationTitle("停用模型")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("停用模型")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
             }

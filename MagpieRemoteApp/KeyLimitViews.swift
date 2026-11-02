@@ -25,8 +25,7 @@ struct KeyLimitSheet: View {
                     ContentUnavailableView("密钥已不存在", systemImage: "key")
                 }
             }
-            .navigationTitle(key.map { $0.limits.isEmpty ? "为 \($0.name) 设置限额" : "修改 \($0.name) 的限额" } ?? "限额")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader(key.map { $0.limits.isEmpty ? "为 \($0.name) 设置限额" : "修改 \($0.name) 的限额" } ?? "限额")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -238,8 +237,7 @@ struct KeyModelsSheet: View {
                     ProgressView("正在读取…")
                 }
             }
-            .navigationTitle("此密钥可用的模型")
-            .navigationBarTitleDisplayMode(.inline)
+            .detailHeader("此密钥可用的模型")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
