@@ -143,7 +143,7 @@ struct MagpieWebSection: View {
 
     var body: some View {
         Section {
-            ForEach(MagpieWebPage.allCases) { page in
+            ForEach(MagpieWebPage.fallbacks) { page in
                 NavigationLink {
                     ManageWebPageView(store: store, page: page)
                 } label: {

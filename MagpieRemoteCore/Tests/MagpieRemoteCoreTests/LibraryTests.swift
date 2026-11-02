@@ -371,3 +371,21 @@ final class LibraryTests: XCTestCase {
         XCTAssertFalse(LibraryProbe(json: LibraryFixtureData.probe(source: "example-org/skills")).candidates.isEmpty)
     }
 }
+
+final class LibraryPageTests: XCTestCase {
+    func testLibraryIsAPageForMoreAndDock() {
+        XCTAssertEqual(AppPage.library.title, "资源库")
+        XCTAssertEqual(AppPage(storedValue: "library"), .library)
+        XCTAssertTrue(DockLayout.default.morePages.contains(.library))
+        var layout = DockLayout.default
+        layout.place(.library, at: 3)
+        XCTAssertEqual(layout.pages.last, .library)
+        XCTAssertEqual(DockLayout(stored: layout.stored), layout)
+        XCTAssertEqual(OfficialIcon.navGlyph(page: AppPage.library.rawValue), "Nav/nav-library")
+        XCTAssertFalse(MagpieWebPage.fallbacks.contains(.library))
+        XCTAssertEqual(MagpieWebPage.library.query.first?.value, "library")
+        XCTAssertEqual(LibraryTab.allCases.map(\.title), ["指令", "MCP 服务器", "技能", "Hooks", "子代理", "RTK"])
+        XCTAssertEqual(LibraryTab(stored: "skills"), .skills)
+        XCTAssertEqual(LibraryTab(stored: nil), .instructions)
+    }
+}

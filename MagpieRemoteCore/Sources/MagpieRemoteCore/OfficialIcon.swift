@@ -120,6 +120,7 @@ public enum OfficialIcon {
         case "keys": "Nav/nav-gateway"
         case "usage": "Nav/nav-usage"
         case "plugins": "Nav/nav-plugins"
+        case "library": "Nav/nav-library"
         default: nil
         }
     }
