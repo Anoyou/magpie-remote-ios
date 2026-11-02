@@ -133,9 +133,15 @@ final class PageHeadersUITests: XCTestCase {
                                               file: StaticString = #filePath, line: UInt = #line) {
         let bar = app.navigationBars.matching(identifier: title).firstMatch
         XCTAssertTrue(bar.appears(timeout: 10), "「\(title)」页没有导航栏标题", file: file, line: line)
+        let expandedHeight = bar.frame.height
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
         start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.5)
+        // 示例数据太少、列表滚不动的页面，大标题不会收起：这一页不检查（导航栏高度没变）。
+        guard waitUntil(3, { bar.frame.height < expandedHeight - 20 }) else {
+            XCTContext.runActivity(named: "「\(title)」内容不够长，大标题没有收起，跳过居中检查") { _ in }
+            return
+        }
         let same = NSPredicate(format: "label == %@ AND elementType == %@", title, NSNumber(value: XCUIElement.ElementType.staticText.rawValue))
         var small: XCUIElement?
         let found = waitUntil(5) {

@@ -63,3 +63,18 @@ extension XCUIApplication {
         }
     }
 }
+
+@MainActor
+extension XCUIApplication {
+    /// 页面的系统搜索栏（`.searchable`）。iOS 26 会按地方大小把它显示成完整的搜索栏，
+    /// 或收成工具栏里的放大镜按钮（`.minimizedSearch()` 的页面总是按钮）：是按钮就先点开。
+    func revealSearchField(timeout: TimeInterval = 10) -> XCUIElement {
+        let field = searchFields.firstMatch
+        if field.appears(timeout: 3) { return field }
+        let button = buttons.matching(NSPredicate(format: "label == %@ OR label == %@ OR identifier == %@ OR identifier == %@",
+                                                  "搜索", "Search", "Search", "search")).firstMatch
+        if button.appears(timeout: timeout) { button.tap() }
+        _ = field.appears(timeout: timeout)
+        return field
+    }
+}

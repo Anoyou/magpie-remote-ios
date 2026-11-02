@@ -72,8 +72,8 @@ final class PageTopStripUITests: XCTestCase {
     func testPluginsSearchIsNotPinnedUnderTheTitle() {
         let app = launch()
         app.openFromMore("manage.plugins", title: "插件")
-        let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.appears(timeout: 10), "插件页没有搜索栏")
+        let search = app.revealSearchField()
+        XCTAssertTrue(search.exists, "插件页没有搜索栏（也没有放大镜按钮）：\(app.navigationBars.firstMatch.debugDescription)\n\(app.toolbars.firstMatch.debugDescription)")
         let bar = app.navigationBars["插件"]
         XCTAssertFalse(bar.searchFields.firstMatch.exists, "搜索栏不应当放在导航栏里（和大标题抢位置）")
     }
