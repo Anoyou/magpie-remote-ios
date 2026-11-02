@@ -54,6 +54,16 @@ public struct AgentCLI: Hashable, Sendable {
         return app.isEmpty ? version : "CLI \(version)"
     }
 
+    /// 标题行版本那一行的几段（0.6.3）：CLI 版本、App 版本、「Claude Desktop 内置」。
+    /// App 里排成一行「CLI 0.166.0 · App 26.1027.30824」，放不下时每段一行。
+    public var versionParts: [String] {
+        var parts: [String] = []
+        if let versionTag { parts.append(versionTag) }
+        if !app.isEmpty { parts.append("App \(app)") }
+        if inDesktop { parts.append("Claude Desktop 内置") }
+        return parts
+    }
+
     /// 版本标签的说明（官方 `v.title`）。
     public func versionNote(agent: String) -> String {
         if via.isEmpty { return "\(agent) \(version) · 无法判断安装方式，请按原安装方式更新" }

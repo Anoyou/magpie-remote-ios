@@ -326,25 +326,26 @@ private struct AgentSection: View {
                                 .accessibilityLabel("有新版本")
                         }
                     }
-                    HStack(spacing: 6) {
-                        if let tag = cli?.versionTag {
-                            Text(tag).monospacedDigit()
-                                .accessibilityLabel(cli.map { $0.versionNote(agent: agent.name) } ?? tag)
-                                .accessibilityIdentifier("agent.version.\(agent.id)")
+                    // 0.6.3：版本一行「CLI 0.166.0 · App 26.1027.30824」；放不下时每段一行（左对齐），不再左右两栏换行。
+                    if let cli, !cli.versionParts.isEmpty {
+                        let parts = cli.versionParts
+                        ViewThatFits(in: .horizontal) {
+                            Text(parts.joined(separator: " · ")).lineLimit(1)
+                            VStack(alignment: .leading, spacing: 1) {
+                                ForEach(parts, id: \.self) { Text($0).lineLimit(1) }
+                            }
                         }
-                        if let app = cli?.app, !app.isEmpty {
-                            Text("App \(app)").monospacedDigit()
-                        }
-                        if cli?.inDesktop == true {
-                            Text("Claude Desktop 内置")
-                        }
-                        if agent.cliMissing {
-                            Text("未找到 CLI").foregroundStyle(.orange)
-                        }
+                        .monospacedDigit()
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(cli.version.isEmpty ? parts.joined(separator: "，") : cli.versionNote(agent: agent.name))
+                        .accessibilityIdentifier("agent.version.\(agent.id)")
                     }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    if agent.cliMissing {
+                        Text("未找到 CLI").foregroundStyle(.orange)
+                    }
                 }
+                .font(.caption)
+                .foregroundStyle(.secondary)
                 Spacer()
                 Text(agent.wired ? "已接入 magpie" : "未接入")
                     .font(.subheadline)

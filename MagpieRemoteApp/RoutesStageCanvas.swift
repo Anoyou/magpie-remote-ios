@@ -588,7 +588,7 @@ struct SeatRow: View {
         HStack(alignment: .top, spacing: 10) {
             dot.frame(height: 20.5)
             VStack(alignment: .leading, spacing: 6) {
-                title.frame(height: 20.5)
+                title
                 // 窄屏（.rt-accts.max560 em）：一句状态 white-space: normal，放不下就换行，不出框
                 PII.text(row.status, mask)
                     .font(.system(size: 12)).monospacedDigit()
@@ -681,44 +681,70 @@ struct SeatRow: View {
             .frame(width: 10)
     }
 
+    /// 0.6.3：名字和模型分两行（之前照网页排成一行，长账号名会把模型挤掉）。
+    /// 第一行：标志、账号（放不下时从中间省略，打码照旧）、灰色补充（套餐，例如 plus）；
+    /// 第二行：模型（放不下时从末尾省略）、快速 / 备用。
     private var title: some View {
         let seat = row.seat
-        // 网页 makeRow()：标志（16×16，右边 7px）、名字（560）、空格、灰色补充、模型（margin-left 7、11px 等宽、卡片 2 色底）、
-        // 快速 / 备用。整个 b 是一行：overflow hidden、text-overflow ellipsis、nowrap——放不下时从末尾截断，后面的不再画。
-        return InlineLine().callAsFunction {
-            Group {
-                if BrandIcon.isBrand(seat.officialIcon) {
-                    BrandIcon(seat.officialIcon, size: 16).foregroundStyle(RT.fg)
-                } else {
-                    // 网页认不出的供应商用 generic（一个盒子）
-                    Image(systemName: "shippingbox").font(.system(size: 12)).foregroundStyle(RT.fg2)
-                        .frame(width: 16, height: 16)
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 0) {
+                StageBrandMark(icon: seat.officialIcon).padding(.trailing, 7)
+                PII.text(seat.title, mask).font(.system(size: 13, weight: .medium)).foregroundStyle(RT.fg)
+                    .lineLimit(1).truncationMode(.middle)
+                if !seat.detail.isEmpty {
+                    PII.text(" " + seat.detail, mask).font(.system(size: 13)).foregroundStyle(RT.muted)
+                        .lineLimit(1).fixedSize().layoutPriority(1)
                 }
             }
-            .padding(.trailing, 7)
-            PII.text(seat.title, mask).font(.system(size: 13, weight: .medium)).foregroundStyle(RT.fg)
-            if !seat.detail.isEmpty {
-                PII.text(" " + seat.detail, mask).font(.system(size: 13)).foregroundStyle(RT.muted)
-            }
-            Text(seat.modelLabel)
-                .font(.system(size: 11, design: .monospaced)).foregroundStyle(RT.fg2)
-                .padding(.horizontal, 5).background(RT.card2, in: .rect(cornerRadius: 5))
-                .padding(.leading, seat.detail.isEmpty ? 7 + 3.6 : 7)
-            if seat.fast { badge(RouteWords.t("fast")).padding(.leading, 6) }
-            if seat.fallback { badge(RouteWords.t("fallback")).padding(.leading, 6) }
+            .frame(maxWidth: .infinity, minHeight: 20.5, maxHeight: 20.5, alignment: .leading)
+            StageModelLine(model: seat.modelLabel, fast: seat.fast, fallback: seat.fallback)
         }
-        .lineLimit(1)
-        .truncationMode(.tail)
-        .clipped()
     }
 
-    func badge(_ text: String) -> some View {
+}
+
+
+/// 舞台卡片左上角的供应商标志（16×16；网页认不出的供应商用 generic 盒子）。
+struct StageBrandMark: View {
+    let icon: String
+
+    var body: some View {
+        if BrandIcon.isBrand(icon) {
+            BrandIcon(icon, size: 16).foregroundStyle(RT.fg)
+        } else {
+            Image(systemName: "shippingbox").font(.system(size: 12)).foregroundStyle(RT.fg2)
+                .frame(width: 16, height: 16)
+        }
+    }
+}
+
+/// 账号 / 合并卡片的第二行：模型（等宽、卡片 2 色底，一行、放不下从末尾省略）+ 快速 / 备用。
+struct StageModelLine: View {
+    let model: String
+    var fast = false
+    var fallback = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if !model.isEmpty {
+                Text(model)
+                    .font(.system(size: 11, design: .monospaced)).foregroundStyle(RT.fg2)
+                    .lineLimit(1).truncationMode(.tail)
+                    .padding(.horizontal, 5).background(RT.card2, in: .rect(cornerRadius: 5))
+            }
+            if fast { Self.badge(RouteWords.t("fast")) }
+            if fallback { Self.badge(RouteWords.t("fallback")) }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    static func badge(_ text: String) -> some View {
         Text(text).font(.system(size: 10.5, weight: .medium)).foregroundStyle(RT.muted)
+            .lineLimit(1).fixedSize()
             .padding(.horizontal, 6)
             .overlay(Capsule().strokeBorder(RT.line))
     }
 }
-
 
 /// 网页里一行字的 `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`：几段排成一行，按各自想要的宽度，
 /// 放不下时跨过边的那一段用剩下的宽度（文字自己截断加省略号），后面的不再画——不会挤在一起、叠在一起或伸出框外。
@@ -885,24 +911,14 @@ struct FoldRow: View {
                     .frame(width: 8, height: 8).frame(width: 10, height: 20.5)
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
-                        InlineLine().callAsFunction {
-                            Group {
-                                if let w = item.iconOf, BrandIcon.isBrand(w.officialIcon) { BrandIcon(w.officialIcon, size: 16).foregroundStyle(RT.fg) }
-                                else { Image(systemName: "shippingbox").font(.system(size: 12)).foregroundStyle(RT.fg2).frame(width: 16, height: 16) }
-                            }
-                            .padding(.trailing, 7)
+                        // 0.6.3：和账号卡片一样分两行——名字（中间省略）+「N 个密钥」，下一行模型。
+                        HStack(spacing: 0) {
+                            StageBrandMark(icon: item.iconOf?.officialIcon ?? "").padding(.trailing, 7)
                             PII.text(item.name, mask).font(.system(size: 13, weight: .medium)).foregroundStyle(RT.fg)
+                                .lineLimit(1).truncationMode(.middle)
                             Text(" " + item.count).font(.system(size: 13)).foregroundStyle(RT.muted)
-                            Text(item.ref).font(.system(size: 11, design: .monospaced)).foregroundStyle(RT.fg2)
-                                .padding(.horizontal, 5).background(RT.card2, in: .rect(cornerRadius: 5)).padding(.leading, 7)
-                            if item.fallback {
-                                Text(RouteWords.t("fallback")).font(.system(size: 10.5, weight: .medium)).foregroundStyle(RT.muted)
-                                    .padding(.horizontal, 6).overlay(Capsule().strokeBorder(RT.line)).padding(.leading, 6)
-                            }
+                                .lineLimit(1).fixedSize().layoutPriority(1)
                         }
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .clipped()
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .frame(height: 20.5)
                         ChevronShape().stroke(RT.muted, style: StrokeStyle(lineWidth: 1.7 * 12 / 16, lineCap: .round, lineJoin: .round))
@@ -910,6 +926,7 @@ struct FoldRow: View {
                             .rotationEffect(.degrees(item.open ? 180 : 0))
                             .animation(.easeInOut(duration: 0.2), value: item.open)
                     }
+                    StageModelLine(model: item.ref, fallback: item.fallback)
                     if !item.status.isEmpty {
                         PII.text(item.status, mask).font(.system(size: 12)).monospacedDigit().foregroundStyle(on ? RT.fg : RT.muted)
                             .fixedSize(horizontal: false, vertical: true)
