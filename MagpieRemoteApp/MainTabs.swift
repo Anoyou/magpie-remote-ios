@@ -20,6 +20,9 @@ struct MainTabs: View {
             ForEach(model.dock.layout.pages) { page in
                 Tab(value: AppTab.page(page)) {
                     TabRoot { AppPageView(page: page) }
+                        // 「主页」换分页时换一个新的导航栈：导航栏标题原地从「Agent」改成「供应商」时，
+                        // iOS 26 的大标题无障碍树里还留着旧名字；新栈的导航栏是新的，标题一定对。
+                        .id(page == .home ? "home.\(model.homeSegmentChoice?.rawValue ?? "stored")" : page.rawValue)
                 } label: {
                     Label(page.title, page: page)
                 }

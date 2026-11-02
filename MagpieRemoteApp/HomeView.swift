@@ -7,11 +7,10 @@ import MagpieRemoteCore
 /// 导航栏标题跟着分页走（Agent / 供应商 / 额度），推入的详情页返回按钮也是这个名字。
 struct HomeView: View {
     @Environment(AppModel.self) private var model
-    /// nil：还没读保存的值（读要等拿到 `model`）。
-    @State private var chosen: HomeSegment?
-
     private var defaults: UserDefaults? { model.isFixture ? nil : .standard }
-    private var segment: HomeSegment { chosen ?? HomeSegment(stored: defaults?.string(forKey: HomeSegment.defaultsKey)) }
+    private var segment: HomeSegment {
+        model.homeSegmentChoice ?? HomeSegment(stored: defaults?.string(forKey: HomeSegment.defaultsKey))
+    }
 
     var body: some View {
         page
@@ -48,12 +47,12 @@ struct HomeView: View {
     }
 
     private func choose(_ next: HomeSegment) {
-        let changed = next != segment
-        chosen = next
+        guard next != segment else { return }
+        model.homeSegmentChoice = next
         defaults?.set(next.rawValue, forKey: HomeSegment.defaultsKey)
-        guard changed else { return }
-        // 换分页时导航栏标题是原地改的（Agent → 供应商），iOS 26 的大标题画出了新名字，
-        // 无障碍树里却还是旧名字（VoiceOver 会读「Agent」）。整页内容都换了，告诉系统「换屏」让它重新读一遍。
+        // 导航栏标题原地改（Agent → 供应商）时，iOS 26 的大标题画出了新名字，无障碍树里却还是旧名字
+        // （VoiceOver 会读「Agent」）。在底栏里时 MainTabs 会为新分页换一个导航栈；从「更多」推入时换不了栈，
+        // 至少告诉系统「换屏」让它重新读一遍。
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(350))
             UIAccessibility.post(notification: .screenChanged, argument: nil)
