@@ -68,6 +68,22 @@ extension XCUIApplication {
         XCTAssertTrue(navigationBars[title].appears(timeout: 10), "没有打开「\(title)」", file: file, line: line)
     }
 
+    /// 「主页 › Agent」里某个 Agent 的标题行（设置默认收起，只有这一行）。
+    func agentHeader(_ agentID: String) -> XCUIElement {
+        descendants(matching: .any).matching(identifier: "agent.header.\(agentID)").firstMatch
+    }
+
+    /// 展开「主页 › Agent」里某个 Agent 的设置（默认收起）；已经展开就不动。
+    func expandAgent(_ agentID: String, file: StaticString = #filePath, line: UInt = #line) {
+        let header = agentHeader(agentID)
+        _ = header.appears(timeout: 15)
+        swipeUp(until: header, max: 4)
+        if !(header.exists && header.isHittable) { swipeDown(until: header, max: 4) }
+        XCTAssertTrue(header.appears(timeout: 5), "Agent 页没有 \(agentID) 的标题行", file: file, line: line)
+        if (header.value as? String) != "已展开" { header.tap() }
+        XCTAssertTrue(UITestWait.until(5) { (header.value as? String) == "已展开" }, "\(agentID) 的设置没有展开", file: file, line: line)
+    }
+
     /// 弹出菜单里的一项。放在 Menu 的 Section 里的按钮，iOS 不会把 SwiftUI 的 accessibilityIdentifier
     /// 带到菜单项上（只剩标题），所以按 identifier 或按标题找，哪个先出现用哪个。
     func menuItem(id identifier: String, label: String) -> XCUIElement {
