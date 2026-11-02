@@ -394,6 +394,7 @@ struct LibraryServerDetail: View {
                 }
             }
         }
+        .cardSpacing()
     }
 
     private func copyConfig(_ agent: LibraryAgent) {
@@ -588,6 +589,7 @@ struct LibraryServerEditor: View {
                     }
                 }
             }
+            .cardSpacing()
             .detailHeader(isNew ? "新的 MCP 服务器" : draft.old)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
@@ -680,6 +682,7 @@ struct LibraryServerMarket: View {
                     }
                 }
             }
+            .cardSpacing()
             .pageSearchable(text: $query, prompt: "搜索 MCP 服务器 — GitHub、Postgres、Figma…")
             .onSubmit(of: .search) { Task { await search() } }
             .task { await search() }
@@ -757,6 +760,7 @@ private struct LibraryServerMarketAdd: View {
                     Section { Text("已在资源库中，名为 \(item.have)").foregroundStyle(.secondary) }
                 }
             }
+            .cardSpacing()
             .detailHeader(item.title)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }

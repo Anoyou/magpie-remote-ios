@@ -132,6 +132,7 @@ struct HostTuneView: View {
                 Section { HStack { ProgressView(); Text("正在重放这段时间的调用…").foregroundStyle(.secondary) } }
             }
         }
+        .cardSpacing()
         .pageHeader("自动调优")
         .refreshable { await model.load() }
         .task { await model.load() }

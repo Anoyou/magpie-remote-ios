@@ -154,6 +154,7 @@ struct HostUpdateView: View {
             }
             notesSection
         }
+        .cardSpacing()
         .pageHeader("主机更新")
         .refreshable { await model.load(fresh: true) }
         .task { await model.load(fresh: true) }

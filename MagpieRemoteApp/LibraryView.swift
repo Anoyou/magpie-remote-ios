@@ -156,6 +156,7 @@ private struct LibraryContent: View {
                 Text("在访达里打开资源库 / 备份文件夹、给项目选文件夹、MCP 服务器的 OAuth 登录只在 Mac 上有意义，App 里不做；需要时在网页里操作。")
             }
         }
+        .cardSpacing()
         .animation(.default, value: store.tab)
         // RTK 的状态每次打开这个分页都重新读（官方：装了新 Agent 之后要能看到）
         .onChange(of: store.tab) { _, tab in

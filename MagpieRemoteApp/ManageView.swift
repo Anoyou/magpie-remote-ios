@@ -58,6 +58,7 @@ struct ManageGate<Content: View>: View {
                     Text("需要 Web 密钥")
                 }
             }
+            .cardSpacing()
         case .failed(let error):
             // 密钥不对时用右上角「主机」按钮更新 Web 密钥。
             PageTopStripStack { ErrorStateView(error: error) { Task { await store.refresh() } } }

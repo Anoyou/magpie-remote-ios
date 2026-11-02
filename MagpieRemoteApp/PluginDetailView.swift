@@ -74,6 +74,7 @@ struct PluginDetailView: View {
                 Text("插件是他人的代码：由它登录并发出请求，或作为中间件看到请求。")
             }
         }
+        .cardSpacing()
         .confirmationDialog("移除 \(store.shownName(plugin))？", isPresented: $confirmRemove, titleVisibility: .visible) {
             Button("移除", role: .destructive) {
                 Task { if await store.remove(plugin) { dismiss() } }
@@ -396,6 +397,7 @@ struct PluginListingSheet: View {
                     Text("插件是他人的代码：由它登录并发出请求，或作为中间件看到请求。")
                 }
             }
+            .cardSpacing()
             .detailHeader(listing.name)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } }
@@ -448,6 +450,7 @@ struct PluginOptionsEditor: View {
                 }
             }
         }
+        .cardSpacing()
         .detailHeader("选项")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {

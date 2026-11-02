@@ -5,6 +5,7 @@ import MagpieRemoteCore
 /// 「额度」页：各订阅 / 套餐 / 余额账号的剩余额度、重置时间与历史曲线；密钥受限时显示它自己的限额。
 struct QuotaView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.pageTopStrip) private var outerStrip
     @State private var snapshot: QuotaSnapshot?
     @State private var error: MagpieError?
     @State private var notice: String?
@@ -16,10 +17,11 @@ struct QuotaView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                // 「主页」的分页器：滚动内容的第一行（跟着内容滚，不钉在导航栏下面）。
+            VStack(spacing: 0) {
+                // 「主页」的分页器：滚动内容的第一行（跟着内容滚，不钉在导航栏下面）；
+                // 上下间距和列表页一样（PageTopStripMetrics），不用卡片之间的 16。
                 PageTopStripView()
-                Group {
+                VStack(spacing: 16) {
                     HostStatusCard()
                     ConnectedContent {
                         content
@@ -27,7 +29,9 @@ struct QuotaView: View {
                 }
                 .pageTopStrip(nil)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.bottom)
+            .padding(.top, outerStrip == nil ? 16 : 0)
         }
         .background(Color(.systemGroupedBackground))
         .refreshable { await refreshAll() }

@@ -76,6 +76,7 @@ struct ManageKeysView: View {
                 }
             }
         }
+        .cardSpacing()
         .pageHeader(AppPage.keys.title, subtitle: AppPage.keys.headerSubtitle)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -257,6 +258,7 @@ private struct NewKeySheet: View {
                     Text("创建后会显示一次完整的密钥，请立刻复制保存；之后只能看到脱敏后的值。")
                 }
             }
+            .cardSpacing()
             .detailHeader("新建网关密钥")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
@@ -302,6 +304,7 @@ private struct IssueKeySheet: View {
                     Text("7 天").tag("168h")
                 }
             }
+            .cardSpacing()
             .detailHeader("签发临时密钥")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
@@ -363,6 +366,7 @@ struct SecretRevealView: View {
                     }
                 }
             }
+            .cardSpacing()
             .detailHeader("新密钥")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

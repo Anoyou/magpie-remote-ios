@@ -44,6 +44,8 @@ final class AgentControlsTests: XCTestCase {
         let codex = try XCTUnwrap(clis.agents["codex"])
         XCTAssertTrue(codex.update)
         XCTAssertEqual(codex.versionTag, "CLI 0.163.0") // 旁边有 Codex App
+        XCTAssertEqual(codex.versionParts.first, "CLI 0.163.0")
+        XCTAssertTrue(codex.versionParts.count == 2 && codex.versionParts[1].hasPrefix("App "), "\(codex.versionParts)")
         XCTAssertEqual(codex.app, "26.1.0")
         XCTAssertEqual(codex.buttonTitle(busy: false), "更新到 0.164.2")
         XCTAssertEqual(codex.buttonTitle(busy: true), "更新中…")
@@ -52,6 +54,7 @@ final class AgentControlsTests: XCTestCase {
         let gemini = try XCTUnwrap(clis.agents["gemini"])
         XCTAssertFalse(gemini.update)
         XCTAssertEqual(gemini.versionTag, "0.21.0")
+        XCTAssertEqual(gemini.versionParts, ["0.21.0"])
         XCTAssertEqual(gemini.versionNote(agent: "Gemini CLI"), "Gemini CLI 0.21.0 · 已是最新")
         let pi = try XCTUnwrap(clis.agents["pi"])
         XCTAssertTrue(pi.offPath)

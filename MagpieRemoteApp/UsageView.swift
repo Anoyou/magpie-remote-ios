@@ -21,13 +21,11 @@ struct UsageOverviewPane: View {
     var body: some View {
         ConnectedContent {
             List {
-                PageTopStripSection()
-                Section {
+                // 「用量」的页面分页器和这里的「今天 / 7 天…」在同一条里（PageTopStripMetrics）。
+                PageTopStripSection {
                     UsagePeriodPicker(period: $period)
                         .accessibilityIdentifier("usage.period")
                 }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
 
                 if let error {
                     Section { ErrorStateView(error: error) { Task { await reload() } } }
@@ -52,6 +50,7 @@ struct UsageOverviewPane: View {
                         .listRowBackground(Color.clear)
                 }
             }
+            .cardSpacing()
             .listStyle(.insetGrouped)
             .refreshable { await reload(); await reloadConcurrency() }
         }
@@ -145,7 +144,9 @@ private struct UsageSummarySection: View {
     var body: some View {
         Section {
             VStack(alignment: .leading, spacing: 6) {
-                Text("总花费").font(.subheadline).foregroundStyle(.secondary)
+                // 0.6.3：时间段（今天 / 近 7 天…）写在卡片里，不再单独当分组标题——
+                // 它就在上面的「今天 / 7 天…」分页器下面，标题会让分页器和卡片之间多出一截（PageTopStripMetrics）。
+                Text(period.heading + "总花费").font(.subheadline).foregroundStyle(.secondary)
                 Text(UsageFormat.cost(totals.cost))
                     .font(.system(.largeTitle, design: .rounded, weight: .semibold).monospacedDigit())
                 if totals.unpriced > 0 {
@@ -184,8 +185,6 @@ private struct UsageSummarySection: View {
                 if totals.retried > 0 { LabeledContent("重试后成功", value: "\(UsageFormat.count(totals.retried)) 次") }
             }
             .accessibilityIdentifier("usage.tokens")
-        } header: {
-            Text(period.heading)
         }
     }
 

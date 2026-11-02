@@ -165,6 +165,7 @@ struct KeyLimitSheet: View {
                 }
             }
         }
+        .cardSpacing()
     }
 }
 
@@ -230,6 +231,7 @@ struct KeyModelsSheet: View {
                             }
                         }
                     }
+                    .cardSpacing()
                     .pageSearchable(text: $search, prompt: "搜索模型")
                 } else if failed {
                     ContentUnavailableView("读不到模型列表", systemImage: "exclamationmark.triangle")

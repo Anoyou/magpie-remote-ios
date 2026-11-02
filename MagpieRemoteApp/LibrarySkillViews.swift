@@ -503,6 +503,7 @@ struct LibrarySkillDetail: View {
                 Text("SKILL.md")
             }
         }
+        .cardSpacing()
     }
 }
 
@@ -551,6 +552,7 @@ struct LibrarySkillInstall: View {
                     }
                 }
             }
+            .cardSpacing()
             .detailHeader("添加技能")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
@@ -676,6 +678,7 @@ struct LibrarySkillMarket: View {
                     }
                 }
             }
+            .cardSpacing()
             .pageSearchable(text: $query, prompt: "在 skills.sh 搜索技能 — react、pdf、testing…")
             .onSubmit(of: .search) { Task { await search() } }
             .task { await search() }
@@ -726,6 +729,7 @@ private struct LibrarySkillMarketAdd: View {
                 if let error { Section { Text(error).foregroundStyle(.red).font(.footnote) } }
                 if !item.have.isEmpty { Section { Text("已在资源库中，名为 \(item.have)").foregroundStyle(.secondary) } }
             }
+            .cardSpacing()
             .detailHeader(item.name)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
@@ -798,6 +802,7 @@ struct LibrarySkillHowSheet: View {
                     }
                 }
             }
+            .cardSpacing()
             .detailHeader("Skills 启用方式")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() } } }
         }

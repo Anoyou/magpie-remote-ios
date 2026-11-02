@@ -65,6 +65,7 @@ struct ChatSessionsView: View {
                     }
                 }
             }
+            .cardSpacing()
             .detailHeader("对话列表")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
