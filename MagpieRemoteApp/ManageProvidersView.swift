@@ -9,6 +9,7 @@ struct ManageProvidersView: View {
 
     var body: some View {
         List {
+            PageTopStripSection()
             if store.providers.isEmpty {
                 Section {
                     Text(store.phase == .ready ? "还没有供应商。点右上角「+」添加，或在网页中登录订阅账号。" : "正在读取…")

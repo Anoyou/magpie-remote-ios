@@ -36,6 +36,7 @@ struct ManagePluginsView: View {
 
     var body: some View {
         List {
+            PageTopStripSection()
             Section {
                 tabPicker
             }
@@ -56,7 +57,8 @@ struct ManagePluginsView: View {
             }
         }
         .pageHeader("插件")
-        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索插件和 npm…")
+        // 统一的系统搜索栏（见 DESIGN.md「搜索」）：跟着大标题一起收起，不再钉在导航栏下面（那样会和大标题抢位置）。
+        .pageSearchable(text: $query, prompt: "搜索插件和 npm…")
         .onChange(of: query) { _, new in
             if !new.isEmpty, tab != .discover { tab = .discover }
         }

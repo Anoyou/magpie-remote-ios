@@ -24,6 +24,8 @@ extension XCUIApplication {
         XCTAssertTrue(tab.appears(timeout: 15), "底栏里没有「主页」", file: file, line: line)
         tab.tap()
         let control = homeSegments
+        // 分页器是列表的第一行（跟着内容滚）：之前往下滚过的话先滚回顶部。
+        if !control.appears(timeout: 3) || !control.isHittable { swipeDown(until: control, max: 6) }
         XCTAssertTrue(control.appears(timeout: 10), "主页顶部没有分页器", file: file, line: line)
         let button = control.buttons[segment]
         XCTAssertTrue(button.appears(timeout: 5), "分页器里没有「\(segment)」", file: file, line: line)

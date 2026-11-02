@@ -3,6 +3,15 @@ import XCTest
 /// 统一页头：底栏的每个页面、「更多」里的每一项，顶部都要有左对齐的大标题（导航栏里），
 /// 有官方副标题的页面（用量、会话、网关密钥、资源库）还要有那行副标题。
 /// 0.5.0 里「用量」「会话」「主页」没有大标题，这里逐页检查，防止再丢。
+/// 各页面的副标题（和 App 里 PageSubtitles 一致；0.6.2 起每条都短到 393 pt 宽的 iPhone 上一行放得下）。
+enum PageSubtitleWords {
+    static let usage = "花费、请求和上下文窗口"
+    static let sessions = "查看、搜索和导出历史对话"
+    static let keys = "给每个网关密钥设用量上限"
+    static let library = "统一管理，分发给每个 Agent"
+    static let all = [usage, sessions, keys, library]
+}
+
 @MainActor
 final class PageHeadersUITests: XCTestCase {
     private var launchTimeout: TimeInterval {
@@ -73,20 +82,20 @@ final class PageHeadersUITests: XCTestCase {
         heights.append(("额度", assertHeader("额度", leading: true, in: app)))
 
         app.openDockTab("会话")
-        heights.append(("会话", assertHeader("会话", subtitle: "Agent 的历史对话", leading: true, in: app)))
+        heights.append(("会话", assertHeader("会话", subtitle: PageSubtitleWords.sessions, leading: true, in: app)))
         app.openDockTab("路由")
         heights.append(("路由", assertHeader("路由", leading: true, in: app)))
         app.openDockTab("用量")
-        heights.append(("用量", assertHeader("用量", subtitle: "你的额度、花费及其去向", leading: true, in: app)))
+        heights.append(("用量", assertHeader("用量", subtitle: PageSubtitleWords.usage, leading: true, in: app)))
         app.openMore()
         heights.append(("更多", assertHeader("更多", leading: true, in: app)))
 
         // 「更多」里的页面（每次都点底栏「更多」回到根列表再进）
         let pages: [(id: String, title: String, subtitle: String?)] = [
             ("more.chat", "对话", nil),
-            ("manage.keys", "网关密钥", "让每个网关密钥只用到"),
+            ("manage.keys", "网关密钥", PageSubtitleWords.keys),
             ("manage.plugins", "插件", nil),
-            ("more.library", "资源库", "指令、MCP 服务器、技能和 Hooks"),
+            ("more.library", "资源库", PageSubtitleWords.library),
             ("manage.hosts", "主机", nil),
             ("manage.about", "关于", nil),
             ("manage.guide", "配置引导", nil),
@@ -117,5 +126,66 @@ final class PageHeadersUITests: XCTestCase {
         assertHeader("对话", leading: true, in: app)
         app.openFromMore("more.home", title: "Agent")
         assertHeader("Agent", in: app)
+    }
+
+    /// 往上滚后，系统把大标题收成导航栏正中间的小标题：每个页面都一样居中（0.6.1 真机上有的页面靠左）。
+    private func assertCollapsedTitleCentered(_ title: String, in app: XCUIApplication,
+                                              file: StaticString = #filePath, line: UInt = #line) {
+        let bar = app.navigationBars.matching(identifier: title).firstMatch
+        XCTAssertTrue(bar.appears(timeout: 10), "「\(title)」页没有导航栏标题", file: file, line: line)
+        let expandedHeight = bar.frame.height
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+        start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.5)
+        // 示例数据太少、列表滚不动的页面，大标题不会收起：这一页不检查（导航栏高度没变）。
+        guard waitUntil(3, { bar.frame.height < expandedHeight - 20 }) else {
+            XCTContext.runActivity(named: "「\(title)」内容不够长，大标题没有收起，跳过居中检查") { _ in }
+            return
+        }
+        let same = NSPredicate(format: "label == %@ AND elementType == %@", title, NSNumber(value: XCUIElement.ElementType.staticText.rawValue))
+        var small: XCUIElement?
+        let found = waitUntil(5) {
+            let barFrame = bar.frame
+            small = app.descendants(matching: .any).matching(same).allElementsBoundByIndex.first {
+                let f = $0.frame
+                return !f.isEmpty && f.height < 30 && f.midY >= barFrame.minY && f.midY <= barFrame.maxY
+            }
+            return small != nil
+        }
+        XCTAssertTrue(found, "「\(title)」往上滚后导航栏里没有收起的小标题：\(bar.debugDescription)", file: file, line: line)
+        if let small {
+            let barFrame = bar.frame
+            XCTAssertLessThan(abs(small.frame.midX - barFrame.midX), 24,
+                              "「\(title)」收起后的小标题应当居中：标题 \(small.frame)，导航栏 \(barFrame)", file: file, line: line)
+        }
+        end.press(forDuration: 0.1, thenDragTo: start, withVelocity: .fast, thenHoldForDuration: 0.1)
+    }
+
+    /// 副标题一行放得下（393 pt 宽，不被截断成「…」）。
+    private func assertSubtitleFits(_ subtitle: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let sub = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", subtitle)).firstMatch
+        XCTAssertTrue(sub.appears(timeout: 5), "没有副标题「\(subtitle)」", file: file, line: line)
+        XCTAssertLessThan(sub.frame.height, 26, "副标题「\(subtitle)」换行了：\(sub.frame)", file: file, line: line)
+        XCTAssertLessThanOrEqual(sub.frame.maxX, app.windows.firstMatch.frame.maxX - 8, "副标题「\(subtitle)」超出屏幕：\(sub.frame)", file: file, line: line)
+    }
+
+    func testCollapsedTitlesAreCenteredAndSubtitlesFit() {
+        let app = launch()
+        app.openDockTab("用量")
+        assertSubtitleFits(PageSubtitleWords.usage, in: app)
+        assertCollapsedTitleCentered("用量", in: app)
+        app.openDockTab("会话")
+        assertSubtitleFits(PageSubtitleWords.sessions, in: app)
+        assertCollapsedTitleCentered("会话", in: app)
+        app.openMore()
+        assertCollapsedTitleCentered("更多", in: app)
+        app.openFromMore("manage.keys", title: "网关密钥")
+        assertSubtitleFits(PageSubtitleWords.keys, in: app)
+        assertCollapsedTitleCentered("网关密钥", in: app)
+        app.openFromMore("more.library", title: "资源库")
+        assertSubtitleFits(PageSubtitleWords.library, in: app)
+        assertCollapsedTitleCentered("资源库", in: app)
+        app.openFromMore("manage.plugins", title: "插件")
+        assertCollapsedTitleCentered("插件", in: app)
     }
 }

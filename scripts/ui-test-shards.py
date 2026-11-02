@@ -35,6 +35,7 @@ DURATIONS = {
     "DockUITests/testCustomizeDockAndRestoreDefault": 31,
     "PageHeadersUITests/testEveryDockTabAndMorePageHasHeader": 90,
     "PageHeadersUITests/testHeaderShowsBothInDockAndFromMore": 40,
+    "PageHeadersUITests/testCollapsedTitlesAreCenteredAndSubtitlesFit": 80,
     "DockUITests/testDockedPageOpensFromTabAndLeavesMore": 31,
     "HomeUITests/testAgentsNotSetUpAndHiddenStartFolded": 31,
     "HomeUITests/testAgentSettingsStartCollapsed": 31,

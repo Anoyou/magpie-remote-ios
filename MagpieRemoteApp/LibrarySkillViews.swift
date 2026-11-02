@@ -676,7 +676,7 @@ struct LibrarySkillMarket: View {
                     }
                 }
             }
-            .searchable(text: $query, prompt: "在 skills.sh 搜索技能 — react、pdf、testing…")
+            .pageSearchable(text: $query, prompt: "在 skills.sh 搜索技能 — react、pdf、testing…")
             .onSubmit(of: .search) { Task { await search() } }
             .task { await search() }
             .detailHeader("发现")

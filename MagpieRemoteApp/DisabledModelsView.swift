@@ -125,7 +125,7 @@ private struct DisabledModelPicker: View {
                     }
                 }
             }
-            .searchable(text: $search, prompt: "搜索模型")
+            .pageSearchable(text: $search, prompt: "搜索模型")
             .detailHeader("停用模型")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }

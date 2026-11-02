@@ -680,7 +680,7 @@ struct LibraryServerMarket: View {
                     }
                 }
             }
-            .searchable(text: $query, prompt: "搜索 MCP 服务器 — GitHub、Postgres、Figma…")
+            .pageSearchable(text: $query, prompt: "搜索 MCP 服务器 — GitHub、Postgres、Figma…")
             .onSubmit(of: .search) { Task { await search() } }
             .task { await search() }
             .detailHeader("发现")

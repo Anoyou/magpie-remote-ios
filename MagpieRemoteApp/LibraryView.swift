@@ -36,18 +36,7 @@ private struct LibraryRoot: View {
         // ZStack 而不是 Group：Group 的修饰符会分给它里面的每个视图，换分支（读取中 → 列表）时弹窗的宿主也跟着换掉。
         ZStack {
             if store.turnedOff {
-                ContentUnavailableView {
-                    Label("资源库已关闭", systemImage: "books.vertical")
-                } description: {
-                    Text("magpie 的「插件 › 内置」里关掉了资源库。启用后，指令、MCP 服务器和技能只需添加一次，就能给每个 Agent。")
-                } actions: {
-                    Button("启用资源库") { Task { await store.enable() } }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(store.busy)
-                        .accessibilityIdentifier("library.enable")
-                }
-                .accessibilityElement(children: .contain)
-                .accessibilityIdentifier("library.off")
+                PageTopStripStack { turnedOffView }
             } else {
                 phaseContent
             }
@@ -70,15 +59,32 @@ private struct LibraryRoot: View {
         .libraryAlerts(store: store, id: "library")
     }
 
+    private var turnedOffView: some View {
+        ContentUnavailableView {
+            Label("资源库已关闭", systemImage: "books.vertical")
+        } description: {
+            Text("magpie 的「插件 › 内置」里关掉了资源库。启用后，指令、MCP 服务器和技能只需添加一次，就能给每个 Agent。")
+        } actions: {
+            Button("启用资源库") { Task { await store.enable() } }
+                .buttonStyle(.borderedProminent)
+                .disabled(store.busy)
+                .accessibilityIdentifier("library.enable")
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("library.off")
+    }
+
     @ViewBuilder private var phaseContent: some View {
         Group {
             switch store.phase {
             case .loading where store.page == nil:
-                ProgressView("正在读取资源库…")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .accessibilityIdentifier("library.loading")
+                PageTopStripStack {
+                    ProgressView("正在读取资源库…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .accessibilityIdentifier("library.loading")
+                }
             case .failed(let error) where store.page == nil:
-                ContentUnavailableView {
+                PageTopStripStack { ContentUnavailableView {
                     Label("读不到资源库", systemImage: "exclamationmark.triangle")
                 } description: {
                     Text(error.message)
@@ -88,7 +94,7 @@ private struct LibraryRoot: View {
                         .accessibilityIdentifier("library.retry")
                 }
                 .accessibilityElement(children: .contain)
-                .accessibilityIdentifier("library.failed")
+                .accessibilityIdentifier("library.failed") }
             default:
                 if let page = store.page {
                     LibraryContent(store: store, manage: manage, page: page)
@@ -105,6 +111,7 @@ private struct LibraryContent: View {
 
     var body: some View {
         List {
+            PageTopStripSection()
             Section {
                 Picker("分页", selection: $store.tab) {
                     ForEach(LibraryTab.allCases) { tab in

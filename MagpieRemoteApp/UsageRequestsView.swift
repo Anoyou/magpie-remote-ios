@@ -69,6 +69,7 @@ struct UsageRequestsView: View {
 
     var body: some View {
         List {
+            if embedded { PageTopStripSection() }
             Section {
                 UsagePeriodPicker(period: $period)
                     .accessibilityIdentifier("usage.requests.period")
@@ -136,7 +137,7 @@ struct UsageRequestsView: View {
         }
         .listStyle(.insetGrouped)
         .modifier(RequestsTitle(embedded: embedded))
-        .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "搜索模型、供应商、会话")
+        .pageSearchable(text: $search, prompt: "搜索模型、供应商、会话")
         .toolbar {
             if web != nil {
                 ToolbarItem(placement: .secondaryAction) {

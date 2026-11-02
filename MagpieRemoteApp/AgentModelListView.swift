@@ -82,7 +82,7 @@ struct AgentModelListView: View {
                 }
             }
         }
-        .searchable(text: $search, prompt: "搜索模型")
+        .pageSearchable(text: $search, prompt: "搜索模型")
         .environment(\.editMode, .constant(mode == .order ? .active : .inactive))
         .confirmationDialog(confirmTitle(list), isPresented: present($asksAll), titleVisibility: .visible, presenting: asksAll) { hide in
             Button(hide ? "全部隐藏" : "全部显示", role: hide ? .destructive : nil) {

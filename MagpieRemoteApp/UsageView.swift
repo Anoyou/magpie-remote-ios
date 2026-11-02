@@ -21,6 +21,7 @@ struct UsageOverviewPane: View {
     var body: some View {
         ConnectedContent {
             List {
+                PageTopStripSection()
                 Section {
                     UsagePeriodPicker(period: $period)
                         .accessibilityIdentifier("usage.period")
@@ -73,6 +74,7 @@ struct UsageOverviewPane: View {
             // 已推入页面的下面（点「请求记录」后看到的仍是用量页，返回按钮却变成「请求记录」）。
             NavigationLink {
                 UsageRequestsView(period: $period, held: held)
+                    .pageTopStrip(nil)
             } label: {
                 Label(held ? "查看这把密钥的请求记录" : "请求记录", systemImage: "list.bullet.rectangle")
             }

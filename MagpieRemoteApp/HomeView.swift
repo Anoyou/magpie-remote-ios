@@ -13,8 +13,10 @@ struct HomeView: View {
     }
 
     var body: some View {
+        // 分页器是列表的第一行（跟着内容滚），不钉在导航栏下面：钉住时和系统大标题的展开 / 收起互相抢位置，
+        // 滚到顶部附近页头会抖（见 PageTopStrip）。
         page
-            .safeAreaBar(edge: .top, spacing: 0) { picker }
+            .pageTopStrip { picker }
             // 点「额度」小组件打开时切到额度分页。
             .onChange(of: model.requestedHomeSegment, initial: true) { _, request in
                 guard let request else { return }
@@ -41,8 +43,6 @@ struct HomeView: View {
             }
         }
         .pickerStyle(.segmented)
-        .padding(.horizontal)
-        .padding(.vertical, 8)
         .accessibilityIdentifier("home.segment")
     }
 

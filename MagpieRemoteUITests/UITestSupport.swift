@@ -63,3 +63,19 @@ extension XCUIApplication {
         }
     }
 }
+
+@MainActor
+extension XCUIApplication {
+    /// 统一的系统搜索栏（`pageSearchable`，导航栏标题下面，跟着大标题收起）：列表在顶部时直接可见；
+    /// 已经往下滚过（搜索栏跟着大标题收起了）就往回滑到顶部，让它重新出来。
+    func revealSearchField(timeout: TimeInterval = 10) -> XCUIElement {
+        let field = searchFields.firstMatch
+        if field.appears(timeout: 3), field.isHittable { return field }
+        for _ in 0..<8 {
+            swipeDown()
+            if field.appears(timeout: 1.5), field.isHittable { return field }
+        }
+        _ = field.appears(timeout: timeout)
+        return field
+    }
+}

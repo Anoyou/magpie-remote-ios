@@ -30,6 +30,7 @@ struct UsageSessionsPane: View {
 
     var body: some View {
         List {
+            PageTopStripSection()
             Section {
                 Picker("范围", selection: $rangeRaw) {
                     ForEach(SessionRange.allCases) { Text($0.title).tag($0.rawValue) }
@@ -59,7 +60,7 @@ struct UsageSessionsPane: View {
             }
         }
         .listStyle(.insetGrouped)
-        .searchable(text: $filter.search, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "搜索会话")
+        .pageSearchable(text: $filter.search, prompt: "搜索会话")
         .refreshable { await loadAll() }
         .task(id: range) { await loadAll() }
         .task(id: OverviewKey(range: range, agent: filter.agent, model: filter.model, folder: filter.folder)) { await loadOverview() }
