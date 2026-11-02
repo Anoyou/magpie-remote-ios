@@ -18,7 +18,7 @@ magpie 的 iPhone 遥控器。用户不是开发者：所有文案用简体中�
 - **页面顶部不钉东西**：大标题页面的导航栏下面不放钉住的条（分页器、搜索栏、筛选、`safeAreaInset(edge: .top)` / `safeAreaBar(edge: .top)`、列表上方的固定内容）。钉住的条会和大标题的展开 / 收起抢位置，滚到顶部附近页头会抖。这类内容做成列表的第一行，跟着内容滚：外层用 `.pageTopStrip { … }` 交给页面，页面根列表第一行写 `PageTopStripSection()`（`ScrollView` 页用 `PageTopStripView()`，读取中 / 出错等不能滚的状态用 `PageTopStripStack`），见 `PageTopStrip.swift`。「主页」「用量」的分页器、管理页「读取失败」的提示都这样放。底部的状态行（`safeAreaInset(edge: .bottom)`）不受影响。
 
 ## 搜索
-- 一律用系统的 `.searchable`，放在系统默认位置（iOS 26 的 iPhone 上在底部工具栏，和「会话」页一样），不用 `.navigationBarDrawer` 把搜索栏钉在导航栏下面。
+- 一律用系统的 `.searchable`，放在系统默认位置（和「会话」页一样：由系统决定放在导航栏里、跟着大标题一起展开 / 收起，或收成工具栏里的放大镜），不用 `.navigationBarDrawer(displayMode: .always)` 之类的写法把搜索栏钉在标题下面。
 - 规则只有一条：**页面主体就是那张可搜索的列表**（会话、插件、资源库的「发现」、选模型的表单）→ 完整搜索栏；**页面上还有分页器 / 筛选 / 图表、搜索只是其中一个工具**（用量 › 请求、用量 › 会话、Agent 的模型列表）→ 再加 `.minimizedSearch()`（`searchToolbarBehavior(.minimize)`），收成工具栏里的放大镜，点开才展开。
 
 ## 「更多」
